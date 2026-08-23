@@ -1,0 +1,123 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Dancing+Script:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #060913;
+    color: #E2E8F0;
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+
+  /* Bright neon gradient for all headings (Dancing Script) */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Dancing Script', cursive;
+    font-weight: 700;
+  }
+
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+  }
+
+  /* Agent card hover effect */
+  .agent-card-hover {
+    transition: all 0.3s ease;
+  }
+
+  .agent-card-hover:hover {
+    transform: translateY(-4px);
+  }
+
+  strong, b {
+    color: #FFFFFF;
+  }
+}
+
+@layer components {
+  /* Glass card — dark futuristic */
+  .edu-card {
+    background: linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9));
+    border-radius: 20px;
+    border: 1px solid rgba(148,163,184,0.12);
+    box-shadow: 0 0 24px rgba(0,212,255,0.06), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  .glass-card {
+    background: rgba(15,23,42,0.75);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+  }
+
+  /* Nav item */
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    color: #94A3B8;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .nav-item:hover {
+    background: rgba(0,212,255,0.08);
+    color: #67E8F9;
+  }
+
+  .nav-item.active {
+    background: linear-gradient(135deg, #0EA5E9, #06B6D4);
+    color: #FFFFFF;
+  }
+
+  /* Primary button */
+  .btn-primary {
+    background: linear-gradient(135deg, #00D4FF 0%, #2563EB 100%);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,212,255,0.4);
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    height: 8px;
+    background: rgba(148,163,184,0.12);
+    border-radius: 9999px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00D4FF, #8B5CF6);
+    border-radius: 9999px;
+    transition: width 0.5s ease;
+  }
+
+  /* Tag/badge */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .tag-blue { background: rgba(0,212,255,0.12); color: #67E8F9; }
+  .tag-green { background: rgba(16,185,129,0.12); color: #6EE7B7; }
+  .tag-yellow { background: rgba(245,158,11,0.12); color: #FCD34D; }
+}

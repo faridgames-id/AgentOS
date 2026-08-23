@@ -1,0 +1,466 @@
+import { useState, useRef, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  Mic, MicOff, Send, Sparkles, Brain, CalendarClock, MessageSquare,
+  AudioLines, Plus, Trash2, Bot, User, Zap, Globe, Terminal, X, Play, Pause
+} from 'lucide-react'
+
+type Tab = 'voice' | 'chat' | 'memory' | 'cron'
+
+interface ChatSession {
+  id: number
+  name: string
+  messages: { role: 'user' | 'cozy'; text: string; time: string }[]
+}
+
+interface MemoryItem {
+  id: number
+  category: string
+  content: string
+  color: string
+}
+
+interface CronItem {
+  id: number
+  name: string
+  schedule: string
+  lastRun: string
+  status: 'active' | 'paused'
+}
+
+const suggestions = [
+  { icon: Zap, label: 'Cek profit hari ini', color: '#10B981' },
+  { icon: Globe, label: 'Riset pasar akun FF', color: '#F59E0B' },
+  { icon: Terminal, label: 'Deploy update terbaru', color: '#00D4FF' },
+  { icon: Brain, label: 'Ingatkan jadwal konten', color: '#8B5CF6' },
+]
+
+const initialSessions: ChatSession[] = [
+  { id: 1, name: 'Business Chat', messages: [
+    { role: 'user', text: 'Cozy, profit hari ini berapa?', time: '14:02' },
+    { role: 'cozy', text: 'Hari ini Bos Farid sudah mencatat Rp 150.000 profit dari 2 akun terjual. Total August: Rp 4.574.000 🔥', time: '14:02' },
+  ]},
+  { id: 2, name: 'Stock ZEPHRA', messages: [] },
+]
+
+const memoryItems: MemoryItem[] = [
+  { id: 1, category: 'IDENTITY', content: 'Bos Farid — 15 yo AI Engineer, owner faridshopgame.online', color: '#FBBF24' },
+  { id: 2, category: 'PREFERENCE', content: 'Concise Indonesian responses, cool emojis', color: '#EC4899' },
+  { id: 3, category: 'FINANCE', content: 'August 2026 income Rp 4.574.000 (47 transactions)', color: '#10B981' },
+  { id: 4, category: 'STOCK', content: 'ZEPHRA manages 272 accounts (188 FF, 84 ML) worth Rp 72.3jt', color: '#A855F7' },
+  { id: 5, category: 'PLATFORMS', content: 'TikTok @Faridexcelent • Firebase x2 projects • Obsidian vault', color: '#06B6D4' },
+]
+
+const cronItems: CronItem[] = [
+  { id: 1, name: 'Daily Finance Report', schedule: '0 9 * * *', lastRun: 'Today 09:00 ✓', status: 'active' },
+  { id: 2, name: 'ZEPHRA Stock Sync', schedule: '*/30m', lastRun: '12 min ago ✓', status: 'active' },
+  { id: 3, name: 'TikTok Content Ideas', schedule: '0 18 * * *', lastRun: 'Yesterday ✓', status: 'active' },
+  { id: 4, name: 'Memory Consolidation', schedule: '0 3 * * *', lastRun: 'Paused by user', status: 'paused' },
+]
+
+export default function Chat() {
+  const [tab, setTab] = useState<Tab>('voice')
+  const [sessions, setSessions] = useState<ChatSession[]>(initialSessions)
+  const [activeSession, setActiveSession] = useState(1)
+  const [input, setInput] = useState('')
+  const [isListening, setIsListening] = useState(false)
+  const [orbIntensity, setOrbIntensity] = useState(1)
+  const [typing, setTyping] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const session = sessions.find(s => s.id === activeSession)
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [session?.messages.length])
+
+  // Fake voice orb pulse when listening
+  useEffect(() => {
+    if (!isListening) return
+    const i = setInterval(() => setOrbIntensity(0.7 + Math.random() * 0.6), 180)
+    return () => clearInterval(i)
+  }, [isListening])
+
+  const sendMessage = () => {
+    if (!input.trim() || !session) return
+    const now = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+    const userMsg = { role: 'user' as const, text: input, time: now }
+    setSessions(prev => prev.map(s => s.id === activeSession
+      ? { ...s, messages: [...s.messages, userMsg] } : s))
+    setInput('')
+    setTyping(true)
+    setTimeout(() => {
+      const cozyMsg = { role: 'copy' as never, text: '', time: now }
+      void cozyMsg
+      const reply = {
+        role: 'cozy' as const,
+        text: generateReply(input),
+        time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+      }
+      setSessions(prev => prev.map(s => s.id === activeSession
+        ? { ...s, messages: [...s.messages, reply] } : s))
+      setTyping(false)
+    }, 1200)
+  }
+
+  const generateReply = (q: string) => {
+    const l = q.toLowerCase()
+    if (l.includes('profit') || l.includes('income') || l.includes('pendapatan'))
+      return `💰 August 2026: Rp 4.574.000 dari 47 transaksi. Hari ini ada profit baru masuk! Mau saya buatkan breakdown per minggu?`
+    if (l.includes('stock') || l.includes('stok'))
+      return `📦 ZEPHRA reports: 272 accounts ready (188 FF, 84 ML). Total modal Rp 72.345.000. Semua sistem normal ✅`
+    if (l.includes('cron') || l.includes('jadwal'))
+      return `⏰ 3 cron aktif: Daily Finance (09:00), Stock Sync (30m), TikTok Ideas (18:00). Mau ubah jadwal?`
+    if (l.includes('ingat') || l.includes('memory'))
+      return `🧠 Saya ingat semuanya Bos — identitas, preferensi, data finansial, dan stok ZEPHRA. Ada yang mau ditambahkan ke memory?`
+    return `🤖 Copy that Bos! Saya proses sekarang. Ada lagi yang bisa saya bantu?`
+  }
+
+  const newSession = () => {
+    const id = Math.max(...sessions.map(s => s.id)) + 1
+    setSessions([...sessions, { id, name: `New Session ${id}`, messages: [] }])
+    setActiveSession(id)
+  }
+
+  const deleteSession = (id: number) => {
+    if (sessions.length <= 1) return
+    const rest = sessions.filter(s => s.id !== id)
+    setSessions(rest)
+    if (activeSession === id) setActiveSession(rest[0].id)
+  }
+
+  // ════════════════ VOICE TAB (Jarvis) ════════════════
+  const VoiceTab = () => (
+    <div className="flex flex-col items-center justify-center min-h-[70vh] relative">
+      {/* Background rings */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        {[220, 320, 420].map((size, i) => (
+          <motion.div
+            key={size}
+            className="absolute rounded-full border border-cyan-400/10"
+            style={{ width: size, height: size }}
+            animate={{ scale: [1, 1.08, 1], opacity: [0.5, 0.15, 0.5] }}
+            transition={{ duration: 3, repeat: Infinity, delay: i * 0.7 }}
+          />
+        ))}
+      </div>
+
+      {/* Central Orb */}
+      <motion.div
+        animate={{ scale: isListening ? orbIntensity : [1, 1.04, 1] }}
+        transition={isListening ? { duration: 0.18 } : { duration: 3, repeat: Infinity }}
+        className="relative w-52 h-52 rounded-full cursor-pointer select-none"
+        onClick={() => setIsListening(!isListening)}
+        style={{
+          background: 'radial-gradient(circle at 35% 30%, rgba(255,255,255,0.25), rgba(0,212,255,0.35) 30%, rgba(139,92,246,0.5) 65%, rgba(10,15,30,0.95) 100%)',
+          boxShadow: isListening
+            ? '0 0 80px rgba(0,212,255,0.55), 0 0 140px rgba(139,92,246,0.35), inset 0 0 50px rgba(255,255,255,0.15)'
+            : '0 0 40px rgba(0,212,255,0.25), 0 0 90px rgba(139,92,246,0.15), inset 0 0 40px rgba(255,255,255,0.08)',
+          border: '1px solid rgba(0,212,255,0.3)'
+        }}
+      >
+        {/* inner grid sphere effect */}
+        <div className="absolute inset-3 rounded-full opacity-30" style={{
+          backgroundImage: 'radial-gradient(circle, transparent 60%, rgba(255,255,255,0.15) 61%, transparent 62%), radial-gradient(circle, transparent 78%, rgba(255,255,255,0.12) 79%, transparent 80%)',
+        }} />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <AnimatePresence mode="wait">
+            {isListening ? (
+              <motion.div key="mic" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
+                <AudioLines size={44} className="text-white drop-shadow-[0_0_12px_rgba(0,212,255,0.9)]" />
+              </motion.div>
+            ) : (
+              <motion.div key="idle" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
+                <Mic size={40} className="text-white/90" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+
+      <h2 className="mt-10 text-3xl font-bold text-white font-display">
+        {isListening ? 'Listening...' : "Hey Cozy!"}
+      </h2>
+      <p className="text-slate-400 mt-2 text-sm">
+        {isListening ? 'Speak now — saya dengar Bos 👂' : 'Tap orb atau tekan mic untuk ngobrol via voice'}
+      </p>
+
+      {/* Waveform bars */}
+      <div className="flex items-center gap-1.5 h-16 mt-6">
+        {Array.from({ length: 28 }).map((_, i) => (
+          <motion.div
+            key={i}
+            className="w-1.5 rounded-full"
+            style={{ background: 'linear-gradient(180deg,#00D4FF,#8B5CF6)' }}
+            animate={isListening ? { height: [8, 20 + Math.random() * 40, 8] } : { height: 8 }}
+            transition={isListening ? { duration: 0.5, repeat: Infinity, delay: i * 0.04 } : { duration: 0.3 }}
+          />
+        ))}
+      </div>
+
+      {/* Quick voice actions */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-10 w-full max-w-2xl">
+        {suggestions.map((s, i) => (
+          <motion.button
+            key={i}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 + i * 0.07 }}
+            whileHover={{ y: -3, boxShadow: `0 0 20px ${s.color}44` }}
+            className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-white/25 transition-all"
+          >
+            <s.icon size={16} style={{ color: s.color }} />
+            <span className="text-xs text-slate-300 text-left">{s.label}</span>
+          </motion.button>
+        ))}
+      </div>
+    </div>
+  )
+
+  // ════════════════ CHAT TAB (Telegram-style) ════════════════
+  const ChatTab = () => (
+    <div className="flex gap-4 h-[calc(100vh-160px)]">
+      {/* Session list */}
+      <div className="w-64 flex-shrink-0 flex flex-col rounded-2xl overflow-hidden"
+        style={{ background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(148,163,184,0.12)' }}>
+        <button
+          onClick={newSession}
+          className="m-3 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-bold hover:shadow-lg hover:shadow-cyan-500/30 transition-shadow"
+        >
+          <Plus size={16} /> New Session
+        </button>
+        <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-1">
+          {sessions.map(s => (
+            <div
+              key={s.id}
+              onClick={() => setActiveSession(s.id)}
+              className={`group flex items-center gap-2 px-3 py-2.5 rounded-xl cursor-pointer transition-all ${activeSession === s.id
+                ? 'bg-cyan-500/15 border border-cyan-400/30'
+                : 'hover:bg-white/5 border border-transparent'
+                }`}
+            >
+              <MessageSquare size={14} className={activeSession === s.id ? 'text-cyan-400' : 'text-slate-500'} />
+              <span className={`text-sm flex-1 truncate ${activeSession === s.id ? 'text-white' : 'text-slate-400'}`}>{s.name}</span>
+              <Trash2 size={13} className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-opacity"
+                onClick={(e) => { e.stopPropagation(); deleteSession(s.id) }} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Chat area */}
+      <div className="flex-1 flex flex-col rounded-2xl overflow-hidden relative"
+        style={{ background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(148,163,184,0.12)' }}>
+        {/* Header */}
+        <div className="flex items-center gap-3 px-5 py-3.5 border-b border-white/5">
+          <div className="relative">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center">
+              <Bot size={17} className="text-white" />
+            </div>
+            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-slate-900" />
+          </div>
+          <div>
+            <p className="text-white font-bold text-sm">Cozy</p>
+            <p className="text-emerald-400 text-[11px] flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />online
+            </p>
+          </div>
+        </div>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          {session?.messages.length === 0 && (
+            <div className="h-full flex flex-col items-center justify-center text-center">
+              <Sparkles size={32} className="text-cyan-400 mb-3" />
+              <p className="text-slate-300 font-medium">Mulai percakapan dengan Cozy</p>
+              <p className="text-slate-500 text-sm mt-1">Chat ini tersinkron dengan Telegram kamu 📱</p>
+            </div>
+          )}
+          {session?.messages.map((m, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${m.role === 'user'
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-br-md'
+                : 'bg-white/[0.06] text-slate-200 border border-white/5 rounded-bl-md'
+                }`}>
+                <p>{m.text}</p>
+                <p className={`text-[10px] mt-1 text-right ${m.role === 'user' ? 'text-white/60' : 'text-slate-500'}`}>{m.time}</p>
+              </div>
+            </motion.div>
+          ))}
+          {typing && (
+            <div className="flex justify-start">
+              <div className="bg-white/[0.06] border border-white/5 px-4 py-3 rounded-2xl rounded-bl-md flex gap-1">
+                {[0, 1, 2].map(d => (
+                  <motion.span key={d} className="w-2 h-2 bg-slate-400 rounded-full"
+                    animate={{ y: [0, -4, 0] }}
+                    transition={{ duration: 0.6, repeat: Infinity, delay: d * 0.15 }} />
+                ))}
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input */}
+        <div className="p-4 border-t border-white/5">
+          <div className="flex items-center gap-2 bg-white/[0.04] border border-white/10 rounded-2xl px-4 py-2.5 focus-within:border-cyan-400/40 transition-colors">
+            <input
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && sendMessage()}
+              placeholder="Ask me anything..."
+              className="flex-1 bg-transparent outline-none text-sm text-white placeholder:text-slate-500"
+            />
+            <Mic size={17} className="text-slate-500 hover:text-cyan-400 cursor-pointer transition-colors" />
+            <button onClick={sendMessage} className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 flex items-center justify-center hover:shadow-lg hover:shadow-cyan-500/30 transition-shadow">
+              <Send size={14} className="text-white" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
+  // ════════════════ MEMORY TAB ════════════════
+  const MemoryTab = () => (
+    <div className="space-y-4 max-w-4xl mx-auto pt-4">
+      <div className="flex items-center gap-3 mb-2">
+        <Brain size={22} className="text-purple-400" />
+        <h2 className="text-xl font-bold text-white">Cozy Core Memory</h2>
+        <span className="ml-auto text-xs px-3 py-1 rounded-full bg-purple-500/10 border border-purple-400/30 text-purple-300 font-mono">
+          {memoryItems.length} entries
+        </span>
+      </div>
+      {memoryItems.map((item, idx) => (
+        <motion.div
+          key={item.id}
+          initial={{ opacity: 0, x: -15 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: idx * 0.07 }}
+          whileHover={{ x: 4 }}
+          className="flex items-start gap-4 p-4 rounded-2xl relative overflow-hidden group"
+          style={{ background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(148,163,184,0.1)' }}
+        >
+          <div className="absolute left-0 top-0 bottom-0 w-1" style={{ background: item.color, boxShadow: `0 0 12px ${item.color}` }} />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${item.color}18`, border: `1px solid ${item.color}40` }}>
+            <Brain size={16} style={{ color: item.color }} />
+          </div>
+          <div className="flex-1">
+            <p className="text-[10px] font-mono tracking-widest" style={{ color: item.color }}>{item.category}</p>
+            <p className="text-sm text-slate-200 mt-1">{item.content}</p>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  )
+
+  // ════════════════ CRON TAB ════════════════
+  const CronTab = () => (
+    <div className="space-y-4 max-w-4xl mx-auto pt-4">
+      <div className="flex items-center gap-3 mb-2">
+        <CalendarClock size={22} className="text-amber-400" />
+        <h2 className="text-xl font-bold text-white">Cozy Cron Manager</h2>
+        <span className="ml-auto text-xs px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 font-mono">
+          {cronItems.filter(c => c.status === 'active').length}/{cronItems.length} active
+        </span>
+      </div>
+      {cronItems.map((job, idx) => (
+        <motion.div
+          key={job.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: idx * 0.07 }}
+          className="flex items-center justify-between p-4 rounded-2xl"
+          style={{ background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(148,163,184,0.1)' }}
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-500/10 border border-amber-400/30">
+              <CalendarClock size={16} className="text-amber-400" />
+            </div>
+            <div>
+              <p className="text-white font-semibold text-sm">{job.name}</p>
+              <p className="text-xs text-slate-500 font-mono">{job.schedule} · last: {job.lastRun}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className={`text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full font-bold ${job.status === 'active'
+              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-400/20'
+              : 'bg-slate-500/10 text-slate-400 border border-slate-500/20'
+              }`}>
+              {job.status}
+            </span>
+            <button className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${job.status === 'active'
+              ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
+              : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
+              }`}>
+              {job.status === 'active' ? <Pause size={13} /> : <Play size={13} />}
+            </button>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  )
+
+  return (
+    <div className="w-full">
+      {/* Header + Tabs */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-4xl font-black font-display">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-sky-300 to-violet-300 drop-shadow-[0_0_22px_rgba(56,189,248,0.65)]">
+              Cozy Agentic
+            </span>
+            <Sparkles className="inline-block text-yellow-300 ml-3 animate-pulse" size={26} />
+          </h1>
+          <p className="text-slate-400 text-sm font-mono mt-1">Neural Link Interface • v3.0</p>
+        </div>
+
+        {/* Tab switcher */}
+        <div className="flex items-center gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/10">
+          {([
+            { key: 'voice', icon: AudioLines, label: 'Voice' },
+            { key: 'chat', icon: MessageSquare, label: 'Chat Session' },
+            { key: 'memory', icon: Brain, label: 'Memory' },
+            { key: 'cron', icon: CalendarClock, label: 'Cron' },
+          ] as { key: Tab; icon: typeof Mic; label: string }[]).map(t => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`relative flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${tab === t.key
+                ? 'text-white'
+                : 'text-slate-500 hover:text-slate-300'
+                }`}
+            >
+              {tab === t.key && (
+                <motion.div layoutId="tab-pill" className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/25" />
+              )}
+              <t.icon size={15} className="relative z-10" />
+              <span className="relative z-10 hidden sm:inline">{t.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tab content */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={tab}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -12 }}
+          transition={{ duration: 0.25 }}
+        >
+          {tab === 'voice' && <VoiceTab />}
+          {tab === 'chat' && <ChatTab />}
+          {tab === 'memory' && <MemoryTab />}
+          {tab === 'cron' && <CronTab />}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  )
+}

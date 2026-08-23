@@ -1,0 +1,103 @@
+{
+  "agents": [
+    {
+      "id": 1,
+      "name": "NOVA",
+      "role": "Research & Analysis",
+      "description": "Deep research, market analysis, and strategic insights using advanced LLM models",
+      "icon": "flame",
+      "status": "working",
+      "current_task": "Analyzing market trends for Farid Shop",
+      "tasks_completed": 342,
+      "avatar_color": "#FF6B35"
+    },
+    {
+      "id": 2,
+      "name": "CIPHER",
+      "role": "Code & Development",
+      "description": "Full-stack development, debugging, and code optimization across multiple languages",
+      "icon": "code",
+      "status": "idle",
+      "current_task": null,
+      "tasks_completed": 567,
+      "avatar_color": "#00D4FF"
+    },
+    {
+      "id": 3,
+      "name": "ATLAS",
+      "role": "Finance & Tracking",
+      "description": "Income/expense tracking, financial insights, and profit optimization strategies",
+      "icon": "chart",
+      "status": "working",
+      "current_task": "Processing August finance data",
+      "tasks_completed": 891,
+      "avatar_color": "#10B981"
+    },
+    {
+      "id": 4,
+      "name": "PIXEL",
+      "role": "Image & Creative",
+      "description": "Image generation, design assistance, and visual content creation",
+      "icon": "palette",
+      "status": "idle",
+      "current_task": null,
+      "tasks_completed": 234,
+      "avatar_color": "#EC4899"
+    },
+    {
+      "id": 5,
+      "name": "ORACLE",
+      "role": "Insights & Predictions",
+      "description": "Predictive analytics, trend forecasting, and data-driven recommendations",
+      "icon": "crystal",
+      "status": "working",
+      "current_task": "Forecasting stock market movements",
+      "tasks_completed": 156,
+      "avatar_color": "#8B5CF6"
+    },
+    {
+      "id": 6,
+      "name": "SENTINEL",
+      "role": "Security & Monitoring",
+      "description": "System security, anomaly detection, and 24/7 infrastructure monitoring",
+      "icon": "shield",
+      "status": "working",
+      "current_task": "Scanning for security vulnerabilities",
+      "tasks_completed": 1203,
+      "avatar_color": "#F59E0B"
+    },
+    {
+      "id": 7,
+      "name": "AURORA",
+      "role": "Content & Writing",
+      "description": "Content creation, copywriting, and creative writing assistance",
+      "icon": "pen",
+      "status": "idle",
+      "current_task": null,
+      "tasks_completed": 445,
+      "avatar_color": "#EC4899"
+    },
+    {
+      "id": 8,
+      "name": "PHOENIX",
+      "role": "Automation & Tasks",
+      "description": "Task automation, workflow orchestration, and repetitive task elimination",
+      "icon": "bird",
+      "status": "working",
+      "current_task": "Running scheduled database backups",
+      "tasks_completed": 678,
+      "avatar_color": "#F43F5E"
+    },
+    {
+      "id": 9,
+      "name": "ZEPHRA",
+      "role": "Stock Tracking FF/ML",
+      "description": "FF/ML account inventory management, pricing analysis, and sales optimization",
+      "icon": "brain",
+      "status": "working",
+      "current_task": "Syncing stock data from Firebase",
+      "tasks_completed": 287,
+      "avatar_color": "#F43F5E"
+    }
+  ]
+}
