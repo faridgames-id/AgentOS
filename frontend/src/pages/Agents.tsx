@@ -602,8 +602,8 @@ function OfficeScene({ onOpen, selectedId, brainAgentId }: { onOpen: (a: SubAgen
 
 /** Ruangan kotak putih ala Minecraft: lantai + 4 dinding blok */
 function MinecraftRoom() {
-  const W = 11   // half-width
-  const H = 4.2  // tinggi dinding
+  const W = 15   // half-width (lebih luas)
+  const H = 6.4  // tinggi dinding (lebih tinggi)
   return (
     <group>
       {/* lantai blok putih */}
@@ -635,16 +635,22 @@ function MinecraftRoom() {
         <meshLambertMaterial color="#F8FAFD" />
       </mesh>
       {/* lampu plafon ala Minecraft (glowstone strip) */}
-      {[-4, 0, 4].map((x, i) => (
-        <mesh key={i} position={[x, H - 0.35, 0]}>
-          <boxGeometry args={[2.2, 0.12, 1.2]} />
+      {[-8, -4, 0, 4, 8].map((x, i) => (
+        <mesh key={i} position={[x, H - 0.4, 0]}>
+          <boxGeometry args={[3, 0.14, 1.6]} />
           <meshStandardMaterial color="#FFF7D6" emissive="#FFE9A8" emissiveIntensity={0.9} />
         </mesh>
       ))}
+      {[[-8, -5], [0, -5], [8, -5], [-8, 5], [0, 5], [8, 5]].map(([x, z], i) => (
+        <mesh key={`s-${i}`} position={[x, H - 0.4, z]}>
+          <boxGeometry args={[2.4, 0.14, 1.4]} />
+          <meshStandardMaterial color="#FFF7D6" emissive="#FFE9A8" emissiveIntensity={0.8} />
+        </mesh>
+      ))}
       {/* jendela besar di dinding belakang */}
-      {[-5, -2.5, 2.5, 5].map((x, i) => (
-        <mesh key={`w-${i}`} position={[x, 2.6, -W + 0.22]}>
-          <boxGeometry args={[1.6, 1.6, 0.08]} />
+      {[-9, -6, -3, 0, 3, 6, 9].map((x, i) => (
+        <mesh key={`w-${i}`} position={[x, 3.6, -W + 0.22]}>
+          <boxGeometry args={[2, 2, 0.08]} />
           <meshStandardMaterial color="#BFE3FF" emissive="#9CCBFF" emissiveIntensity={0.55} />
         </mesh>
       ))}
@@ -732,13 +738,13 @@ function OfficeView({ onOpen, selectedId }: { onOpen: (a: SubAgent) => void; sel
         boxShadow: '0 0 40px rgba(0,212,255,0.07)'
       }}
     >
-      <Canvas shadows camera={{ position: [0, 4.2, 11], fov: 46 }} gl={{ antialias: true }}>
+      <Canvas shadows camera={{ position: [0, 5.4, 14.5], fov: 48 }} gl={{ antialias: true }}>
         <color attach="background" args={['#DDE7F2']} />
-        <fog attach="fog" args={['#DDE7F2', 18, 34]} />
+        <fog attach="fog" args={['#DDE7F2', 26, 48]} />
         <OfficeScene onOpen={onOpen} selectedId={selectedId} brainAgentId={null} />
         <OrbitControls
           target={[0, 1, 0]}
-          minDistance={5} maxDistance={16}
+          minDistance={6} maxDistance={22}
           maxPolarAngle={Math.PI / 2.1}
           enablePan={false}
           enableDamping
