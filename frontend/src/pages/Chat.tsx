@@ -864,10 +864,11 @@ export default function Chat() {
           exit={{ opacity: 0, y: -12 }}
           transition={{ duration: 0.25 }}
         >
-          {tab === 'voice' && <VoiceTab />}
-          {tab === 'chat' && <ChatTab />}
-          {tab === 'memory' && <MemoryTab />}
-          {tab === 'cron' && <CronTab />}
+          {/* dipanggil sebagai fungsi (bukan <Comp />) agar tidak remount saat parent re-render — fix bug input reset */}
+          {tab === 'voice' && VoiceTab()}
+          {tab === 'chat' && ChatTab()}
+          {tab === 'memory' && MemoryTab()}
+          {tab === 'cron' && CronTab()}
         </motion.div>
       </AnimatePresence>
     </div>
