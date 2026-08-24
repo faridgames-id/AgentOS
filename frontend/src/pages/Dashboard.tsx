@@ -474,52 +474,55 @@ function AgentPerformanceCard() {
         style={{ filter: 'drop-shadow(0 0 10px rgba(34,211,238,0.18))' }}
       >
         <ResponsiveContainer width="100%" height={210}>
-          <BarChart data={agentSystemData} barCategoryGap="28%">
+          <BarChart data={agentSystemData} barCategoryGap="38%">
             <defs>
+              {/* gradient memudar ke bawah ala referensi */}
               <linearGradient id="barActive" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#67E8F9" stopOpacity={1} />
-                <stop offset="55%" stopColor="#22D3EE" stopOpacity={0.9} />
-                <stop offset="100%" stopColor="#0E7490" stopOpacity={0.55} />
+                <stop offset="0%" stopColor="#7DD3FC" stopOpacity={1} />
+                <stop offset="40%" stopColor="#38BDF8" stopOpacity={0.95} />
+                <stop offset="100%" stopColor="#0EA5E9" stopOpacity={0.12} />
               </linearGradient>
               <linearGradient id="barIdle" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#64748B" stopOpacity={0.75} />
-                <stop offset="100%" stopColor="#334155" stopOpacity={0.4} />
+                <stop offset="0%" stopColor="#64748B" stopOpacity={0.85} />
+                <stop offset="100%" stopColor="#334155" stopOpacity={0.12} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="4 6" stroke="rgba(148,163,184,0.07)" vertical={false} />
+            <CartesianGrid strokeDasharray="4 6" stroke="rgba(148,163,184,0.06)" vertical={false} />
             <XAxis dataKey="name" stroke="#475569" fontSize={10} tickLine={false} axisLine={false} dy={6} />
             <YAxis stroke="#475569" fontSize={10} tickLine={false} axisLine={false} width={34} />
             <Tooltip
-              cursor={{ fill: 'rgba(34,211,238,0.06)' }}
-              contentStyle={{
-                backgroundColor: 'rgba(10, 15, 30, 0.95)',
-                border: '1px solid rgba(34,211,238,0.3)',
-                borderRadius: '12px',
-                color: '#fff',
-                backdropFilter: 'blur(10px)',
-                boxShadow: '0 0 20px rgba(34,211,238,0.15)'
-              }}
-              labelStyle={{ color: '#E2E8F0', fontWeight: 'bold' }}
-              formatter={(value: number | string, nameKey: string, entry: { payload?: { status?: string; efficiency?: number } }) => [
-                `${Number(value).toLocaleString()} tasks • ${entry?.payload?.efficiency ?? 0}% eff • ${entry?.payload?.status === 'working' ? '🟢 working' : '⚪ idle'}`,
-                ''
-              ]}
+              cursor={{ fill: 'rgba(56,189,248,0.05)' }}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              content={((props: any) => {
+                const { active, payload, label } = props
+                if (!active || !payload || !payload.length) return null
+                const p = payload[0]
+                const row = p?.payload || {}
+                return (
+                  <div
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold font-mono shadow-xl"
+                    style={{
+                      background: 'rgba(10,15,30,0.95)',
+                      border: '1px solid rgba(56,189,248,0.4)',
+                      color: '#7DD3FC',
+                      boxShadow: '0 6px 20px rgba(56,189,248,0.2)'
+                    }}
+                  >
+                    {label}: {Number(p.value).toLocaleString('id-ID')} tasks • {row.efficiency ?? 0}% eff • {row.status === 'working' ? '🟢' : '⚪'}
+                  </div>
+                )
+              }) as never}
             />
             <Bar
               dataKey="tasks"
-              radius={[7, 7, 2, 2]}
+              radius={[9, 9, 9, 9]}
               isAnimationActive
               animationDuration={1100}
               animationBegin={700}
               animationEasing="ease-out"
             >
               {agentSystemData.map((entry, index) => (
-                <Cell
-                  key={index}
-                  fill={entry.status === 'working' ? 'url(#barActive)' : 'url(#barIdle)'}
-                  stroke={entry.status === 'working' ? 'rgba(103,232,249,0.5)' : 'rgba(100,116,139,0.3)'}
-                  strokeWidth={1}
-                />
+                <Cell key={index} fill={entry.status === 'working' ? 'url(#barActive)' : 'url(#barIdle)'} />
               ))}
             </Bar>
           </BarChart>
