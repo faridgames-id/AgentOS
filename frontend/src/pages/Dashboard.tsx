@@ -348,29 +348,64 @@ function IncomeTracker() {
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={230}>
-          <BarChart data={chartData} barGap={2}>
+          <BarChart data={chartData} barGap={3} barCategoryGap="32%">
             <defs>
+              {/* gradient memudar ke bawah ala referensi */}
               <linearGradient id="incGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#22D3EE" stopOpacity={1} />
-                <stop offset="100%" stopColor="#22D3EE" stopOpacity={0.35} />
+                <stop offset="0%" stopColor="#67E8F9" stopOpacity={1} />
+                <stop offset="45%" stopColor="#22D3EE" stopOpacity={0.95} />
+                <stop offset="100%" stopColor="#22D3EE" stopOpacity={0.15} />
               </linearGradient>
               <linearGradient id="expGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#FB7185" stopOpacity={1} />
-                <stop offset="100%" stopColor="#FB7185" stopOpacity={0.35} />
+                <stop offset="0%" stopColor="#FDA4AF" stopOpacity={1} />
+                <stop offset="45%" stopColor="#FB7185" stopOpacity={0.95} />
+                <stop offset="100%" stopColor="#FB7185" stopOpacity={0.15} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.08)" vertical={false} />
-            <XAxis dataKey="name" stroke="#475569" fontSize={11} tickLine={false} />
-            <YAxis stroke="#475569" fontSize={10} tickLine={false} unit="jt" width={38} />
+            <CartesianGrid strokeDasharray="4 6" stroke="rgba(148,163,184,0.06)" vertical={false} />
+            <XAxis dataKey="name" stroke="#475569" fontSize={11} tickLine={false} axisLine={false} dy={6} />
+            <YAxis stroke="#475569" fontSize={10} tickLine={false} axisLine={false} unit="jt" width={38} />
             <Tooltip
-              {...darkTooltip}
-              formatter={(value: number | string, nameKey: string) => [
-                `Rp ${(Number(value) * 1_000_000).toLocaleString('id-ID')}`,
-                nameKey === 'income' ? 'Income' : 'Expense'
-              ]}
+              cursor={{ fill: 'rgba(148,163,184,0.05)' }}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              content={((props: any) => {
+                const { active, payload, label } = props
+                if (!active || !payload || !payload.length) return null
+                const p = payload[0]
+                const isIncome = p.dataKey === 'income'
+                return (
+                  <div
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold font-mono shadow-xl"
+                    style={{
+                      background: 'rgba(10,15,30,0.95)',
+                      border: `1px solid ${isIncome ? 'rgba(34,211,238,0.4)' : 'rgba(251,113,133,0.4)'}`,
+                      color: isIncome ? '#67E8F9' : '#FDA4AF',
+                      boxShadow: `0 6px 20px ${isIncome ? 'rgba(34,211,238,0.2)' : 'rgba(251,113,133,0.2)'}`
+                    }}
+                  >
+                    {label}: Rp {(Number(p.value) * 1_000_000).toLocaleString('id-ID')}
+                  </div>
+                )
+              }) as never}
             />
-            <Bar dataKey="income" fill="url(#incGrad)" radius={[4, 4, 0, 0]} isAnimationActive animationDuration={900} animationBegin={600} />
-            <Bar dataKey="expense" fill="url(#expGrad)" radius={[4, 4, 0, 0]} isAnimationActive animationDuration={900} animationBegin={750} />
+            <Bar
+              dataKey="income"
+              fill="url(#incGrad)"
+              radius={[8, 8, 8, 8]}
+              isAnimationActive
+              animationDuration={1000}
+              animationBegin={600}
+              animationEasing="ease-out"
+            />
+            <Bar
+              dataKey="expense"
+              fill="url(#expGrad)"
+              radius={[8, 8, 8, 8]}
+              isAnimationActive
+              animationDuration={1000}
+              animationBegin={750}
+              animationEasing="ease-out"
+            />
           </BarChart>
         </ResponsiveContainer>
       )}
