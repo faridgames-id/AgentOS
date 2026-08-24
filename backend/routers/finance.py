@@ -53,9 +53,18 @@ async def get_summary():
     except Exception as e:
         return {"error": str(e)}
 
+# ── Cache untuk hemat kuota Firestore (refresh tiap 10 menit) ──
+_monthly_cache = {"data": None, "ts": 0}
+_CACHE_TTL = 600  # detik
+
 @router.get("/monthly-summary")
 async def get_monthly_summary():
-    """Get monthly breakdown of income and expense"""
+    """Get monthly breakdown of income and expense (cached 10 min)"""
+    import time
+    now = time.time()
+    if _monthly_cache["data"] is not None and now - _monthly_cache["ts"] < _CACHE_TTL:
+        return _monthly_cache["data"]
+
     if not db or not UID:
         return []
     
@@ -121,8 +130,26 @@ async def get_monthly_summary():
                 "expense_count": data['expense_count']
             })
         
+        _monthly_cache["data"] = result
+        _monthly_cache["ts"] = time.time()
+        # simpan snapshot sukses ke file fallback
+        try:
+            from routers.finance_fallback import save_fallback
+            save_fallback(result)
+        except Exception:
+            pass
         return result
     except Exception as e:
+        # kalau kuota habis / error, pakai fallback snapshot terakhir
+        try:
+            from routers.finance_fallback import load_fallback
+            fb = load_fallback()
+            if fb:
+                return fb
+        except Exception:
+            pass
+        if _monthly_cache["data"] is not None:
+            return _monthly_cache["data"]
         return [{"error": str(e)}]
 
 @router.get("/transactions")

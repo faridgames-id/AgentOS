@@ -1,0 +1,34 @@
+"""Fallback data bulanan (snapshot terakhir yang berhasil dari Firestore).
+Dipakai kalau kuota Firestore habis (429). Update otomatis saat API sukses."""
+import json
+from pathlib import Path
+
+FALLBACK_FILE = Path(__file__).parent / "finance_monthly_fallback.json"
+
+DEFAULT = [
+    {"month": "2025-11", "month_name": "Nov 2025", "income": 11392500, "expense": 2067000, "net_profit": 9325500, "income_count": 29, "expense_count": 27},
+    {"month": "2025-12", "month_name": "Des 2025", "income": 12380100, "expense": 4947000, "net_profit": 7433100, "income_count": 28, "expense_count": 29},
+    {"month": "2026-01", "month_name": "Jan 2026", "income": 10079000, "expense": 246000, "net_profit": 9833000, "income_count": 27, "expense_count": 2},
+    {"month": "2026-02", "month_name": "Feb 2026", "income": 14674000, "expense": 752000, "net_profit": 13922000, "income_count": 27, "expense_count": 14},
+    {"month": "2026-03", "month_name": "Mar 2026", "income": 12076000, "expense": 20609000, "net_profit": -8533000, "income_count": 27, "expense_count": 41},
+    {"month": "2026-04", "month_name": "Apr 2026", "income": 8449000, "expense": 1405000, "net_profit": 7044000, "income_count": 25, "expense_count": 25},
+    {"month": "2026-05", "month_name": "Mei 2026", "income": 9179000, "expense": 3289000, "net_profit": 5890000, "income_count": 28, "expense_count": 21},
+    {"month": "2026-07", "month_name": "Jul 2026", "income": 5502000, "expense": 326000, "net_profit": 5176000, "income_count": 54, "expense_count": 10},
+    {"month": "2026-08", "month_name": "Agu 2026", "income": 4935000, "expense": 229000, "net_profit": 4706000, "income_count": 47, "expense_count": 8},
+]
+
+
+def load_fallback():
+    if FALLBACK_FILE.exists():
+        try:
+            return json.loads(FALLBACK_FILE.read_text())
+        except Exception:
+            pass
+    return DEFAULT
+
+
+def save_fallback(rows):
+    try:
+        FALLBACK_FILE.write_text(json.dumps(rows, indent=2))
+    except Exception:
+        pass
