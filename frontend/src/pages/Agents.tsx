@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import * as THREE from 'three'
 import { Canvas, useFrame } from '@react-three/fiber'
@@ -736,13 +737,14 @@ function OfficeView({ onOpen, selectedId }: { onOpen: (a: SubAgent) => void; sel
     return () => window.removeEventListener('keydown', onKey)
   }, [isFull])
 
-  return (
+  const canvas = (
     <motion.div
       key="office"
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="relative overflow-hidden"
       style={isFull ? {
-        position: 'fixed', inset: 0, zIndex: 90, borderRadius: 0,
+        position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+        zIndex: 9999, borderRadius: 0,
         background: '#DDE7F2',
       } : {
         borderRadius: 24,
@@ -796,6 +798,9 @@ function OfficeView({ onOpen, selectedId }: { onOpen: (a: SubAgent) => void; sel
       )}
     </motion.div>
   )
+
+  // fullscreen: render di document.body lewat portal biar lepas dari transform parent
+  return isFull ? createPortal(canvas, document.body) : canvas
 }
 
 // ─────────────────────────────────────────────────────────
