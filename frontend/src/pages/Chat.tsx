@@ -67,6 +67,35 @@ export default function Chat() {
   const [orbIntensity, setOrbIntensity] = useState(1)
   const [typing, setTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  // Telegram sync state — di level atas biar tidak reset saat re-render
+  const [tgSessions, setTgSessions] = useState<Array<{ id: string; name: string; preview: string; last_role: string; time: string; message_count: number }>>([])
+  const [tgActive, setTgActive] = useState<string | null>(null)
+  const [tgMessages, setTgMessages] = useState<Array<{ role: string; text: string; time: string }>>([])
+  const [tgLoading, setTgLoading] = useState(true)
+
+  useEffect(() => {
+    let alive = true
+    const loadSessions = () => {
+      fetch('/api/telegram/sessions')
+        .then(r => r.json())
+        .then(d => { if (alive) { setTgSessions(d.sessions || []); setTgLoading(false) } })
+        .catch(() => { if (alive) setTgLoading(false) })
+    }
+    loadSessions()
+    const iv = setInterval(loadSessions, 15000)
+    return () => { alive = false; clearInterval(iv) }
+  }, [])
+
+  useEffect(() => {
+    if (!tgActive) { setTgMessages([]); return }
+    setTgMessages([])
+    let alive = true
+    fetch(`/api/telegram/messages/${tgActive}`)
+      .then(r => r.json())
+      .then(d => { if (alive) setTgMessages(d.messages || []) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [tgActive])
 
   const session = sessions.find(s => s.id === activeSession)
 
@@ -397,34 +426,6 @@ export default function Chat() {
     const hour = new Date().getHours()
     const greet = hour < 11 ? 'Good Morning' : hour < 15 ? 'Good Afternoon' : hour < 19 ? 'Good Evening' : 'Good Night'
 
-    // ── Sesi Telegram REAL dari Hermes state.db ──
-    const [tgSessions, setTgSessions] = useState<Array<{ id: string; name: string; preview: string; last_role: string; time: string; message_count: number }>>([])
-    const [tgActive, setTgActive] = useState<string | null>(null)
-    const [tgMessages, setTgMessages] = useState<Array<{ role: string; text: string; time: string }>>([])
-    const [tgLoading, setTgLoading] = useState(true)
-
-    useEffect(() => {
-      let alive = true
-      const loadSessions = () => {
-        fetch('/api/telegram/sessions')
-          .then(r => r.json())
-          .then(d => { if (alive) { setTgSessions(d.sessions || []); setTgLoading(false) } })
-          .catch(() => { if (alive) setTgLoading(false) })
-      }
-      loadSessions()
-      const iv = setInterval(loadSessions, 15000) // real-time tiap 15s
-      return () => { alive = false; clearInterval(iv) }
-    }, [])
-
-    useEffect(() => {
-      if (!tgActive) { setTgMessages([]); return }
-      setTgMessages([])
-      fetch(`/api/telegram/messages/${tgActive}`)
-        .then(r => r.json())
-        .then(d => setTgMessages(d.messages || []))
-        .catch(() => {})
-    }, [tgActive])
-
     return (
       <div className="flex gap-4 h-[calc(100vh-190px)]">
         {/* ── History Chat (ala referensi 3) ── */}
@@ -648,11 +649,13 @@ export default function Chat() {
           {/* Composer besar ala Orion */}
           <div className="p-4 pt-1">
             <div
-              className="rounded-3xl px-4 pt-3.5 pb-2.5 transition-colors"
+              className="rounded-3xl px-4 pt-3.5 pb-2.5 transition-all focus-within:border-sky-400/50"
               style={{
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(96,140,220,0.25)',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.3)'
+                background: 'linear-gradient(155deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02) 60%)',
+                backdropFilter: 'blur(18px)',
+                WebkitBackdropFilter: 'blur(18px)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                boxShadow: '0 12px 36px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)'
               }}
             >
               <div className="flex items-center gap-2.5 mb-2.5">
@@ -667,16 +670,22 @@ export default function Chat() {
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <button className="w-8 h-8 rounded-full flex items-center justify-center bg-white/[0.05] border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all" title="Attach">
+                  <button className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-white transition-all"
+                    style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.14)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12)' }}
+                    title="Attach">
                     <Plus size={14} />
                   </button>
-                  <button className="w-8 h-8 rounded-full flex items-center justify-center bg-white/[0.05] border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all" title="Voice">
+                  <button className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-white transition-all"
+                    style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.14)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12)' }}
+                    title="Voice">
                     <Mic size={14} />
                   </button>
-                  <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.05] border border-white/10 text-[11px] font-semibold text-slate-300 hover:text-white hover:bg-white/10 transition-all">
+                  <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold text-slate-200 hover:text-white transition-all"
+                    style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.14)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12)' }}>
                     <Brain size={12} /> Reasoning
                   </button>
-                  <button className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.05] border border-white/10 text-[11px] font-semibold text-slate-300 hover:text-white hover:bg-white/10 transition-all">
+                  <button className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold text-slate-200 hover:text-white transition-all"
+                    style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.14)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12)' }}>
                     <Globe size={12} /> Deep Research
                   </button>
                 </div>
