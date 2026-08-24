@@ -131,12 +131,13 @@ const ringFragmentShader = `
   }
 `
 
-function MemoryScene({ selectedNode, setSelectedNode }: { selectedNode: MemoryNode | null; setSelectedNode: (n: MemoryNode | null) => void }) {
+function MemoryScene({ selectedNode, setSelectedNode, extraNodes }: { selectedNode: MemoryNode | null; setSelectedNode: (n: MemoryNode | null) => void; extraNodes: MemoryNode[] }) {
   const { gl, size, camera, scene } = useThree()
   const composerRef = useRef<EffectComposer | null>(null)
   const clockRef = useRef(new THREE.Clock())
   const nodeMeshesRef = useRef<Map<string, THREE.Mesh>>(new Map())
   const ringMeshesRef = useRef<Map<string, THREE.Mesh>>(new Map())
+  const allSceneNodes = [...memoryNodes, ...extraNodes]
   
   useEffect(() => {
     const renderer = gl
@@ -163,7 +164,7 @@ function MemoryScene({ selectedNode, setSelectedNode }: { selectedNode: MemoryNo
     const elapsedTime = clockRef.current.getElapsedTime()
     
     nodeMeshesRef.current.forEach((mesh, id) => {
-      const node = memoryNodes.find(n => n.id === id)
+      const node = allSceneNodes.find(n => n.id === id)
       if (node && mesh) {
         mesh.position.y = node.y + Math.sin(elapsedTime * 0.5 + node.x * 0.1) * 0.4
         mesh.rotation.y = elapsedTime * 0.3
@@ -181,7 +182,7 @@ function MemoryScene({ selectedNode, setSelectedNode }: { selectedNode: MemoryNo
     })
     
     ringMeshesRef.current.forEach((ring, id) => {
-      const node = memoryNodes.find(n => n.id === id)
+      const node = allSceneNodes.find(n => n.id === id)
       if (node && ring) {
         ring.position.y = node.y + Math.sin(clockRef.current.getElapsedTime() * 0.5 + node.x * 0.1) * 0.4
         ring.rotation.x = Math.PI / 2.5 + Math.sin(clockRef.current.getElapsedTime() * 0.3) * 0.2
@@ -200,7 +201,7 @@ function MemoryScene({ selectedNode, setSelectedNode }: { selectedNode: MemoryNo
   
   return (
     <>
-      {memoryNodes.map(node => (
+      {allSceneNodes.map(node => (
         <MemoryPlanet
           key={node.id}
           node={node}
@@ -472,7 +473,51 @@ function StarField() {
 export default function Memory() {
   const [selectedNode, setSelectedNode] = useState<MemoryNode | null>(null)
   const [isMinimized, setIsMinimized] = useState(false)
-  
+  const [skillNodes, setSkillNodes] = useState<MemoryNode[]>([])
+
+  // ── Real-time skills dari Hermes (~/.hermes/skills) — refresh tiap 30s ──
+  useEffect(() => {
+    let alive = true
+    const load = () => {
+      fetch('/api/skills/list')
+        .then(r => r.json())
+        .then(d => {
+          if (!alive) return
+          const skills = d.skills || []
+          // posisi orbit melingkar untuk skill planets
+          const nodes: MemoryNode[] = skills.map((s: { name: string; description: string; color: string; sub_skills: string[]; has_docs?: boolean }, i: number) => {
+            const angle = (i / Math.max(1, skills.length)) * Math.PI * 2
+            const radius = 26
+            return {
+              id: `skill-${s.name}`,
+              label: s.name,
+              type: 'concept' as const,
+              connections: ['cozy'],
+              description: `Hermes skill · ${s.sub_skills?.length || 0} sub-skills`,
+              color: s.color,
+              size: s.has_docs ? 1.0 : 0.7,
+              x: Math.cos(angle) * radius,
+              y: (i % 3 - 1) * 6,
+              z: Math.sin(angle) * radius,
+              content: `${s.description}${s.sub_skills?.length ? ` | Sub-skills: ${s.sub_skills.join(', ')}` : ''}`,
+            }
+          })
+          setSkillNodes(nodes)
+        })
+        .catch(() => {})
+    }
+    load()
+    const iv = setInterval(load, 30000)
+    return () => { alive = false; clearInterval(iv) }
+  }, [])
+
+  // gabungkan node statis + skill real-time
+  const allNodes = [...memoryNodes, ...skillNodes]
+  const allEdges = [
+    ...memoryEdges,
+    ...skillNodes.map(s => ({ from: 'cozy', to: s.id, strength: 0.6 })),
+  ]
+
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'person': return <User size={16} />
@@ -494,7 +539,7 @@ export default function Memory() {
             </span>
             <Sparkles className="inline-block text-yellow-300 ml-2 animate-pulse" size={28} />
           </h1>
-          <p className="text-slate-400">{memoryNodes.length} nodes · {memoryEdges.length} connections · Your knowledge universe</p>
+          <p className="text-slate-400">{allNodes.length} nodes · {allEdges.length} connections · {skillNodes.length} live skills dari Hermes</p>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={() => setIsMinimized(!isMinimized)} className="p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors">
@@ -513,7 +558,7 @@ export default function Memory() {
           <pointLight position={[-25, -25, -25]} intensity={0.8} color="#06B6D4" />
           <pointLight position={[0, 30, 0]} intensity={1.0} color="#FBBF24" />
           
-          <MemoryScene selectedNode={selectedNode} setSelectedNode={setSelectedNode} />
+          <MemoryScene selectedNode={selectedNode} setSelectedNode={setSelectedNode} extraNodes={skillNodes} />
           
           <OrbitControls enablePan minDistance={20} maxDistance={100} autoRotate autoRotateSpeed={0.15} enableDamping dampingFactor={0.05} />
         </Canvas>
@@ -544,7 +589,7 @@ export default function Memory() {
               <div className="space-y-2">
                 <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mb-3">Connected To ({selectedNode.connections.length})</p>
                 {selectedNode.connections.map(connId => {
-                  const conn = memoryNodes.find(n => n.id === connId)
+                  const conn = allNodes.find(n => n.id === connId)
                   return conn ? (
                     <button key={connId} onClick={() => setSelectedNode(conn)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all text-left group border border-transparent hover:border-white/10">
                       <div className="w-3 h-3 rounded-full flex-shrink-0 shadow-lg" style={{ backgroundColor: conn.color, boxShadow: `0 0 12px ${conn.color}` }} />
