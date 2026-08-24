@@ -582,41 +582,72 @@ export default function Chat() {
 
   return (
     <div className="w-full">
-      {/* Header + Tabs */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-4xl font-black font-display">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-sky-300 to-violet-300 drop-shadow-[0_0_22px_rgba(56,189,248,0.65)]">
-              Cozy Agentic
-            </span>
-            <Sparkles className="inline-block text-yellow-300 ml-3 animate-pulse" size={26} />
-          </h1>
-          <p className="text-slate-400 text-sm font-mono mt-1">Neural Link Interface • v3.0</p>
-        </div>
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-4xl font-black font-display">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-sky-300 to-violet-300 drop-shadow-[0_0_22px_rgba(56,189,248,0.65)]">
+            Cozy Agentic
+          </span>
+          <Sparkles className="inline-block text-yellow-300 ml-3 animate-pulse" size={26} />
+        </h1>
+        <p className="text-slate-400 text-sm font-mono mt-1">Neural Link Interface • v3.0</p>
+      </div>
 
-        {/* Tab switcher */}
-        <div className="flex items-center gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/10">
+      {/* Tab switcher — floating pill center ala referensi */}
+      <div className="flex justify-center mb-8 -mt-2">
+        <div
+          className="inline-flex items-center gap-1 p-1.5 rounded-full"
+          style={{
+            background: 'linear-gradient(160deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))',
+            border: '1px solid rgba(96,140,220,0.22)',
+            boxShadow: '0 10px 32px rgba(0,0,0,0.45), inset 0 1px 0 rgba(140,180,255,0.08)'
+          }}
+        >
           {([
-            { key: 'voice', icon: AudioLines, label: 'Voice' },
-            { key: 'chat', icon: MessageSquare, label: 'Chat Session' },
-            { key: 'memory', icon: Brain, label: 'Memory' },
-            { key: 'cron', icon: CalendarClock, label: 'Cron' },
-          ] as { key: Tab; icon: typeof Mic; label: string }[]).map(t => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`relative flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${tab === t.key
-                ? 'text-white'
-                : 'text-slate-500 hover:text-slate-300'
-                }`}
-            >
-              {tab === t.key && (
-                <motion.div layoutId="tab-pill" className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/25" />
-              )}
-              <t.icon size={15} className="relative z-10" />
-              <span className="relative z-10 hidden sm:inline">{t.label}</span>
-            </button>
-          ))}
+            { key: 'voice', icon: AudioLines, label: 'Voice', hex: '#e879f9' },
+            { key: 'chat', icon: MessageSquare, label: 'Chat Session', hex: '#34d399' },
+            { key: 'memory', icon: Brain, label: 'Memory', hex: '#a78bfa' },
+            { key: 'cron', icon: CalendarClock, label: 'Cron', hex: '#fbbf24' },
+          ] as { key: Tab; icon: typeof Mic; label: string; hex: string }[]).map(t => {
+            const isActive = tab === t.key
+            return (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className="relative flex items-center gap-2 px-4 py-2.5 rounded-full transition-all"
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="tab-pill"
+                    className="absolute inset-0 rounded-full"
+                    transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                  >
+                    <div
+                      className="absolute inset-0 rounded-full"
+                      style={{
+                        background: `linear-gradient(160deg, ${t.hex}E6, ${t.hex})`,
+                        boxShadow: `inset 0 1px 1px rgba(255,255,255,0.35), inset 0 -2px 3px rgba(0,0,0,0.15), 0 4px 14px ${t.hex}55`
+                      }}
+                    />
+                    <div
+                      className="absolute inset-x-0 top-0"
+                      style={{
+                        height: '46%',
+                        borderRadius: '999px 999px 40% 40% / 999px 999px 70% 70%',
+                        background: 'linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.02))'
+                      }}
+                    />
+                  </motion.div>
+                )}
+                <t.icon size={15} className={`relative z-10 ${isActive ? 'text-white' : 'text-slate-500'}`} strokeWidth={isActive ? 2.5 : 2} />
+                <span className={`relative z-10 text-[13px] hidden sm:inline font-semibold tracking-wide ${
+                  isActive ? 'text-white' : 'text-slate-500 hover:text-slate-300'
+                }`}>
+                  {t.label}
+                </span>
+              </button>
+            )
+          })}
         </div>
       </div>
 
