@@ -347,8 +347,8 @@ function IncomeTracker() {
           <Sparkles size={18} className="animate-pulse mr-2 text-purple-400" /> Memuat data...
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height={230}>
-          <BarChart data={chartData} barGap={3} barCategoryGap="32%">
+        <ResponsiveContainer width="100%" height={290}>
+          <BarChart data={chartData} barGap={3} barCategoryGap="30%">
             <defs>
               {/* gradient memudar ke bawah ala referensi */}
               <linearGradient id="incGrad" x1="0" y1="0" x2="0" y2="1">
@@ -473,8 +473,8 @@ function AgentPerformanceCard() {
         className="relative z-10 -mx-2"
         style={{ filter: 'drop-shadow(0 0 10px rgba(34,211,238,0.18))' }}
       >
-        <ResponsiveContainer width="100%" height={210}>
-          <BarChart data={agentSystemData} barCategoryGap="38%">
+        <ResponsiveContainer width="100%" height={265}>
+          <BarChart data={agentSystemData} barCategoryGap="34%">
             <defs>
               {/* gradient memudar ke bawah ala referensi */}
               <linearGradient id="barActive" x1="0" y1="0" x2="0" y2="1">
@@ -594,7 +594,7 @@ function TaskFlowCard() {
         className="relative z-10 -mx-2"
         style={{ filter: 'drop-shadow(0 0 12px rgba(34,211,238,0.22))' }}
       >
-        <ResponsiveContainer width="100%" height={215}>
+        <ResponsiveContainer width="100%" height={270}>
           <AreaChart data={taskFlowData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
             <defs>
               <linearGradient id="flowGrad" x1="0" y1="0" x2="0" y2="1">
