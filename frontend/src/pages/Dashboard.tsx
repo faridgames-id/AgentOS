@@ -153,7 +153,7 @@ function StatCard({ stat, idx }: { stat: StatItem; idx: number }) {
       {/* header: icon tile + label */}
       <div className="flex items-center gap-3 mb-4 relative z-10">
         <motion.div
-          initial={{ scale: 0, rotate: -12, opacity: 0 }}
+          initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.12 + idx * 0.04, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         >
@@ -273,7 +273,7 @@ function IncomeTracker() {
       <div className="flex items-center justify-between mb-4 relative z-10">
         <div className="flex items-center gap-3">
           <motion.div
-            initial={{ scale: 0, rotate: -12, opacity: 0 }}
+            initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.1, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
@@ -442,7 +442,7 @@ function AgentPerformanceCard() {
       <div className="flex items-center justify-between mb-4 relative z-10">
         <div className="flex items-center gap-3">
           <motion.div
-            initial={{ scale: 0, rotate: -12, opacity: 0 }}
+            initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.1, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
@@ -561,7 +561,7 @@ function TaskFlowCard() {
       <div className="flex items-center justify-between mb-4 relative z-10">
         <div className="flex items-center gap-3">
           <motion.div
-            initial={{ scale: 0, rotate: -12, opacity: 0 }}
+            initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.1, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
@@ -715,7 +715,7 @@ function CozyCronCard() {
       <div className="flex items-center justify-between mb-4 relative z-10">
         <div className="flex items-center gap-3">
           <motion.div
-            initial={{ scale: 0, rotate: -12, opacity: 0 }}
+            initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.1, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
@@ -858,7 +858,7 @@ function LiveTaskQueue() {
       <div className="flex items-center justify-between p-6 pb-4 relative z-10">
         <div className="flex items-center gap-3">
           <motion.div
-            initial={{ scale: 0, rotate: -12, opacity: 0 }}
+            initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.1, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
@@ -1035,7 +1035,7 @@ function StockDashboard() {
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5 relative z-10">
         <div className="flex items-center gap-3">
           <motion.div
-            initial={{ scale: 0, rotate: -12, opacity: 0 }}
+            initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.1, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
@@ -1180,8 +1180,8 @@ function StockStatCard({ s, idx }: { s: { icon: typeof Gamepad2; label: string; 
       <div className="px-4 pt-3.5 pb-3 flex items-center justify-between relative">
         <div className="flex items-center gap-2.5 relative z-10">
           <motion.div
-            initial={{ scale: 0, rotate: -12, opacity: 0 }}
-            animate={{ scale: 1, rotate: 0, opacity: 1 }}
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 300, damping: 18 }}
           >
             <AppIcon icon={s.icon} hex={s.hex} size={32} />
@@ -1321,7 +1321,7 @@ function AiModelsDashboard() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5 relative z-10">
         <div className="flex items-center gap-3">
-          <motion.div initial={{ scale: 0, rotate: -12, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+          <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.1, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}>
             <AppIcon icon={BrainCircuit} hex="#8B5CF6" size={38} />
           </motion.div>
