@@ -397,6 +397,34 @@ export default function Chat() {
     const hour = new Date().getHours()
     const greet = hour < 11 ? 'Good Morning' : hour < 15 ? 'Good Afternoon' : hour < 19 ? 'Good Evening' : 'Good Night'
 
+    // ── Sesi Telegram REAL dari Hermes state.db ──
+    const [tgSessions, setTgSessions] = useState<Array<{ id: string; name: string; preview: string; last_role: string; time: string; message_count: number }>>([])
+    const [tgActive, setTgActive] = useState<string | null>(null)
+    const [tgMessages, setTgMessages] = useState<Array<{ role: string; text: string; time: string }>>([])
+    const [tgLoading, setTgLoading] = useState(true)
+
+    useEffect(() => {
+      let alive = true
+      const loadSessions = () => {
+        fetch('/api/telegram/sessions')
+          .then(r => r.json())
+          .then(d => { if (alive) { setTgSessions(d.sessions || []); setTgLoading(false) } })
+          .catch(() => { if (alive) setTgLoading(false) })
+      }
+      loadSessions()
+      const iv = setInterval(loadSessions, 15000) // real-time tiap 15s
+      return () => { alive = false; clearInterval(iv) }
+    }, [])
+
+    useEffect(() => {
+      if (!tgActive) { setTgMessages([]); return }
+      setTgMessages([])
+      fetch(`/api/telegram/messages/${tgActive}`)
+        .then(r => r.json())
+        .then(d => setTgMessages(d.messages || []))
+        .catch(() => {})
+    }, [tgActive])
+
     return (
       <div className="flex gap-4 h-[calc(100vh-190px)]">
         {/* ── History Chat (ala referensi 3) ── */}
@@ -418,35 +446,75 @@ export default function Chat() {
               <Plus size={12} strokeWidth={3} /> New Chat
             </button>
           </div>
-          <div className="px-4 pb-1">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Today</p>
-          </div>
-          <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-1.5">
-            {sessions.map(s => (
-              <div
-                key={s.id}
-                onClick={() => setActiveSession(s.id)}
-                className={`group flex items-center gap-2.5 px-3 py-2.5 rounded-2xl cursor-pointer transition-all ${activeSession === s.id ? '' : 'hover:bg-white/[0.04]'}`}
-                style={activeSession === s.id ? {
-                  background: 'rgba(34,211,238,0.08)',
-                  border: '1px solid rgba(34,211,238,0.3)',
-                  boxShadow: '0 0 16px rgba(34,211,238,0.12)'
-                } : { border: '1px solid rgba(148,163,184,0.08)' }}
-              >
-                <span
-                  className="flex items-center justify-center shrink-0 w-7 h-7 rounded-full"
-                  style={{
-                    background: activeSession === s.id ? 'linear-gradient(160deg,#22D3EEE6,#22D3EE)' : 'rgba(148,163,184,0.12)',
-                    boxShadow: activeSession === s.id ? '0 0 10px rgba(34,211,238,0.4)' : 'none'
-                  }}
+          <div className="flex-1 overflow-y-auto px-3 pb-3">
+            {/* ── Sesi Telegram REAL ── */}
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-1 pt-1 pb-2 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" /> Telegram • Live
+            </p>
+            <div className="space-y-1.5 mb-4">
+              {tgLoading && (
+                <div className="px-3 py-3 text-[11px] text-slate-500 font-mono">Membaca sesi Telegram...</div>
+              )}
+              {tgSessions.map(s => (
+                <div
+                  key={s.id}
+                  onClick={() => setTgActive(tgActive === s.id ? null : s.id)}
+                  className={`group flex items-start gap-2.5 px-3 py-2.5 rounded-2xl cursor-pointer transition-all ${tgActive === s.id ? '' : 'hover:bg-white/[0.04]'}`}
+                  style={tgActive === s.id ? {
+                    background: 'rgba(56,189,248,0.1)',
+                    border: '1px solid rgba(56,189,248,0.4)',
+                    boxShadow: '0 0 16px rgba(56,189,248,0.15)'
+                  } : { border: '1px solid rgba(148,163,184,0.08)' }}
                 >
-                  <MessageSquare size={12} className="text-white" />
-                </span>
-                <span className={`text-[12px] flex-1 truncate font-medium ${activeSession === s.id ? 'text-white' : 'text-slate-400'}`}>{s.name}</span>
-                <Trash2 size={12} className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-opacity shrink-0"
-                  onClick={(e) => { e.stopPropagation(); deleteSession(s.id) }} />
-              </div>
-            ))}
+                  <span
+                    className="flex items-center justify-center shrink-0 w-7 h-7 rounded-full mt-0.5"
+                    style={{
+                      background: tgActive === s.id ? 'linear-gradient(160deg,#38BDF8E6,#38BDF8)' : 'rgba(56,189,248,0.15)',
+                      boxShadow: tgActive === s.id ? '0 0 10px rgba(56,189,248,0.45)' : 'none'
+                    }}
+                  >
+                    <Send size={11} className="text-white" />
+                  </span>
+                  <span className="flex-1 min-w-0">
+                    <span className={`block text-[12px] truncate font-medium ${tgActive === s.id ? 'text-white' : 'text-slate-300'}`}>{s.preview}</span>
+                    <span className="block text-[9px] text-slate-500 font-mono mt-0.5">{s.time} · {s.message_count} pesan</span>
+                  </span>
+                </div>
+              ))}
+              {!tgLoading && tgSessions.length === 0 && (
+                <div className="px-3 py-3 text-[11px] text-slate-500 font-mono">Belum ada sesi Telegram</div>
+              )}
+            </div>
+
+            {/* ── Sesi lokal ── */}
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-1 pb-2">Lokal</p>
+            <div className="space-y-1.5">
+              {sessions.map(s => (
+                <div
+                  key={s.id}
+                  onClick={() => { setActiveSession(s.id); setTgActive(null) }}
+                  className={`group flex items-center gap-2.5 px-3 py-2.5 rounded-2xl cursor-pointer transition-all ${activeSession === s.id && !tgActive ? '' : 'hover:bg-white/[0.04]'}`}
+                  style={activeSession === s.id && !tgActive ? {
+                    background: 'rgba(34,211,238,0.08)',
+                    border: '1px solid rgba(34,211,238,0.3)',
+                    boxShadow: '0 0 16px rgba(34,211,238,0.12)'
+                  } : { border: '1px solid rgba(148,163,184,0.08)' }}
+                >
+                  <span
+                    className="flex items-center justify-center shrink-0 w-7 h-7 rounded-full"
+                    style={{
+                      background: activeSession === s.id && !tgActive ? 'linear-gradient(160deg,#22D3EEE6,#22D3EE)' : 'rgba(148,163,184,0.12)',
+                      boxShadow: activeSession === s.id && !tgActive ? '0 0 10px rgba(34,211,238,0.4)' : 'none'
+                    }}
+                  >
+                    <MessageSquare size={12} className="text-white" />
+                  </span>
+                  <span className={`text-[12px] flex-1 truncate font-medium ${activeSession === s.id && !tgActive ? 'text-white' : 'text-slate-400'}`}>{s.name}</span>
+                  <Trash2 size={12} className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-opacity shrink-0"
+                    onClick={(e) => { e.stopPropagation(); deleteSession(s.id) }} />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -478,7 +546,39 @@ export default function Chat() {
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-5 space-y-4">
-            {!hasMessages && (
+            {tgActive && (
+              <>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
+                  <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Sesi Telegram • {tgActive.slice(0, 15)}</p>
+                </div>
+                {tgMessages.map((m, i) => (
+                  <motion.div
+                    key={`tg-${i}`}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div className={`max-w-[78%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${m.role === 'user'
+                      ? 'text-white rounded-br-md'
+                      : 'bg-white/[0.06] text-slate-200 border border-white/5 rounded-bl-md'
+                      }`}
+                      style={m.role === 'user' ? {
+                        background: 'linear-gradient(160deg,#38BDF8E6,#0284C7)',
+                        boxShadow: '0 4px 14px rgba(56,189,248,0.25)'
+                      } : {}}
+                    >
+                      <p>{m.text}</p>
+                      {m.time && <p className={`text-[10px] mt-1 text-right ${m.role === 'user' ? 'text-white/70' : 'text-slate-500'}`}>{m.time}</p>}
+                    </div>
+                  </motion.div>
+                ))}
+                {tgMessages.length === 0 && (
+                  <div className="h-40 flex items-center justify-center text-slate-500 text-sm font-mono">Memuat pesan Telegram...</div>
+                )}
+              </>
+            )}
+            {!tgActive && !hasMessages && (
               <div className="h-full flex flex-col items-center justify-center text-center px-4">
                 {/* mini orb ala voice */}
                 <motion.div
@@ -510,7 +610,7 @@ export default function Chat() {
                 </p>
               </div>
             )}
-            {hasMessages && session?.messages.map((m, i) => (
+            {!tgActive && hasMessages && session?.messages.map((m, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 8 }}
