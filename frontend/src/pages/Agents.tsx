@@ -6,7 +6,7 @@ import { OrbitControls, Html, RoundedBox, Text } from '@react-three/drei'
 import {
   Flame, Code, BarChart3, Palette, Eye, Shield, PenTool, Bird, Gamepad2,
   Network, X, Send, Zap, MessageSquare, Cpu, Activity, ListTodo,
-  LayoutGrid, Building2, Brain
+  LayoutGrid, Building2, Brain, Maximize2, Minimize2
 } from 'lucide-react'
 
 // ─────────────────────────────────────────────────────────
@@ -726,12 +726,26 @@ function MemoryServer({ brainAgentId }: { brainAgentId: string | null }) {
 }
 
 function OfficeView({ onOpen, selectedId }: { onOpen: (a: SubAgent) => void; selectedId: string | null }) {
+  const [isFull, setIsFull] = useState(false)
+
+  // ESC untuk keluar fullscreen
+  useEffect(() => {
+    if (!isFull) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setIsFull(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [isFull])
+
   return (
     <motion.div
       key="office"
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="relative rounded-3xl overflow-hidden"
-      style={{
+      className="relative overflow-hidden"
+      style={isFull ? {
+        position: 'fixed', inset: 0, zIndex: 90, borderRadius: 0,
+        background: '#DDE7F2',
+      } : {
+        borderRadius: 24,
         height: '62vh', minHeight: 520,
         background: 'linear-gradient(180deg, #0B1226 0%, #05070F 100%)',
         border: '1px solid rgba(148,163,184,0.12)',
@@ -758,6 +772,28 @@ function OfficeView({ onOpen, selectedId }: { onOpen: (a: SubAgent) => void; sel
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: '#94A3B8' }} /> Idle</span>
         <span className="text-slate-500">· drag putar · scroll zoom · klik robot</span>
       </div>
+
+      {/* Tombol fullscreen ala YouTube — pojok kanan bawah */}
+      <button
+        onClick={() => setIsFull(!isFull)}
+        title={isFull ? 'Keluar layar penuh (Esc)' : 'Layar penuh'}
+        className="absolute right-4 bottom-4 w-10 h-10 rounded-xl flex items-center justify-center text-white transition-all hover:scale-110 active:scale-95"
+        style={{
+          background: 'rgba(10,15,30,0.75)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255,255,255,0.18)',
+          boxShadow: '0 6px 18px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.1)'
+        }}
+      >
+        {isFull ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
+      </button>
+
+      {/* hint ESC saat fullscreen */}
+      {isFull && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 text-[11px] text-slate-600 bg-white/70 backdrop-blur px-3 py-1.5 rounded-full font-mono">
+          tekan ESC untuk keluar
+        </div>
+      )}
     </motion.div>
   )
 }
