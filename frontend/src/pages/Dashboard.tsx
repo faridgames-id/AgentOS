@@ -180,6 +180,171 @@ function StatCard({ stat, idx }: { stat: StatItem; idx: number }) {
   )
 }
 
+// ── Income Tracker (Jan–Dec + Year Picker) ────────────
+interface MonthlyRow {
+  month: string
+  month_name: string
+  income: number
+  expense: number
+  net_profit: number
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+const YEARS = [2025, 2026, 2027, 2028, 2029, 2030]
+
+function IncomeTracker() {
+  const [year, setYear] = useState(2026)
+  const [open, setOpen] = useState(false)
+  const [rows, setRows] = useState<MonthlyRow[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let alive = true
+    setLoading(true)
+    fetch('/api/finance/monthly-summary')
+      .then(r => r.json())
+      .then((data: MonthlyRow[]) => { if (alive) setRows(Array.isArray(data) ? data : []) })
+      .catch(() => {})
+      .finally(() => { if (alive) setLoading(false) })
+    return () => { alive = false }
+  }, [])
+
+  // Map API data -> 12 bulan
+  const chartData = MONTHS.map((m, i) => {
+    const key = `${year}-${String(i + 1).padStart(2, '0')}`
+    const found = rows.find(r => r.month === key)
+    return {
+      name: m,
+      income: found ? found.income / 1_000_000 : 0,
+      expense: found ? found.expense / 1_000_000 : 0,
+      hasData: !!found,
+    }
+  })
+
+  const totalIncome = chartData.reduce((a, b) => a + b.income, 0)
+  const totalExpense = chartData.reduce((a, b) => a + b.expense, 0)
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 48, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay: 0.4, type: 'spring', stiffness: 120, damping: 16 }}
+      className="p-6 rounded-2xl relative overflow-hidden"
+      style={{
+        background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
+        border: '1px solid rgba(148,163,184,0.12)',
+        boxShadow: '0 0 24px rgba(139,92,246,0.08)'
+      }}
+    >
+      {/* corner glow */}
+      <div className="absolute -top-12 -right-12 w-36 h-36 rounded-full blur-3xl opacity-15 pointer-events-none bg-purple-500" />
+      {/* scan line */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5 relative z-10">
+        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          <TrendingUp size={20} className="text-emerald-400" />
+          Income Tracker
+        </h2>
+
+        {/* Year picker dengan ikon kalender */}
+        <div className="relative">
+          <button
+            onClick={() => setOpen(o => !o)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10 hover:border-purple-400/40 transition-colors"
+          >
+            <CalendarClock size={14} className="text-purple-400" />
+            <span className="text-sm text-white font-mono font-bold">{year}</span>
+            <motion.span animate={{ rotate: open ? 180 : 0 }} className="text-slate-500 text-xs">▼</motion.span>
+          </button>
+
+          <AnimatePresence>
+            {open && (
+              <motion.div
+                initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                transition={{ duration: 0.18 }}
+                className="absolute right-0 top-full mt-2 z-50 p-2 grid grid-cols-3 gap-1.5 rounded-xl min-w-[180px]"
+                style={{
+                  background: 'rgba(10, 15, 30, 0.97)',
+                  border: '1px solid rgba(139,92,246,0.35)',
+                  boxShadow: '0 8px 30px rgba(0,0,0,0.5), 0 0 20px rgba(139,92,246,0.15)'
+                }}
+              >
+                {YEARS.map(y => (
+                  <button
+                    key={y}
+                    onClick={() => { setYear(y); setOpen(false) }}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-mono transition-all ${
+                      y === year
+                        ? 'bg-purple-500/25 text-purple-300 border border-purple-400/40 shadow-[0_0_12px_rgba(139,92,246,0.3)]'
+                        : y > new Date().getFullYear()
+                          ? 'text-slate-600 border border-transparent hover:bg-white/5'
+                          : 'text-slate-300 border border-transparent hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    {y}
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Summary chips */}
+      <div className="flex items-center gap-4 mb-4 relative z-10">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.7)]" />
+          <span className="text-xs text-slate-400">Income</span>
+          <span className="text-xs font-bold text-cyan-300 font-mono">{totalIncome.toFixed(1)}jt</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.7)]" />
+          <span className="text-xs text-slate-400">Expense</span>
+          <span className="text-xs font-bold text-rose-300 font-mono">{totalExpense.toFixed(1)}jt</span>
+        </div>
+      </div>
+
+      {/* Chart */}
+      {loading ? (
+        <div className="flex items-center justify-center h-[230px] text-slate-500 text-sm font-mono">
+          <Sparkles size={18} className="animate-pulse mr-2 text-purple-400" /> Memuat data...
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height={230}>
+          <BarChart data={chartData} barGap={2}>
+            <defs>
+              <linearGradient id="incGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#22D3EE" stopOpacity={1} />
+                <stop offset="100%" stopColor="#22D3EE" stopOpacity={0.35} />
+              </linearGradient>
+              <linearGradient id="expGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#FB7185" stopOpacity={1} />
+                <stop offset="100%" stopColor="#FB7185" stopOpacity={0.35} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.08)" vertical={false} />
+            <XAxis dataKey="name" stroke="#475569" fontSize={11} tickLine={false} />
+            <YAxis stroke="#475569" fontSize={10} tickLine={false} unit="jt" width={38} />
+            <Tooltip
+              {...darkTooltip}
+              formatter={(value: number | string, nameKey: string) => [
+                `Rp ${(Number(value) * 1_000_000).toLocaleString('id-ID')}`,
+                nameKey === 'income' ? 'Income' : 'Expense'
+              ]}
+            />
+            <Bar dataKey="income" fill="url(#incGrad)" radius={[4, 4, 0, 0]} isAnimationActive animationDuration={900} animationBegin={600} />
+            <Bar dataKey="expense" fill="url(#expGrad)" radius={[4, 4, 0, 0]} isAnimationActive animationDuration={900} animationBegin={750} />
+          </BarChart>
+        </ResponsiveContainer>
+      )}
+    </motion.div>
+  )
+}
+
 export default function Dashboard() {
   const [pulseActive, setPulseActive] = useState(true)
 
@@ -238,12 +403,12 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* ═══ Charts Row ═══ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Task Flow */}
+      {/* ═══ Charts Row: Task Flow + Income Tracker ═══ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* 1. Task Flow */}
         <motion.div
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
-          className="lg:col-span-2 p-6 rounded-2xl relative overflow-hidden"
+          className="p-6 rounded-2xl relative overflow-hidden"
           style={{
             background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
             border: '1px solid rgba(148,163,184,0.12)',
@@ -277,44 +442,8 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </motion.div>
 
-        {/* Resource Usage */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-          className="p-6 rounded-2xl relative overflow-hidden"
-          style={{
-            background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
-            border: '1px solid rgba(148,163,184,0.12)',
-            boxShadow: '0 0 24px rgba(139,92,246,0.08)'
-          }}
-        >
-          <h2 className="text-lg font-bold text-white flex items-center gap-2 mb-6">
-            <Cpu size={20} className="text-purple-400" />
-            Neural Resources
-          </h2>
-          <div className="flex flex-col items-center">
-            <ResponsiveContainer width="100%" height={150}>
-              <PieChart>
-                <Pie data={resourceDistribution} cx="50%" cy="50%" innerRadius={48} outerRadius={68} paddingAngle={6} dataKey="value" strokeWidth={0}>
-                  {resourceDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip {...darkTooltip} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="w-full space-y-2 mt-4">
-              {resourceDistribution.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full" style={{ background: item.color, boxShadow: `0 0 8px ${item.color}` }} />
-                    <span className="text-xs text-slate-400">{item.name}</span>
-                  </div>
-                  <span className="text-xs font-bold text-white font-mono">{item.value}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
+        {/* 2. Income Tracker (Jan–Dec, year picker) */}
+        <IncomeTracker />
       </div>
 
       {/* ═══ Row 2: Agent Perf + Cron Jobs ═══ */}
