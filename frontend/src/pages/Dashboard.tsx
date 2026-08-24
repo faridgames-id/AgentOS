@@ -141,7 +141,7 @@ function StatCard({ stat, idx }: { stat: StatItem; idx: number }) {
       style={{
         background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
         border: '1px solid rgba(148,163,184,0.12)',
-        boxShadow: `0 0 24px ${stat.glow}, inset 0 1px 0 rgba(255,255,255,0.06)`
+        boxShadow: `0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)`
       }}
     >
       {/* corner glow blob */}
@@ -261,7 +261,7 @@ function IncomeTracker() {
       style={{
         background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
         border: '1px solid rgba(148,163,184,0.12)',
-        boxShadow: '0 0 24px rgba(139,92,246,0.08)'
+        boxShadow: '0 8px 24px rgba(0,0,0,0.35)'
       }}
     >
       {/* corner glow */}
@@ -430,7 +430,7 @@ function AgentPerformanceCard() {
       style={{
         background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
         border: '1px solid rgba(148,163,184,0.12)',
-        boxShadow: '0 0 24px rgba(16,185,129,0.1), inset 0 1px 0 rgba(255,255,255,0.06)'
+        boxShadow: '0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)'
       }}
     >
       {/* corner glow */}
@@ -549,7 +549,7 @@ function TaskFlowCard() {
       style={{
         background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
         border: '1px solid rgba(148,163,184,0.12)',
-        boxShadow: '0 0 24px rgba(0,212,255,0.1), inset 0 1px 0 rgba(255,255,255,0.06)'
+        boxShadow: '0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)'
       }}
     >
       {/* corner glow */}
@@ -703,7 +703,7 @@ function CozyCronCard() {
       style={{
         background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
         border: '1px solid rgba(148,163,184,0.12)',
-        boxShadow: '0 0 24px rgba(245,158,11,0.1), inset 0 1px 0 rgba(255,255,255,0.06)'
+        boxShadow: '0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)'
       }}
     >
       {/* corner glow */}
@@ -849,7 +849,7 @@ function LiveTaskQueue() {
       style={{
         background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
         border: '1px solid rgba(148,163,184,0.12)',
-        boxShadow: '0 0 24px rgba(0,212,255,0.08), inset 0 1px 0 rgba(255,255,255,0.06)'
+        boxShadow: '0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)'
       }}
     >
       {/* scan line */}
@@ -1025,7 +1025,7 @@ function StockDashboard() {
       style={{
         background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
         border: '1px solid rgba(148,163,184,0.12)',
-        boxShadow: '0 0 24px rgba(239,68,68,0.08), inset 0 1px 0 rgba(255,255,255,0.06)'
+        boxShadow: '0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)'
       }}
     >
       {/* scan line */}
@@ -1313,7 +1313,7 @@ function AiModelsDashboard() {
       style={{
         background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
         border: '1px solid rgba(148,163,184,0.12)',
-        boxShadow: '0 0 24px rgba(139,92,246,0.08), inset 0 1px 0 rgba(255,255,255,0.06)'
+        boxShadow: '0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)'
       }}
     >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
