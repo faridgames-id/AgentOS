@@ -1170,9 +1170,9 @@ function StockStatCard({ s, idx }: { s: { icon: typeof Gamepad2; label: string; 
       whileHover={{ y: -5, transition: { duration: 0.18 } }}
       className="rounded-xl relative overflow-hidden group"
       style={{
-        background: 'linear-gradient(160deg, rgba(30,35,45,0.95), rgba(15,19,26,0.98))',
-        border: '1px solid rgba(148,163,184,0.14)',
-        boxShadow: '0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)'
+        background: 'linear-gradient(160deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))',
+        border: '1px solid rgba(96,140,220,0.22)',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(140,180,255,0.08)'
       }}
     >
       {/* ── Header gelap: icon tile + label + badge sub ── */}
@@ -1361,8 +1361,8 @@ function AiModelsDashboard() {
                 whileHover={{ y: -5, transition: { duration: 0.18 } }}
                 className="rounded-xl relative overflow-hidden group"
                 style={{
-                  background: 'linear-gradient(160deg, rgba(30,35,45,0.95), rgba(15,19,26,0.98))',
-                  border: '1px solid rgba(148,163,184,0.14)',
+                  background: 'linear-gradient(160deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))',
+                  border: '1px solid rgba(96,140,220,0.22)',
                   boxShadow: '0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)'
                 }}
               >
@@ -1423,8 +1423,8 @@ function AiModelsDashboard() {
             transition={{ delay: 1.0, type: 'spring', stiffness: 150, damping: 15 }}
             className="rounded-xl relative overflow-hidden p-4"
             style={{
-              background: 'linear-gradient(160deg, rgba(30,35,45,0.95), rgba(15,19,26,0.98))',
-              border: '1px solid rgba(148,163,184,0.14)',
+              background: 'linear-gradient(160deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))',
+              border: '1px solid rgba(96,140,220,0.22)',
               boxShadow: '0 8px 24px rgba(0,0,0,0.35)'
             }}
           >
@@ -1469,8 +1469,8 @@ function AiModelsDashboard() {
             transition={{ delay: 1.1, type: 'spring', stiffness: 150, damping: 15 }}
             className="rounded-xl relative overflow-hidden p-4"
             style={{
-              background: 'linear-gradient(160deg, rgba(30,35,45,0.95), rgba(15,19,26,0.98))',
-              border: '1px solid rgba(148,163,184,0.14)',
+              background: 'linear-gradient(160deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))',
+              border: '1px solid rgba(96,140,220,0.22)',
               boxShadow: '0 8px 24px rgba(0,0,0,0.35)'
             }}
           >
