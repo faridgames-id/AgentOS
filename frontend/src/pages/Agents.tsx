@@ -277,9 +277,8 @@ function WorkflowView({ onOpen, selectedId }: { onOpen: (a: SubAgent) => void; s
 // ─────────────────────────────────────────────────────────
 
 /** A little robot built from primitives */
-function Robot({
-  agent, position, rotationY, onClick, isSelected
-}: {
+/** Karakter blok ala Minecraft (Steve-style): kepala kubus, badan kubus, lengan kaki kubus */
+function BlockCharacter({ agent, position, rotationY, onClick, isSelected }: {
   agent: SubAgent
   position: [number, number, number]
   rotationY: () => number
@@ -287,180 +286,161 @@ function Robot({
   isSelected: boolean
 }) {
   const group = useRef<THREE.Group>(null)
-  const head = useRef<THREE.Group>(null)
   const armL = useRef<THREE.Group>(null)
   const armR = useRef<THREE.Group>(null)
-  const screenMat = useRef<THREE.MeshStandardMaterial>(null)
+  const head = useRef<THREE.Group>(null)
 
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime()
     if (!group.current) return
-
     switch (agent.status) {
       case 'working': {
-        if (armL.current) armL.current.rotation.x = Math.sin(t * 8) * 0.5 - 0.9
-        if (armR.current) armR.current.rotation.x = Math.sin(t * 8 + Math.PI) * 0.5 - 0.9
-        if (head.current) {
-          head.current.rotation.y = Math.sin(t * 0.8) * 0.15
-          head.current.rotation.x = 0.25
-        }
-        if (screenMat.current) screenMat.current.emissiveIntensity = 1.2 + Math.sin(t * 6) * 0.5
-        break
-      }
-      case 'sleeping': {
-        if (armL.current) armL.current.rotation.x = -0.2
-        if (armR.current) armR.current.rotation.x = -0.2
-        if (head.current) { head.current.rotation.x = 0.7; head.current.rotation.y = 0 }
-        group.current.position.y = position[1] + Math.sin(t * 1.2) * 0.02
-        if (screenMat.current) screenMat.current.emissiveIntensity = 0.15 + Math.sin(t * 1.2) * 0.1
+        // mengetik: lengan ke depan naik-turun cepat
+        if (armL.current) armL.current.rotation.x = -0.9 + Math.sin(t * 6) * 0.15
+        if (armR.current) armR.current.rotation.x = -0.9 + Math.sin(t * 6 + Math.PI) * 0.15
+        if (head.current) head.current.rotation.y = Math.sin(t * 0.8) * 0.12
         break
       }
       case 'break': {
-        if (armL.current) armL.current.rotation.x = -1.8
-        if (armR.current) armR.current.rotation.x = -0.3
-        if (head.current) { head.current.rotation.x = -0.15; head.current.rotation.y = Math.sin(t * 0.5) * 0.3 }
-        group.current.rotation.z = Math.sin(t * 0.8) * 0.03
-        if (screenMat.current) screenMat.current.emissiveIntensity = 0.8 + Math.sin(t * 2) * 0.3
+        // ngopi: lengan kanan ke mulut pelan
+        if (armR.current) armR.current.rotation.x = -1.9 + Math.sin(t * 1.2) * 0.06
+        if (armL.current) armL.current.rotation.x = -0.2
+        if (head.current) head.current.rotation.z = Math.sin(t * 0.9) * 0.05
+        break
+      }
+      case 'sleeping': {
+        // tidur: kepala menunduk + badan berdenyut halus
+        if (head.current) head.current.rotation.x = 0.45
+        if (armL.current) armL.current.rotation.x = 0.1
+        if (armR.current) armR.current.rotation.x = 0.1
+        group.current.scale.y = 1 + Math.sin(t * 1.4) * 0.015
         break
       }
       default: {
-        if (armL.current) armL.current.rotation.x = Math.sin(t * 1.5) * 0.08
-        if (armR.current) armR.current.rotation.x = Math.sin(t * 1.5 + 1) * 0.08
-        if (head.current) head.current.rotation.y = Math.sin(t * 0.6) * 0.4
-        group.current.position.y = position[1] + Math.abs(Math.sin(t * 1)) * 0.03
-        if (screenMat.current) screenMat.current.emissiveIntensity = 0.6 + Math.sin(t * 1.5) * 0.2
+        // idle: goyang santai ala Minecraft
+        if (armL.current) armL.current.rotation.x = Math.sin(t * 1.5) * 0.12
+        if (armR.current) armR.current.rotation.x = Math.sin(t * 1.5 + Math.PI) * 0.12
+        if (head.current) head.current.rotation.y = Math.sin(t * 0.5) * 0.35
       }
     }
-
-    group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, rotationY(), 0.05)
+    group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, rotationY(), 0.08)
   })
 
-  const c = new THREE.Color(agent.status === 'sleeping' ? '#3B82F6' : agent.color)
-  // unique face per agent: eye offset + mouth curve seed
-  const seed = agent.id.length + agent.name.charCodeAt(0)
-  const eyeSpread = 0.05 + (seed % 3) * 0.012
-  const mouthY = -0.035 + (seed % 2) * 0.012
+  const skin = agent.status === 'sleeping' ? '#93B4E8' : agent.color
+  const shirt = agent.color
+  const pants = '#3B4657'
+  const skinDark = new THREE.Color(skin).offsetHSL(0, 0, -0.08).getStyle()
 
   return (
     <group ref={group} position={position} onClick={(e) => { e.stopPropagation(); onClick() }}>
-      {/* legs */}
-      {[-0.09, 0.09].map((dx, i) => (
-        <mesh key={i} position={[dx, 0.16, 0]}>
-          <cylinderGeometry args={[0.045, 0.055, 0.32, 12]} />
-          <meshStandardMaterial color="#334155" metalness={0.6} roughness={0.35} />
+      {/* ═══ KAKI (2 blok) ═══ */}
+      {[-0.11, 0.11].map((dx, i) => (
+        <mesh key={i} position={[dx, 0.38, 0]} castShadow>
+          <boxGeometry args={[0.22, 0.76, 0.24]} />
+          <meshLambertMaterial color={pants} />
         </mesh>
       ))}
-      {/* body */}
-      <RoundedBox args={[0.42, 0.5, 0.3]} radius={0.08} position={[0, 0.58, 0]} castShadow>
-        <meshStandardMaterial color={c.getStyle()} metalness={0.55} roughness={0.3} />
-      </RoundedBox>
-      {/* chest light */}
-      <mesh position={[0, 0.62, 0.16]}>
-        <sphereGeometry args={[0.045, 16, 16]} />
-        <meshStandardMaterial color="#FFFFFF" emissive={c} emissiveIntensity={agent.status === 'working' ? 1.5 : 0.4} />
+
+      {/* ═══ BADAN (blok kaos warna agent) ═══ */}
+      <mesh position={[0, 1.14, 0]} castShadow>
+        <boxGeometry args={[0.56, 0.62, 0.32]} />
+        <meshLambertMaterial color={shirt} />
       </mesh>
-      {/* head */}
-      <group ref={head} position={[0, 1.02, 0]}>
-        <RoundedBox args={[0.4, 0.32, 0.34]} radius={0.09}>
-          <meshStandardMaterial color="#E2E8F0" metalness={0.4} roughness={0.35} />
-        </RoundedBox>
+      {/* lencana dada ala Minecraft skin */}
+      <mesh position={[0, 1.2, 0.165]}>
+        <boxGeometry args={[0.14, 0.14, 0.02]} />
+        <meshLambertMaterial color="#FFFFFF" />
+      </mesh>
 
-        {/* ── FACE: eyes + happy smile (unique per agent) ── */}
-        {/* eyes */}
-        {[-eyeSpread, eyeSpread].map((ex, i) => (
-          <mesh key={i} position={[ex, 0.03, 0.172]}>
-            <circleGeometry args={[0.028, 16]} />
-            <meshBasicMaterial color="#0B1120" />
-          </mesh>
-        ))}
-        {/* eye highlights */}
-        {[-eyeSpread, eyeSpread].map((ex, i) => (
-          <mesh key={`hl-${i}`} position={[ex + 0.008, 0.04, 0.174]}>
-            <circleGeometry args={[0.008, 8]} />
-            <meshBasicMaterial color="#FFFFFF" />
-          </mesh>
-        ))}
-        {/* happy smile — curved using torus arc */}
-        <mesh position={[0, mouthY, 0.17]} rotation={[0, 0, Math.PI]}>
-          <torusGeometry args={[0.045, 0.008, 8, 16, Math.PI]} />
-          <meshBasicMaterial color="#0B1120" />
+      {/* ═══ LENGAN (2 blok, skin color) ═══ */}
+      <group ref={armL} position={[-0.39, 1.42, 0]}>
+        <mesh position={[0, -0.28, 0]} castShadow>
+          <boxGeometry args={[0.2, 0.62, 0.22]} />
+          <meshLambertMaterial color={skin} />
         </mesh>
-        {/* blush dots */}
-        {[-0.12, 0.12].map((bx, i) => (
-          <mesh key={`bl-${i}`} position={[bx, -0.02, 0.171]}>
-            <circleGeometry args={[0.016, 10]} />
-            <meshBasicMaterial color={c.getStyle()} transparent opacity={0.55} />
-          </mesh>
-        ))}
-        {/* sleeping: closed eyes (lines over eyes) */}
-        {agent.status === 'sleeping' && [-eyeSpread, eyeSpread].map((ex, i) => (
-          <mesh key={`sl-${i}`} position={[ex, 0.03, 0.175]}>
-            <planeGeometry args={[0.062, 0.008]} />
-            <meshBasicMaterial color="#0B1120" />
-          </mesh>
-        ))}
+      </group>
+      <group ref={armR} position={[0.39, 1.42, 0]}>
+        <mesh position={[0, -0.28, 0]} castShadow>
+          <boxGeometry args={[0.2, 0.62, 0.22]} />
+          <meshLambertMaterial color={skin} />
+        </mesh>
+      </group>
 
-        {/* antenna */}
-        <mesh position={[0, 0.22, 0]}>
-          <cylinderGeometry args={[0.012, 0.012, 0.14, 8]} />
-          <meshStandardMaterial color="#94A3B8" />
+      {/* ═══ KEPALA (kubus besar ala Steve) ═══ */}
+      <group ref={head} position={[0, 1.78, 0]}>
+        <mesh castShadow>
+          <boxGeometry args={[0.62, 0.62, 0.62]} />
+          <meshLambertMaterial color={skin} />
         </mesh>
-        <mesh position={[0, 0.31, 0]}>
-          <sphereGeometry args={[0.032, 12, 12]} />
-          <meshStandardMaterial color={c.getStyle()} emissive={c} emissiveIntensity={2} />
+        {/* rambut blok (atas + poni) */}
+        <mesh position={[0, 0.33, 0]}>
+          <boxGeometry args={[0.64, 0.1, 0.64]} />
+          <meshLambertMaterial color={skinDark} />
         </mesh>
-        {/* sleeping Zzz label */}
+        <mesh position={[0, 0.24, -0.26]}>
+          <boxGeometry args={[0.64, 0.16, 0.1]} />
+          <meshLambertMaterial color={skinDark} />
+        </mesh>
+        {/* mata kotak putih + pupil biru ala Minecraft */}
+        {[-0.14, 0.14].map((ex, i) => (
+          <group key={i} position={[ex, 0.04, 0.315]}>
+            <mesh>
+              <boxGeometry args={[0.14, 0.12, 0.02]} />
+              <meshLambertMaterial color="#FFFFFF" />
+            </mesh>
+            <mesh position={[i === 0 ? 0.03 : -0.03, 0, 0.012]}>
+              <boxGeometry args={[0.07, 0.12, 0.02]} />
+              <meshLambertMaterial color="#3B82F6" />
+            </mesh>
+          </group>
+        ))}
+        {/* mulut kotak */}
+        <mesh position={[0, -0.16, 0.315]}>
+          <boxGeometry args={[0.16, 0.05, 0.02]} />
+          <meshLambertMaterial color="#8B5A4A" />
+        </mesh>
+        {/* Zzz saat tidur */}
         {agent.status === 'sleeping' && (
-          <Html center position={[0.35, 0.35, 0]} distanceFactor={4}>
-            <div style={{ fontSize: 14, userSelect: 'none' }}>
-              <motion.span animate={{ y: [0, -6, 0], opacity: [0.4, 1, 0.4] }} transition={{ duration: 2, repeat: Infinity }}>💤</motion.span>
+          <Html center position={[0.45, 0.4, 0]} distanceFactor={5}>
+            <div style={{ fontSize: 15, userSelect: 'none' }}>
+              <motion.span animate={{ y: [0, -7, 0], opacity: [0.4, 1, 0.4] }} transition={{ duration: 2, repeat: Infinity }}>💤</motion.span>
             </div>
           </Html>
         )}
       </group>
-      {/* arms */}
-      <group ref={armL} position={[-0.26, 0.72, 0.05]}>
-        <mesh position={[0, -0.12, 0]}>
-          <capsuleGeometry args={[0.04, 0.18, 6, 12]} />
-          <meshStandardMaterial color={c.getStyle()} metalness={0.5} roughness={0.4} />
-        </mesh>
-      </group>
-      <group ref={armR} position={[0.26, 0.72, 0.05]}>
-        <mesh position={[0, -0.12, 0]}>
-          <capsuleGeometry args={[0.04, 0.18, 6, 12]} />
-          <meshStandardMaterial color={c.getStyle()} metalness={0.5} roughness={0.4} />
-        </mesh>
-      </group>
-      {/* coffee cup for break status */}
+
+      {/* cangkir kopi ala Minecraft saat break */}
       {agent.status === 'break' && (
-        <mesh position={[0.3, 0.62, 0.12]}>
-          <cylinderGeometry args={[0.045, 0.04, 0.08, 12]} />
-          <meshStandardMaterial color="#F8FAFC" />
+        <mesh position={[0.42, 1.05, 0.28]}>
+          <boxGeometry args={[0.12, 0.14, 0.12]} />
+          <meshLambertMaterial color="#F8FAFC" />
         </mesh>
       )}
-      {/* selection halo */}
-      {isSelected && (
-        <mesh position={[0, 0.55, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[0.45, 0.55, 32]} />
-          <meshBasicMaterial color={c.getStyle()} transparent opacity={0.6} side={THREE.DoubleSide} />
-        </mesh>
-      )}
-      {/* floating name tag */}
-      <Html center position={[0, 1.55, 0]} distanceFactor={6} zIndexRange={[20, 10]}>
+
+      {/* name tag */}
+      <Html center position={[0, 2.45, 0]} distanceFactor={7} zIndexRange={[20, 10]}>
         <button
           onClick={(e) => { e.stopPropagation(); onClick() }}
           className="px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap cursor-pointer transition-transform hover:scale-105"
           style={{
             background: 'rgba(10,15,30,0.92)',
-            border: `1px solid ${c.getStyle()}`,
-            color: c.getStyle(),
-            boxShadow: `0 0 12px ${c.getStyle()}44`,
+            border: `1px solid ${agent.color}`,
+            color: agent.color,
+            boxShadow: `0 0 12px ${agent.color}44`,
             fontFamily: 'JetBrains Mono, monospace'
           }}
         >
           {agent.name} · {STATUS_META[agent.status].label}
         </button>
       </Html>
+
+      {/* selection ring */}
+      {isSelected && (
+        <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[0.62, 0.78, 4, 1]} />
+          <meshBasicMaterial color={agent.color} transparent opacity={0.85} />
+        </mesh>
+      )}
     </group>
   )
 }
@@ -469,16 +449,16 @@ function Robot({
 function Workstation({ position, color }: { position: [number, number, number]; color: string }) {
   return (
     <group position={position}>
-      {/* tabletop */}
-      <mesh position={[0, 0.78, 0]} receiveShadow>
-        <boxGeometry args={[1.15, 0.05, 0.55]} />
-        <meshStandardMaterial color="#1E293B" metalness={0.3} roughness={0.6} />
+      {/* tabletop kayu ala Minecraft */}
+      <mesh position={[0, 0.78, 0]} receiveShadow castShadow>
+        <boxGeometry args={[1.15, 0.08, 0.6]} />
+        <meshLambertMaterial color="#B08968" />
       </mesh>
-      {/* desk legs */}
+      {/* kaki kayu */}
       {[[-0.5, -0.24], [0.5, -0.24]].map(([dx, dz], i) => (
-        <mesh key={i} position={[dx, 0.39, dz]}>
-          <boxGeometry args={[0.05, 0.78, 0.05]} />
-          <meshStandardMaterial color="#334155" />
+        <mesh key={i} position={[dx, 0.39, dz]} castShadow>
+          <boxGeometry args={[0.09, 0.78, 0.09]} />
+          <meshLambertMaterial color="#8B5E3C" />
         </mesh>
       ))}
       {/* monitor stand */}
@@ -493,7 +473,7 @@ function Workstation({ position, color }: { position: [number, number, number]; 
       </mesh>
       <mesh position={[0, 1.08, -0.142]}>
         <planeGeometry args={[0.56, 0.34]} />
-        <meshBasicMaterial color={color} transparent opacity={0.35} />
+        <meshBasicMaterial color={color} transparent opacity={0.55} />
       </mesh>
     </group>
   )
@@ -541,78 +521,201 @@ function OfficeFloor() {
   )
 }
 
-function OfficeScene({ onOpen, selectedId }: { onOpen: (a: SubAgent) => void; selectedId: string | null }) {
-  // two rows of workstations facing camera
+function OfficeScene({ onOpen, selectedId, brainAgentId }: { onOpen: (a: SubAgent) => void; selectedId: string | null; brainAgentId: string | null }) {
+  // meja melingkar menghadap server pusat (ala Minecraft server room)
   const layout: { id: string; pos: [number, number, number]; rot: number }[] = [
-    { id: 'nova',     pos: [-4.2, 0, 1.2],  rot: 0.35 },
-    { id: 'cipher',   pos: [-2.1, 0, 0.2],  rot: 0.15 },
-    { id: 'atlas',    pos: [0, 0, -0.2],    rot: 0 },
-    { id: 'pixel',    pos: [2.1, 0, 0.2],   rot: -0.15 },
-    { id: 'oracle',   pos: [4.2, 0, 1.2],   rot: -0.35 },
-    { id: 'sentinel', pos: [-3.15, 0, 3.6], rot: 0.25 },
-    { id: 'aurora',   pos: [-1.05, 0, 3.0], rot: 0.1 },
-    { id: 'phoenix',  pos: [1.05, 0, 3.0],  rot: -0.1 },
-    { id: 'zephra',   pos: [3.15, 0, 3.6],  rot: -0.25 },
+    { id: 'nova',     pos: [-3.4, 0, 1.6],  rot: Math.PI * 0.28 },
+    { id: 'cipher',   pos: [-1.7, 0, 0.4],  rot: Math.PI * 0.14 },
+    { id: 'atlas',    pos: [0, 0, 0],       rot: Math.PI },
+    { id: 'pixel',    pos: [1.7, 0, 0.4],   rot: -Math.PI * 0.14 },
+    { id: 'oracle',   pos: [3.4, 0, 1.6],   rot: -Math.PI * 0.28 },
+    { id: 'sentinel', pos: [-2.55, 0, 3.4], rot: Math.PI * 0.36 },
+    { id: 'aurora',   pos: [-0.85, 0, 2.9], rot: Math.PI * 0.12 },
+    { id: 'phoenix',  pos: [0.85, 0, 2.9],  rot: -Math.PI * 0.12 },
+    { id: 'zephra',   pos: [2.55, 0, 3.4],  rot: -Math.PI * 0.36 },
   ]
+
+  // hitung rotasi menghadap pusat (0,0)
+  const faceCenter = (pos: [number, number, number]) => Math.atan2(-pos[0], -pos[2])
 
   return (
     <>
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[6, 10, 6]} intensity={0.9} castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
-      <pointLight position={[0, 6, 4]} intensity={0.6} color="#00D4FF" />
-      <pointLight position={[-8, 4, 6]} intensity={0.4} color="#8B5CF6" />
-      <pointLight position={[8, 4, 6]} intensity={0.4} color="#FBBF24" />
+      <ambientLight intensity={0.85} />
+      <directionalLight position={[6, 12, 6]} intensity={0.9} castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
+      <pointLight position={[0, 4.5, 0]} intensity={1.2} color="#BFE3FF" />
 
-      <OfficeFloor />
+      {/* ═══ RUANGAN KOTAK PUTIH ala Minecraft ═══ */}
+      <MinecraftRoom />
+
+      {/* ═══ SERVER MEMORI pusat — tempat agent "menyimpan" memori ═══ */}
+      <MemoryServer brainAgentId={brainAgentId} />
 
       {layout.map((slot) => {
         const agent = AGENTS.find(a => a.id === slot.id)!
+        const rot = faceCenter(slot.pos)
         return (
           <group key={slot.id}>
-            {/* desk in front of robot (robots face camera, monitor between robot & camera) */}
-            <Workstation position={[slot.pos[0], 0, slot.pos[2] + 0.75]} color={agent.color} />
-            {/* chair behind robot */}
-            <OfficeChair position={[slot.pos[0], 0, slot.pos[2] - 0.45]} color={agent.color} />
-            <Robot
+            {/* meja di depan karakter (menghadap server) */}
+            <Workstation position={[slot.pos[0] * 0.72, 0, slot.pos[2] * 0.72]} color={agent.color} />
+            {/* karakter duduk di belakang meja */}
+            <BlockCharacter
               agent={agent}
               position={slot.pos}
-              rotationY={() => slot.rot}
+              rotationY={() => rot}
               onClick={() => onOpen(agent)}
               isSelected={selectedId === slot.id}
             />
-            {/* status floor glow */}
-            <mesh position={[slot.pos[0], 0.002, slot.pos[2]]} rotation={[-Math.PI / 2, 0, 0]}>
-              <circleGeometry args={[0.55, 32]} />
-              <meshBasicMaterial color={STATUS_META[agent.status].dot} transparent opacity={agent.status === 'working' ? 0.18 : 0.08} />
+            {/* karpet warna agent ala Minecraft */}
+            <mesh position={[slot.pos[0], 0.012, slot.pos[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+              <boxGeometry args={[1.1, 0.02, 1.1]} />
+              <meshLambertMaterial color={agent.color} transparent opacity={agent.status === 'working' ? 0.35 : 0.18} />
             </mesh>
           </group>
         )
       })}
 
-      {/* COZY manager at the back center */}
-      <group position={[0, 0, -4.5]}>
-        <Workstation position={[0, 0, 0.75]} color="#FBBF24" />
-        <OfficeChair position={[0, 0, -0.45]} color="#FBBF24" />
-        <Robot
+      {/* COZY manager di sisi belakang, meja lebih besar */}
+      <group position={[0, 0, -3.6]}>
+        <Workstation position={[0, 0, 0.9]} color="#FBBF24" />
+        <BlockCharacter
           agent={AGENTS.find(a => a.id === 'cozy')!}
-          position={[0, 0.25, 0]}
-          rotationY={() => 0}
+          position={[0, 0, 0]}
+          rotationY={() => Math.PI}
           onClick={() => onOpen(AGENTS.find(a => a.id === 'cozy')!)}
           isSelected={selectedId === 'cozy'}
         />
         <Text
-          position={[0, 2.6, 0]}
-          fontSize={0.32}
-          color="#FBBF24"
+          position={[0, 3.1, 0]}
+          fontSize={0.3}
+          color="#B45309"
           anchorX="center"
           anchorY="middle"
           fontWeight="bold"
           letterSpacing={0.04}
         >
-          COZY — Manager
+          COZY — MANAGER
         </Text>
       </group>
     </>
+  )
+}
+
+/** Ruangan kotak putih ala Minecraft: lantai + 4 dinding blok */
+function MinecraftRoom() {
+  const W = 11   // half-width
+  const H = 4.2  // tinggi dinding
+  return (
+    <group>
+      {/* lantai blok putih */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
+        <planeGeometry args={[W * 2, W * 2]} />
+        <meshLambertMaterial color="#F4F7FB" />
+      </mesh>
+      {/* grid blok ala Minecraft di lantai */}
+      <gridHelper args={[W * 2, Math.round(W * 2), '#D7E1EC', '#E4EBF3']} position={[0, 0.002, 0]} />
+
+      {/* dinding belakang */}
+      <mesh position={[0, H / 2, -W]} receiveShadow>
+        <boxGeometry args={[W * 2, H, 0.4]} />
+        <meshLambertMaterial color="#EDF2F8" />
+      </mesh>
+      {/* dinding kiri */}
+      <mesh position={[-W, H / 2, 0]} receiveShadow>
+        <boxGeometry args={[0.4, H, W * 2]} />
+        <meshLambertMaterial color="#E8EEF6" />
+      </mesh>
+      {/* dinding kanan */}
+      <mesh position={[W, H / 2, 0]} receiveShadow>
+        <boxGeometry args={[0.4, H, W * 2]} />
+        <meshLambertMaterial color="#E8EEF6" />
+      </mesh>
+      {/* plafon blok putih */}
+      <mesh position={[0, H, 0]}>
+        <boxGeometry args={[W * 2, 0.4, W * 2]} />
+        <meshLambertMaterial color="#F8FAFD" />
+      </mesh>
+      {/* lampu plafon ala Minecraft (glowstone strip) */}
+      {[-4, 0, 4].map((x, i) => (
+        <mesh key={i} position={[x, H - 0.35, 0]}>
+          <boxGeometry args={[2.2, 0.12, 1.2]} />
+          <meshStandardMaterial color="#FFF7D6" emissive="#FFE9A8" emissiveIntensity={0.9} />
+        </mesh>
+      ))}
+      {/* jendela besar di dinding belakang */}
+      {[-5, -2.5, 2.5, 5].map((x, i) => (
+        <mesh key={`w-${i}`} position={[x, 2.6, -W + 0.22]}>
+          <boxGeometry args={[1.6, 1.6, 0.08]} />
+          <meshStandardMaterial color="#BFE3FF" emissive="#9CCBFF" emissiveIntensity={0.55} />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
+/** Server memori pusat: rak server Minecraft — agent "menyimpan memori" di sini */
+function MemoryServer({ brainAgentId }: { brainAgentId: string | null }) {
+  const blinkRef = useRef<THREE.MeshStandardMaterial>(null)
+  const [pulse, setPulse] = useState(0)
+
+  // denyut tiap ada memori baru (poll ringan)
+  useEffect(() => {
+    const iv = setInterval(() => setPulse(p => p + 1), 4000)
+    return () => clearInterval(iv)
+  }, [])
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime()
+    if (blinkRef.current) {
+      blinkRef.current.emissiveIntensity = 1.2 + Math.sin(t * 4) * 0.8
+    }
+  })
+
+  const racks = [-0.9, 0, 0.9]
+  return (
+    <group position={[0, 0, -0.2]}>
+      {/* badan server */}
+      <mesh position={[0, 0.9, 0]} castShadow>
+        <boxGeometry args={[2.4, 1.8, 1]} />
+        <meshLambertMaterial color="#3B4657" />
+      </mesh>
+      {/* panel depan */}
+      {racks.map((y, i) => (
+        <group key={i} position={[0, 0.55 + i * 0.42, 0.51]}>
+          <mesh>
+            <boxGeometry args={[2.1, 0.3, 0.06]} />
+            <meshLambertMaterial color="#1F2937" />
+          </mesh>
+          {/* lampu indikator */}
+          {[0, 1, 2, 3, 4].map(j => (
+            <mesh key={j} position={[-0.8 + j * 0.16, 0.04, 0.04]}>
+              <boxGeometry args={[0.07, 0.07, 0.02]} />
+              <meshStandardMaterial
+                color={brainAgentId ? '#4ADE80' : '#22C55E'}
+                emissive="#22C55E"
+                emissiveIntensity={0.8 + ((pulse + i + j) % 3) * 0.4}
+              />
+            </mesh>
+          ))}
+          {/* layar kecil */}
+          <mesh position={[0.55, 0.02, 0.045]}>
+            <planeGeometry args={[0.7, 0.16]} />
+            <meshStandardMaterial ref={i === 1 ? blinkRef : undefined} color="#0B1120" emissive="#38BDF8" emissiveIntensity={1} />
+          </mesh>
+        </group>
+      ))}
+      {/* label */}
+      <Text position={[0, 2.15, 0]} fontSize={0.26} color="#334155" anchorX="center" fontWeight="bold" letterSpacing={0.05}>
+        MEMORY SERVER
+      </Text>
+      <Text position={[0, -0.12, 0.55]} fontSize={0.14} color="#94A3B8" anchorX="center">
+        semua memori agent tersimpan di sini
+      </Text>
+      {/* kabel ke atas */}
+      <mesh position={[0, 2.4, 0]}>
+        <cylinderGeometry args={[0.03, 0.03, 1.2, 8]} />
+        <meshStandardMaterial color="#64748B" />
+      </mesh>
+    </group>
   )
 }
 
@@ -629,9 +732,10 @@ function OfficeView({ onOpen, selectedId }: { onOpen: (a: SubAgent) => void; sel
         boxShadow: '0 0 40px rgba(0,212,255,0.07)'
       }}
     >
-      <Canvas shadows camera={{ position: [0, 3.4, 9.5], fov: 46 }} gl={{ antialias: true }}>
-        <color attach="background" args={['#070B18']} />
-        <OfficeScene onOpen={onOpen} selectedId={selectedId} />
+      <Canvas shadows camera={{ position: [0, 4.2, 11], fov: 46 }} gl={{ antialias: true }}>
+        <color attach="background" args={['#DDE7F2']} />
+        <fog attach="fog" args={['#DDE7F2', 18, 34]} />
+        <OfficeScene onOpen={onOpen} selectedId={selectedId} brainAgentId={null} />
         <OrbitControls
           target={[0, 1, 0]}
           minDistance={5} maxDistance={16}
