@@ -131,7 +131,7 @@ export default function Chat() {
 
   // ════════════════ VOICE TAB (Jarvis) ════════════════
   const VoiceTab = () => (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] relative overflow-hidden">
+    <div className="flex flex-col items-center justify-start pt-6 min-h-[70vh] relative overflow-hidden">
       {/* Background rings — halus, jauh */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         {[260, 380, 520].map((size, i) => (
@@ -303,7 +303,7 @@ export default function Chat() {
       </motion.div>
 
       <motion.h2
-        className="mt-12 text-3xl font-bold font-display tracking-tight"
+        className="mt-8 text-3xl font-bold font-display tracking-tight"
         animate={isListening ? {
           background: [
             'linear-gradient(90deg,#67e8f9,#e879f9)',
@@ -321,7 +321,7 @@ export default function Chat() {
       </p>
 
       {/* Waveform dots — ala referensi 1: deretan titik biru */}
-      <div className="flex items-center gap-[7px] h-8 mt-7">
+      <div className="flex items-center gap-[7px] h-8 mt-5">
         {Array.from({ length: 32 }).map((_, i) => (
           <motion.div
             key={i}
@@ -339,7 +339,7 @@ export default function Chat() {
       </div>
 
       {/* Quick voice actions — iOS widget style */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-10 w-full max-w-lg">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-7 w-full max-w-lg pb-4">
         {suggestions.map((s, i) => (
           <motion.button
             key={i}
