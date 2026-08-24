@@ -131,7 +131,7 @@ export default function Chat() {
 
   // ════════════════ VOICE TAB (Jarvis) ════════════════
   const VoiceTab = () => (
-    <div className="flex flex-col items-center pt-2 relative">
+    <div className="flex flex-col items-center pt-16 relative">
       {/* Background rings — halus, jauh */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         {[260, 380, 520].map((size, i) => (
