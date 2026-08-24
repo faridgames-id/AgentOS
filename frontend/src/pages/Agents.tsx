@@ -278,10 +278,18 @@ function WorkflowView({ onOpen, selectedId }: { onOpen: (a: SubAgent) => void; s
 // ─────────────────────────────────────────────────────────
 
 /** A little robot built from primitives */
-/** Karakter blok ala Minecraft (Steve-style): kepala kubus, badan kubus, lengan kaki kubus */
-function BlockCharacter({ agent, position, rotationY, onClick, isSelected }: {
+/** Konstanta seragam & posisi server (shared) */
+const UNIFORM_SHIRT = '#2E4057'
+const UNIFORM_PANTS = '#222B38'
+const SKIN = '#E8B58B'
+const HAIR = '#4A3728'
+const SERVER_POS: [number, number, number] = [9.2, 0, -9.2]
+
+/** Karakter blok ala Minecraft — pakai SERAGAM kantor, jalan ke server utk simpan memori */
+function BlockCharacter({ agent, position, deskPos, rotationY, onClick, isSelected }: {
   agent: SubAgent
   position: [number, number, number]
+  deskPos: [number, number, number]
   rotationY: () => number
   onClick: () => void
   isSelected: boolean
@@ -290,99 +298,166 @@ function BlockCharacter({ agent, position, rotationY, onClick, isSelected }: {
   const armL = useRef<THREE.Group>(null)
   const armR = useRef<THREE.Group>(null)
   const head = useRef<THREE.Group>(null)
+  const carry = useRef<THREE.Group>(null)
 
-  useFrame(({ clock }) => {
+  // ── siklus kerja: meja → jalan ke server → simpan memori → jalan balik ──
+  const phase = useRef<{ name: 'desk' | 'go' | 'store' | 'back'; t: number }>({ name: 'desk', t: Math.random() * 22 })
+  const posRef = useRef(new THREE.Vector3(position[0], position[1], position[2]))
+  const isCozy = agent.id === 'cozy'
+  const WALK_DUR = isCozy ? 4.5 : 7
+  const DESK_DUR = isCozy ? 34 : 24 + (agent.name.charCodeAt(0) % 10)
+  const STORE_DUR = 2.6
+
+  useFrame(({ clock }, delta) => {
     const t = clock.getElapsedTime()
-    if (!group.current) return
-    switch (agent.status) {
-      case 'working': {
-        // mengetik: lengan ke depan naik-turun cepat
-        if (armL.current) armL.current.rotation.x = -0.9 + Math.sin(t * 6) * 0.15
-        if (armR.current) armR.current.rotation.x = -0.9 + Math.sin(t * 6 + Math.PI) * 0.15
-        if (head.current) head.current.rotation.y = Math.sin(t * 0.8) * 0.12
+    const st = phase.current
+    const d = Math.min(delta, 0.1)
+    st.t += d
+
+    const charV = new THREE.Vector3(position[0], position[1], position[2])
+    const srvV = new THREE.Vector3(SERVER_POS[0], SERVER_POS[1], SERVER_POS[2])
+    const ease = (k: number) => k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2
+    let walking = false
+
+    switch (st.name) {
+      case 'desk': {
+        posRef.current.lerp(charV, 0.15)
+        if (st.t > DESK_DUR) { st.name = 'go'; st.t = 0 }
         break
       }
-      case 'break': {
-        // ngopi: lengan kanan ke mulut pelan
-        if (armR.current) armR.current.rotation.x = -1.9 + Math.sin(t * 1.2) * 0.06
-        if (armL.current) armL.current.rotation.x = -0.2
-        if (head.current) head.current.rotation.z = Math.sin(t * 0.9) * 0.05
+      case 'go': {
+        walking = true
+        const k = Math.min(1, st.t / WALK_DUR)
+        posRef.current.lerpVectors(charV, srvV, ease(k))
+        // hadap arah jalan
+        const dx = srvV.x - posRef.current.x, dz = srvV.z - posRef.current.z
+        if (group.current) group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, Math.atan2(dx, dz), 0.12)
+        if (k >= 1) { st.name = 'store'; st.t = 0 }
         break
       }
-      case 'sleeping': {
-        // tidur: kepala menunduk + badan berdenyut halus
-        if (head.current) head.current.rotation.x = 0.45
-        if (armL.current) armL.current.rotation.x = 0.1
-        if (armR.current) armR.current.rotation.x = 0.1
-        group.current.scale.y = 1 + Math.sin(t * 1.4) * 0.015
+      case 'store': {
+        // menghadap server, memori "diserahkan" (kubus mengecil)
+        const dx = srvV.x - posRef.current.x, dz = srvV.z - posRef.current.z
+        if (group.current) group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, Math.atan2(dx, dz), 0.1)
+        if (carry.current) {
+          const s = Math.max(0.05, 1 - st.t / STORE_DUR)
+          carry.current.scale.setScalar(s)
+          carry.current.position.y = 1.05 + Math.sin(t * 3) * 0.05 + (1 - s) * 0.6
+        }
+        if (st.t > STORE_DUR) { st.name = 'back'; st.t = 0 }
         break
       }
-      default: {
-        // idle: goyang santai ala Minecraft
-        if (armL.current) armL.current.rotation.x = Math.sin(t * 1.5) * 0.12
-        if (armR.current) armR.current.rotation.x = Math.sin(t * 1.5 + Math.PI) * 0.12
-        if (head.current) head.current.rotation.y = Math.sin(t * 0.5) * 0.35
+      case 'back': {
+        walking = true
+        const k = Math.min(1, st.t / WALK_DUR)
+        posRef.current.lerpVectors(srvV, charV, ease(k))
+        const dx = charV.x - posRef.current.x, dz = charV.z - posRef.current.z
+        if (group.current) group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, Math.atan2(dx, dz), 0.12)
+        if (k >= 1) { st.name = 'desk'; st.t = 0 }
+        break
       }
     }
-    group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, rotationY(), 0.08)
+
+    if (!group.current) return
+    // posisi + bobbing saat jalan
+    group.current.position.set(
+      posRef.current.x,
+      posRef.current.y + (walking ? Math.abs(Math.sin(t * 9)) * 0.05 : 0),
+      posRef.current.z
+    )
+    if (st.name !== 'go' && st.name !== 'back') {
+      group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, rotationY(), 0.08)
+    }
+
+    // animasi kerja sesuai fase
+    if (st.name === 'desk') {
+      switch (agent.status) {
+        case 'working':
+          if (armL.current) armL.current.rotation.x = -0.9 + Math.sin(t * 6) * 0.15
+          if (armR.current) armR.current.rotation.x = -0.9 + Math.sin(t * 6 + Math.PI) * 0.15
+          if (head.current) head.current.rotation.y = Math.sin(t * 0.8) * 0.12
+          break
+        case 'break':
+          if (armR.current) armR.current.rotation.x = -1.9 + Math.sin(t * 1.2) * 0.06
+          if (armL.current) armL.current.rotation.x = -0.2
+          break
+        case 'sleeping':
+          if (head.current) head.current.rotation.x = 0.45
+          group.current.scale.y = 1 + Math.sin(t * 1.4) * 0.015
+          break
+        default:
+          if (armL.current) armL.current.rotation.x = Math.sin(t * 1.5) * 0.12
+          if (armR.current) armR.current.rotation.x = Math.sin(t * 1.5 + Math.PI) * 0.12
+          if (head.current) head.current.rotation.y = Math.sin(t * 0.5) * 0.35
+      }
+    } else if (walking) {
+      // ayun lengan saat jalan
+      if (armL.current) armL.current.rotation.x = Math.sin(t * 9) * 0.5
+      if (armR.current) armR.current.rotation.x = Math.sin(t * 9 + Math.PI) * 0.5
+      if (head.current) head.current.rotation.set(0, 0, 0)
+    } else if (st.name === 'store') {
+      if (armL.current) armL.current.rotation.x = -1.2
+      if (armR.current) armR.current.rotation.x = -1.2
+    }
   })
 
-  const skin = agent.status === 'sleeping' ? '#93B4E8' : agent.color
-  const shirt = agent.color
-  const pants = '#3B4657'
-  const skinDark = new THREE.Color(skin).offsetHSL(0, 0, -0.08).getStyle()
+  const tie = isCozy ? '#FBBF24' : agent.color
+  const shirt = isCozy ? '#1E2A3E' : UNIFORM_SHIRT
 
   return (
     <group ref={group} position={position} onClick={(e) => { e.stopPropagation(); onClick() }}>
-      {/* ═══ KAKI (2 blok) ═══ */}
+      {/* ═══ KAKI ═══ */}
       {[-0.11, 0.11].map((dx, i) => (
         <mesh key={i} position={[dx, 0.38, 0]} castShadow>
           <boxGeometry args={[0.22, 0.76, 0.24]} />
-          <meshLambertMaterial color={pants} />
+          <meshLambertMaterial color={UNIFORM_PANTS} />
         </mesh>
       ))}
 
-      {/* ═══ BADAN (blok kaos warna agent) ═══ */}
+      {/* ═══ BADAN — seragam kantor navy ═══ */}
       <mesh position={[0, 1.14, 0]} castShadow>
         <boxGeometry args={[0.56, 0.62, 0.32]} />
         <meshLambertMaterial color={shirt} />
       </mesh>
-      {/* lencana dada ala Minecraft skin */}
-      <mesh position={[0, 1.2, 0.165]}>
-        <boxGeometry args={[0.14, 0.14, 0.02]} />
-        <meshLambertMaterial color="#FFFFFF" />
+      {/* dasi warna agent */}
+      <mesh position={[0, 1.22, 0.168]}>
+        <boxGeometry args={[0.08, 0.3, 0.02]} />
+        <meshLambertMaterial color={tie} />
+      </mesh>
+      {/* badge nama di dada */}
+      <mesh position={[0.17, 1.05, 0.168]}>
+        <boxGeometry args={[0.12, 0.08, 0.02]} />
+        <meshLambertMaterial color="#F8FAFC" />
       </mesh>
 
-      {/* ═══ LENGAN (2 blok, skin color) ═══ */}
+      {/* ═══ LENGAN — skin (seragam lengan pendek) ═══ */}
       <group ref={armL} position={[-0.39, 1.42, 0]}>
         <mesh position={[0, -0.28, 0]} castShadow>
           <boxGeometry args={[0.2, 0.62, 0.22]} />
-          <meshLambertMaterial color={skin} />
+          <meshLambertMaterial color={SKIN} />
         </mesh>
       </group>
       <group ref={armR} position={[0.39, 1.42, 0]}>
         <mesh position={[0, -0.28, 0]} castShadow>
           <boxGeometry args={[0.2, 0.62, 0.22]} />
-          <meshLambertMaterial color={skin} />
+          <meshLambertMaterial color={SKIN} />
         </mesh>
       </group>
 
-      {/* ═══ KEPALA (kubus besar ala Steve) ═══ */}
+      {/* ═══ KEPALA ═══ */}
       <group ref={head} position={[0, 1.78, 0]}>
         <mesh castShadow>
           <boxGeometry args={[0.62, 0.62, 0.62]} />
-          <meshLambertMaterial color={skin} />
+          <meshLambertMaterial color={SKIN} />
         </mesh>
-        {/* rambut blok (atas + poni) */}
         <mesh position={[0, 0.33, 0]}>
           <boxGeometry args={[0.64, 0.1, 0.64]} />
-          <meshLambertMaterial color={skinDark} />
+          <meshLambertMaterial color={HAIR} />
         </mesh>
         <mesh position={[0, 0.24, -0.26]}>
           <boxGeometry args={[0.64, 0.16, 0.1]} />
-          <meshLambertMaterial color={skinDark} />
+          <meshLambertMaterial color={HAIR} />
         </mesh>
-        {/* mata kotak putih + pupil biru ala Minecraft */}
         {[-0.14, 0.14].map((ex, i) => (
           <group key={i} position={[ex, 0.04, 0.315]}>
             <mesh>
@@ -395,12 +470,10 @@ function BlockCharacter({ agent, position, rotationY, onClick, isSelected }: {
             </mesh>
           </group>
         ))}
-        {/* mulut kotak */}
         <mesh position={[0, -0.16, 0.315]}>
           <boxGeometry args={[0.16, 0.05, 0.02]} />
           <meshLambertMaterial color="#8B5A4A" />
         </mesh>
-        {/* Zzz saat tidur */}
         {agent.status === 'sleeping' && (
           <Html center position={[0.45, 0.4, 0]} distanceFactor={5}>
             <div style={{ fontSize: 15, userSelect: 'none' }}>
@@ -410,7 +483,15 @@ function BlockCharacter({ agent, position, rotationY, onClick, isSelected }: {
         )}
       </group>
 
-      {/* cangkir kopi ala Minecraft saat break */}
+      {/* ═══ KUBUS MEMORI dibawa tangan saat menuju server ═══ */}
+      <group ref={carry} position={[0, 1.05, 0.42]} visible={false}>
+        <mesh>
+          <boxGeometry args={[0.22, 0.22, 0.22]} />
+          <meshStandardMaterial color="#4ADE80" emissive="#22C55E" emissiveIntensity={1.4} />
+        </mesh>
+      </group>
+
+      {/* cangkir kopi saat break */}
       {agent.status === 'break' && (
         <mesh position={[0.42, 1.05, 0.28]}>
           <boxGeometry args={[0.12, 0.14, 0.12]} />
@@ -435,7 +516,6 @@ function BlockCharacter({ agent, position, rotationY, onClick, isSelected }: {
         </button>
       </Html>
 
-      {/* selection ring */}
       {isSelected && (
         <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[0.62, 0.78, 4, 1]} />
@@ -523,21 +603,21 @@ function OfficeFloor() {
 }
 
 function OfficeScene({ onOpen, selectedId, brainAgentId }: { onOpen: (a: SubAgent) => void; selectedId: string | null; brainAgentId: string | null }) {
-  // meja melingkar menghadap server pusat (ala Minecraft server room)
-  const layout: { id: string; pos: [number, number, number]; rot: number }[] = [
-    { id: 'nova',     pos: [-3.4, 0, 1.6],  rot: Math.PI * 0.28 },
-    { id: 'cipher',   pos: [-1.7, 0, 0.4],  rot: Math.PI * 0.14 },
-    { id: 'atlas',    pos: [0, 0, 0],       rot: Math.PI },
-    { id: 'pixel',    pos: [1.7, 0, 0.4],   rot: -Math.PI * 0.14 },
-    { id: 'oracle',   pos: [3.4, 0, 1.6],   rot: -Math.PI * 0.28 },
-    { id: 'sentinel', pos: [-2.55, 0, 3.4], rot: Math.PI * 0.36 },
-    { id: 'aurora',   pos: [-0.85, 0, 2.9], rot: Math.PI * 0.12 },
-    { id: 'phoenix',  pos: [0.85, 0, 2.9],  rot: -Math.PI * 0.12 },
-    { id: 'zephra',   pos: [2.55, 0, 3.4],  rot: -Math.PI * 0.36 },
+  // meja masing-magent di dekat tembok (posisi melingkar di pinggir ruangan)
+  const layout: { id: string; pos: [number, number, number]; wall: 'back' | 'left' | 'right' }[] = [
+    { id: 'nova',     pos: [-5.5, 0, -10.5], wall: 'back' },
+    { id: 'cipher',   pos: [-2.2, 0, -10.5], wall: 'back' },
+    { id: 'atlas',    pos: [1.2, 0, -10.5],  wall: 'back' },
+    { id: 'pixel',    pos: [4.5, 0, -10.5],  wall: 'back' },
+    { id: 'oracle',   pos: [7.8, 0, -10.5],  wall: 'back' },
+    { id: 'sentinel', pos: [-10.5, 0, -4],   wall: 'left' },
+    { id: 'aurora',   pos: [-10.5, 0, -0.5], wall: 'left' },
+    { id: 'phoenix',  pos: [10.5, 0, -4],    wall: 'right' },
+    { id: 'zephra',   pos: [10.5, 0, -0.5],  wall: 'right' },
   ]
 
-  // hitung rotasi menghadap pusat (0,0)
-  const faceCenter = (pos: [number, number, number]) => Math.atan2(-pos[0], -pos[2])
+  // hadap tembok (dari meja ke arah dinding)
+  const faceWall = (wall: string) => wall === 'back' ? Math.PI : wall === 'left' ? -Math.PI / 2 : Math.PI / 2
 
   return (
     <>
@@ -545,59 +625,213 @@ function OfficeScene({ onOpen, selectedId, brainAgentId }: { onOpen: (a: SubAgen
       <directionalLight position={[6, 12, 6]} intensity={0.9} castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
       <pointLight position={[0, 4.5, 0]} intensity={1.2} color="#BFE3FF" />
 
-      {/* ═══ RUANGAN KOTAK PUTIH ala Minecraft ═══ */}
       <MinecraftRoom />
+      <Furniture />
 
-      {/* ═══ SERVER MEMORI pusat — tempat agent "menyimpan" memori ═══ */}
-      <MemoryServer brainAgentId={brainAgentId} />
+      {/* ═══ SERVER MEMORI — pojok kanan belakang ═══ */}
+      <MemoryServer position={SERVER_POS} brainAgentId={brainAgentId} />
 
       {layout.map((slot) => {
         const agent = AGENTS.find(a => a.id === slot.id)!
-        const rot = faceCenter(slot.pos)
+        const rot = faceWall(slot.wall)
+        // meja sedikit di depan karakter (ke arah tembok)
+        const deskOff: [number, number, number] =
+          slot.wall === 'back' ? [slot.pos[0], 0, slot.pos[2] - 1.0]
+          : slot.wall === 'left' ? [slot.pos[0] - 1.0, 0, slot.pos[2]]
+          : [slot.pos[0] + 1.0, 0, slot.pos[2]]
         return (
           <group key={slot.id}>
-            {/* meja di depan karakter (menghadap server) */}
-            <Workstation position={[slot.pos[0] * 0.72, 0, slot.pos[2] * 0.72]} color={agent.color} />
-            {/* karakter duduk di belakang meja */}
+            <Workstation position={deskOff} color={agent.color} />
             <BlockCharacter
               agent={agent}
               position={slot.pos}
+              deskPos={deskOff}
               rotationY={() => rot}
               onClick={() => onOpen(agent)}
               isSelected={selectedId === slot.id}
             />
-            {/* karpet warna agent ala Minecraft */}
             <mesh position={[slot.pos[0], 0.012, slot.pos[2]]} rotation={[-Math.PI / 2, 0, 0]}>
-              <boxGeometry args={[1.1, 0.02, 1.1]} />
-              <meshLambertMaterial color={agent.color} transparent opacity={agent.status === 'working' ? 0.35 : 0.18} />
+              <boxGeometry args={[1.3, 0.02, 1.3]} />
+              <meshLambertMaterial color={agent.color} transparent opacity={0.28} />
             </mesh>
           </group>
         )
       })}
 
-      {/* COZY manager di sisi belakang, meja lebih besar */}
-      <group position={[0, 0, -3.6]}>
-        <Workstation position={[0, 0, 0.9]} color="#FBBF24" />
+      {/* ═══ ZONA COZY — premium di tengah ruangan ═══ */}
+      <group position={[0, 0, 2.5]}>
+        {/* platform marmer premium */}
+        <mesh position={[0, 0.06, 0]} receiveShadow>
+          <boxGeometry args={[6.5, 0.12, 4.6]} />
+          <meshLambertMaterial color="#E8E2D6" />
+        </mesh>
+        <mesh position={[0, 0.13, 0]}>
+          <boxGeometry args={[6.3, 0.03, 4.4]} />
+          <meshLambertMaterial color="#F5F1E8" />
+        </mesh>
+        {/* meja manajer premium (lebih besar, kayu gelap) */}
+        <group position={[0, 0.14, -1.1]}>
+          <mesh position={[0, 0.72, 0]} castShadow>
+            <boxGeometry args={[2.6, 0.1, 1.1]} />
+            <meshLambertMaterial color="#5D4037" />
+          </mesh>
+          {[-1.15, 1.15].map((dx, i) => (
+            <mesh key={i} position={[dx, 0.36, 0]} castShadow>
+              <boxGeometry args={[0.14, 0.72, 0.9]} />
+              <meshLambertMaterial color="#4E342E" />
+            </mesh>
+          ))}
+          {/* monitor ganda emas */}
+          <group position={[-0.6, 1.05, -0.2]}>
+            <mesh>
+              <boxGeometry args={[0.72, 0.46, 0.04]} />
+              <meshLambertMaterial color="#0B1120" />
+            </mesh>
+            <mesh position={[0, 0, 0.03]}>
+              <planeGeometry args={[0.66, 0.4]} />
+              <meshBasicMaterial color="#FBBF24" transparent opacity={0.6} />
+            </mesh>
+          </group>
+          <group position={[0.6, 1.05, -0.2]}>
+            <mesh>
+              <boxGeometry args={[0.72, 0.46, 0.04]} />
+              <meshLambertMaterial color="#0B1120" />
+            </mesh>
+            <mesh position={[0, 0, 0.03]}>
+              <planeGeometry args={[0.66, 0.4]} />
+              <meshBasicMaterial color="#FBBF24" transparent opacity={0.6} />
+            </mesh>
+          </group>
+          {/* tanaman meja */}
+          <mesh position={[1.1, 0.92, 0.2]}>
+            <boxGeometry args={[0.16, 0.14, 0.16]} />
+            <meshLambertMaterial color="#8D6E63" />
+          </mesh>
+          <mesh position={[1.1, 1.06, 0.2]}>
+            <boxGeometry args={[0.2, 0.18, 0.2]} />
+            <meshLambertMaterial color="#66BB6A" />
+          </mesh>
+        </group>
+        {/* kursi manajer premium */}
+        <group position={[0, 0.14, 0.1]}>
+          <mesh position={[0, 0.45, 0]} castShadow>
+            <boxGeometry args={[0.6, 0.1, 0.6]} />
+            <meshLambertMaterial color="#3E2723" />
+          </mesh>
+          <mesh position={[0, 0.85, 0.28]} castShadow>
+            <boxGeometry args={[0.6, 0.85, 0.12]} />
+            <meshLambertMaterial color="#4E342E" />
+          </mesh>
+        </group>
+        {/* COZY duduk menghadap ruangan */}
         <BlockCharacter
           agent={AGENTS.find(a => a.id === 'cozy')!}
-          position={[0, 0, 0]}
+          position={[0, 0.14, 0.35]}
+          deskPos={[0, 0.14, -1.1]}
           rotationY={() => Math.PI}
           onClick={() => onOpen(AGENTS.find(a => a.id === 'cozy')!)}
           isSelected={selectedId === 'cozy'}
         />
-        <Text
-          position={[0, 3.1, 0]}
-          fontSize={0.3}
-          color="#B45309"
-          anchorX="center"
-          anchorY="middle"
-          fontWeight="bold"
-          letterSpacing={0.04}
-        >
-          COZY — MANAGER
+        <Text position={[0, 3.2, -1]} fontSize={0.3} color="#8D6E63" anchorX="center" fontWeight="bold" letterSpacing={0.05}>
+          COZY — EXECUTIVE SUITE
         </Text>
       </group>
     </>
+  )
+}
+
+/** Furniture kantor: sofa lounge, tanaman, water cooler, whiteboard, karpet pusat */
+function Furniture() {
+  return (
+    <group>
+      {/* karpet pusat besar */}
+      <mesh position={[0, 0.01, 2.5]} rotation={[-Math.PI / 2, 0, 0]}>
+        <boxGeometry args={[9, 0.015, 6]} />
+        <meshLambertMaterial color="#CFE0F0" />
+      </mesh>
+
+      {/* sofa lounge kiri-depan */}
+      <group position={[-6.5, 0, 5.5]} rotation={[0, 0.5, 0]}>
+        <mesh position={[0, 0.35, 0]} castShadow>
+          <boxGeometry args={[2.6, 0.5, 0.9]} />
+          <meshLambertMaterial color="#7C9EB8" />
+        </mesh>
+        <mesh position={[0, 0.75, -0.35]} castShadow>
+          <boxGeometry args={[2.6, 0.6, 0.25]} />
+          <meshLambertMaterial color="#6B8DAB" />
+        </mesh>
+        {[-1.15, 1.15].map((dx, i) => (
+          <mesh key={i} position={[dx, 0.55, 0]}>
+            <boxGeometry args={[0.25, 0.45, 0.9]} />
+            <meshLambertMaterial color="#6B8DAB" />
+          </mesh>
+        ))}
+        {/* meja kopi */}
+        <mesh position={[0, 0.28, 1.1]}>
+          <boxGeometry args={[0.9, 0.08, 0.9]} />
+          <meshLambertMaterial color="#8B5E3C" />
+        </mesh>
+      </group>
+
+      {/* tanaman besar di pojok-pojok */}
+      {[[-12.5, -12.5], [12.5, -12.5], [-12.5, 8], [12.5, 8]].map(([x, z], i) => (
+        <group key={i} position={[x, 0, z]}>
+          <mesh position={[0, 0.3, 0]} castShadow>
+            <boxGeometry args={[0.5, 0.6, 0.5]} />
+            <meshLambertMaterial color="#8D6E63" />
+          </mesh>
+          <mesh position={[0, 1.0, 0]} castShadow>
+            <boxGeometry args={[0.9, 1.1, 0.9]} />
+            <meshLambertMaterial color="#4CAF50" />
+          </mesh>
+          <mesh position={[0, 1.6, 0]}>
+            <boxGeometry args={[0.5, 0.4, 0.5]} />
+            <meshLambertMaterial color="#66BB6A" />
+          </mesh>
+        </group>
+      ))}
+
+      {/* water cooler kanan-depan */}
+      <group position={[8.5, 0, 6.5]}>
+        <mesh position={[0, 0.5, 0]} castShadow>
+          <boxGeometry args={[0.5, 1.0, 0.5]} />
+          <meshLambertMaterial color="#B0BEC5" />
+        </mesh>
+        <mesh position={[0, 1.2, 0]}>
+          <boxGeometry args={[0.4, 0.5, 0.4]} />
+          <meshStandardMaterial color="#4FC3F7" transparent opacity={0.75} />
+        </mesh>
+      </group>
+
+      {/* whiteboard di dinding belakang-tengah */}
+      <group position={[0, 2.6, -14.6]}>
+        <mesh>
+          <boxGeometry args={[5, 2.2, 0.08]} />
+          <meshLambertMaterial color="#FAFAFA" />
+        </mesh>
+        <mesh position={[0, 0, 0.06]}>
+          <boxGeometry args={[4.6, 1.8, 0.02]} />
+          <meshLambertMaterial color="#E3F2FD" />
+        </mesh>
+        {/* coretan diagram */}
+        {[-1.5, -0.5, 0.5, 1.5].map((x, i) => (
+          <mesh key={i} position={[x, i % 2 ? 0.3 : -0.2, 0.08]}>
+            <boxGeometry args={[0.7, 0.06, 0.01]} />
+            <meshLambertMaterial color={i % 2 ? '#EF5350' : '#43A047'} />
+          </mesh>
+        ))}
+      </group>
+
+      {/* rak arsip dekat dinding kiri */}
+      <group position={[-14.4, 0, 4]}>
+        {[0, 1, 2].map(i => (
+          <mesh key={i} position={[0, 0.4 + i * 0.55, 0]} castShadow>
+            <boxGeometry args={[0.5, 0.45, 2.4]} />
+            <meshLambertMaterial color={i % 2 ? '#90A4AE' : '#78909C'} />
+          </mesh>
+        ))}
+      </group>
+    </group>
   )
 }
 
@@ -659,16 +893,9 @@ function MinecraftRoom() {
   )
 }
 
-/** Server memori pusat: rak server Minecraft — agent "menyimpan memori" di sini */
-function MemoryServer({ brainAgentId }: { brainAgentId: string | null }) {
+/** Server memori — di pojok ruangan, agent datang utk menyimpan memori */
+function MemoryServer({ position, brainAgentId }: { position: [number, number, number]; brainAgentId: string | null }) {
   const blinkRef = useRef<THREE.MeshStandardMaterial>(null)
-  const [pulse, setPulse] = useState(0)
-
-  // denyut tiap ada memori baru (poll ringan)
-  useEffect(() => {
-    const iv = setInterval(() => setPulse(p => p + 1), 4000)
-    return () => clearInterval(iv)
-  }, [])
 
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime()
@@ -679,48 +906,43 @@ function MemoryServer({ brainAgentId }: { brainAgentId: string | null }) {
 
   const racks = [-0.9, 0, 0.9]
   return (
-    <group position={[0, 0, -0.2]}>
-      {/* badan server */}
-      <mesh position={[0, 0.9, 0]} castShadow>
-        <boxGeometry args={[2.4, 1.8, 1]} />
+    <group position={position} rotation={[0, Math.PI * 0.75, 0]}>
+      <mesh position={[0, 1.1, 0]} castShadow>
+        <boxGeometry args={[2.4, 2.2, 1]} />
         <meshLambertMaterial color="#3B4657" />
       </mesh>
-      {/* panel depan */}
       {racks.map((y, i) => (
-        <group key={i} position={[0, 0.55 + i * 0.42, 0.51]}>
+        <group key={i} position={[0, 0.55 + i * 0.55, 0.51]}>
           <mesh>
-            <boxGeometry args={[2.1, 0.3, 0.06]} />
+            <boxGeometry args={[2.1, 0.38, 0.06]} />
             <meshLambertMaterial color="#1F2937" />
           </mesh>
-          {/* lampu indikator */}
-          {[0, 1, 2, 3, 4].map(j => (
-            <mesh key={j} position={[-0.8 + j * 0.16, 0.04, 0.04]}>
+          {[0, 1, 2, 3, 4, 5].map(j => (
+            <mesh key={j} position={[-0.8 + j * 0.16, 0.05, 0.04]}>
               <boxGeometry args={[0.07, 0.07, 0.02]} />
               <meshStandardMaterial
                 color={brainAgentId ? '#4ADE80' : '#22C55E'}
                 emissive="#22C55E"
-                emissiveIntensity={0.8 + ((pulse + i + j) % 3) * 0.4}
+                emissiveIntensity={0.8 + ((i + j) % 3) * 0.4}
               />
             </mesh>
           ))}
-          {/* layar kecil */}
           <mesh position={[0.55, 0.02, 0.045]}>
-            <planeGeometry args={[0.7, 0.16]} />
+            <planeGeometry args={[0.7, 0.18]} />
             <meshStandardMaterial ref={i === 1 ? blinkRef : undefined} color="#0B1120" emissive="#38BDF8" emissiveIntensity={1} />
           </mesh>
         </group>
       ))}
-      {/* label */}
-      <Text position={[0, 2.15, 0]} fontSize={0.26} color="#334155" anchorX="center" fontWeight="bold" letterSpacing={0.05}>
+      <Text position={[0, 2.75, 0.2]} fontSize={0.26} color="#475569" anchorX="center" fontWeight="bold" letterSpacing={0.05}>
         MEMORY SERVER
       </Text>
-      <Text position={[0, -0.12, 0.55]} fontSize={0.14} color="#94A3B8" anchorX="center">
-        semua memori agent tersimpan di sini
-      </Text>
-      {/* kabel ke atas */}
-      <mesh position={[0, 2.4, 0]}>
-        <cylinderGeometry args={[0.03, 0.03, 1.2, 8]} />
+      <mesh position={[0.9, 2.6, 0]}>
+        <cylinderGeometry args={[0.03, 0.03, 1, 8]} />
         <meshStandardMaterial color="#64748B" />
+      </mesh>
+      <mesh position={[0.9, 3.15, 0]}>
+        <sphereGeometry args={[0.08, 10, 10]} />
+        <meshStandardMaterial color="#4ADE80" emissive="#22C55E" emissiveIntensity={1.6} />
       </mesh>
     </group>
   )
