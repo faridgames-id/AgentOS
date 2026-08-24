@@ -13,13 +13,13 @@
     letter-spacing: -0.01em;
   }
 
-  /* Dancing Script hanya untuk judul halaman utama (h1), card headers pakai Inter */
-  h1 {
+  /* Dancing Script untuk judul halaman (h1) & elemen ber-class .font-display */
+  h1, .font-display {
     font-family: 'Dancing Script', cursive;
     font-weight: 700;
   }
 
-  h2, h3, h4, h5, h6 {
+  h2:not(.font-display), h3:not(.font-display), h4, h5, h6 {
     font-family: 'Inter', sans-serif;
     font-weight: 700;
     letter-spacing: -0.01em;
