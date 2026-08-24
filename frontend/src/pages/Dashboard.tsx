@@ -1235,6 +1235,181 @@ function StockStatCard({ s, idx }: { s: { icon: typeof Gamepad2; label: string; 
   )
 }
 
+// ── AI Models Dashboard (REAL usage dari Hermes logs) ─
+interface ModelUsage {
+  name: string
+  calls: number
+  share: number
+  context_window: number
+  context_used_tokens: number
+  context_used_pct: number
+}
+
+const MODEL_HEX: Record<string, string> = {
+  'ox-alpha': '#22D3EE',
+  'DeepSeek': '#8B5CF6',
+  'Agnes': '#F59E0B',
+  'OpenAI': '#10B981',
+}
+const MODEL_ICON: Record<string, typeof Users> = {
+  'ox-alpha (OpenRouter)': Orbit,
+  'DeepSeek v4 Flash': Zap,
+  'Agnes 2.5 Flash': Sparkles,
+  'OpenAI Studio': Globe,
+}
+
+function modelHex(name: string): string {
+  for (const key of Object.keys(MODEL_HEX)) {
+    if (name.toLowerCase().includes(key.toLowerCase())) return MODEL_HEX[key]
+  }
+  return '#94A3B8'
+}
+function modelIcon(name: string): typeof Users {
+  return MODEL_ICON[name] || Bot
+}
+
+function AiModelsDashboard() {
+  const [models, setModels] = useState<ModelUsage[]>([])
+  const [current, setCurrent] = useState('—')
+  const [totalCalls, setActiveDays] = useState(0)
+  const [days, setDays] = useState(0)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let alive = true
+    const load = () => {
+      fetch('/api/models/usage')
+        .then(r => r.json())
+        .then(d => {
+          if (!alive) return
+          setModels(d.models || [])
+          setCurrent(d.current || '—')
+          setDays(d.active_days || 0)
+          setLoading(false)
+        })
+        .catch(() => { if (alive) setLoading(false) })
+    }
+    load()
+    const iv = setInterval(load, 30000) // refresh tiap 30s — angka tetap konsisten saat reload
+    return () => { alive = false; clearInterval(iv) }
+  }, [])
+
+  const totalAll = models.reduce((a, b) => a + b.calls, 0)
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 48 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.55, type: 'spring', stiffness: 110, damping: 16 }}
+      className="p-6 rounded-2xl relative overflow-hidden"
+      style={{
+        background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
+        border: '1px solid rgba(148,163,184,0.12)',
+        boxShadow: '0 0 24px rgba(139,92,246,0.08), inset 0 1px 0 rgba(255,255,255,0.06)'
+      }}
+    >
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5 relative z-10">
+        <div className="flex items-center gap-3">
+          <motion.div initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.65, type: 'spring', stiffness: 200, damping: 12 }}>
+            <AppIcon icon={Cpu} hex="#8B5CF6" size={38} />
+          </motion.div>
+          <div>
+            <span className="text-base font-semibold text-white tracking-wide block">AI Models</span>
+            <span className="text-[10px] text-slate-500 font-mono">usage &amp; context • real-time dari log Hermes</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {totalAll > 0 && (
+            <span className="text-xs px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-400/20 text-purple-300 font-mono">
+              {totalAll.toLocaleString('id-ID')} calls
+            </span>
+          )}
+          <span className="text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/20 text-emerald-400 font-mono">
+            aktif: {current}
+          </span>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center h-[150px] text-slate-500 text-sm font-mono relative z-10">
+          <Sparkles size={18} className="animate-pulse mr-2 text-purple-400" /> Membaca log pemakaian model...
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5 relative z-10">
+          {models.map((m, idx) => {
+            const hex = modelHex(m.name)
+            const Icon = modelIcon(m.name)
+            const ctxPct = Math.min(100, m.context_used_pct)
+            return (
+              <motion.div
+                key={m.name}
+                initial={{ opacity: 0, y: 24, scale: 0.94 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ delay: 0.7 + idx * 0.07, type: 'spring', stiffness: 150, damping: 15 }}
+                whileHover={{ y: -5, transition: { duration: 0.18 } }}
+                className="rounded-xl relative overflow-hidden group"
+                style={{
+                  background: 'linear-gradient(160deg, rgba(30,35,45,0.95), rgba(15,19,26,0.98))',
+                  border: '1px solid rgba(148,163,184,0.14)',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)'
+                }}
+              >
+                {/* header */}
+                <div className="px-4 pt-3.5 pb-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <AppIcon icon={Icon} hex={hex} size={32} />
+                    <span className="text-[12px] font-semibold text-slate-200 tracking-wide">{m.name}</span>
+                  </div>
+                  <span className="text-[9px] px-2 py-0.5 rounded-full font-mono"
+                    style={{ background: `${hex}14`, border: `1px solid ${hex}44`, color: hex }}>
+                    {m.share}%
+                  </span>
+                </div>
+
+                {/* panel usage */}
+                <div className="mx-2.5 mb-2.5 rounded-lg px-4 py-3 relative overflow-hidden"
+                  style={{
+                    background: `linear-gradient(150deg, ${hex}12, rgba(24,29,38,0.92) 55%, rgba(18,22,30,0.96))`,
+                    border: '1px solid rgba(148,163,184,0.1)'
+                  }}>
+                  <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-20 pointer-events-none transition-opacity group-hover:opacity-40" style={{ background: hex }} />
+
+                  <p className="text-[10px] text-slate-500 tracking-wide relative z-10">Total calls</p>
+                  <p className="text-[24px] font-black font-mono leading-tight relative z-10">
+                    <span className="text-white">{m.calls.toLocaleString('id-ID')}</span>
+                    <span className="text-slate-500 text-xs"> / {days} hari</span>
+                  </p>
+
+                  {/* context bar */}
+                  <div className="mt-2.5 relative z-10">
+                    <div className="flex items-center justify-between text-[9px] text-slate-500 mb-1">
+                      <span>Context terpakai</span>
+                      <span className="font-mono" style={{ color: hex }}>{(m.context_used_tokens / 1000).toFixed(0)}k / {(m.context_window / 1000).toFixed(0)}k</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${ctxPct}%` }}
+                        transition={{ delay: 0.9 + idx * 0.07, duration: 1, ease: 'easeOut' }}
+                        className="h-full rounded-full"
+                        style={{ background: `linear-gradient(90deg, ${hex}, ${hex}44)`, boxShadow: `0 0 8px ${hex}66` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )
+          })}
+        </div>
+      )}
+    </motion.div>
+  )
+}
+
 export default function Dashboard() {
   const [pulseActive, setPulseActive] = useState(true)
 
@@ -1295,6 +1470,9 @@ export default function Dashboard() {
 
       {/* ═══ ZEPHRA Stock Dashboard (filter global) ═══ */}
       <StockDashboard />
+
+      {/* ═══ AI Models Dashboard (usage & context) ═══ */}
+      <AiModelsDashboard />
 
       {/* ═══ Charts Row: Task Flow + Income Tracker ═══ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
