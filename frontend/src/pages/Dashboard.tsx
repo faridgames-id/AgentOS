@@ -1274,23 +1274,30 @@ function AiModelsDashboard() {
   const [totalCalls, setActiveDays] = useState(0)
   const [days, setDays] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [providers, setProviders] = useState<Array<{ name: string; endpoint: string; model: string; type: string }>>([])
+  const [budget, setBudget] = useState<{ rows: Array<{ model: string; est_cost_usd: number; tokens_in: number; tokens_out: number }>; total_est_usd: number } | null>(null)
 
   useEffect(() => {
     let alive = true
     const load = () => {
-      fetch('/api/models/usage')
-        .then(r => r.json())
-        .then(d => {
-          if (!alive) return
-          setModels(d.models || [])
-          setCurrent(d.current || '—')
-          setDays(d.active_days || 0)
-          setLoading(false)
-        })
-        .catch(() => { if (alive) setLoading(false) })
+      Promise.allSettled([
+        fetch('/api/models/usage').then(r => r.json()),
+        fetch('/api/models/providers').then(r => r.json()),
+        fetch('/api/models/budget').then(r => r.json()),
+      ]).then(([u, p, b]) => {
+        if (!alive) return
+        if (u.status === 'fulfilled') {
+          setModels(u.value.models || [])
+          setCurrent(u.value.current || '—')
+          setDays(u.value.active_days || 0)
+        }
+        if (p.status === 'fulfilled') setProviders(p.value.providers || [])
+        if (b.status === 'fulfilled') setBudget(b.value)
+        setLoading(false)
+      })
     }
     load()
-    const iv = setInterval(load, 30000) // refresh tiap 30s — angka tetap konsisten saat reload
+    const iv = setInterval(load, 30000)
     return () => { alive = false; clearInterval(iv) }
   }, [])
 
@@ -1339,6 +1346,7 @@ function AiModelsDashboard() {
           <Sparkles size={18} className="animate-pulse mr-2 text-purple-400" /> Membaca log pemakaian model...
         </div>
       ) : (
+        <>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5 relative z-10">
           {models.map((m, idx) => {
             const hex = modelHex(m.name)
@@ -1405,6 +1413,103 @@ function AiModelsDashboard() {
             )
           })}
         </div>
+
+        {/* ── Row 2: Custom Endpoints + Budget ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 mt-3.5 relative z-10">
+          {/* Custom Endpoints */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.0, type: 'spring', stiffness: 150, damping: 15 }}
+            className="rounded-xl relative overflow-hidden p-4"
+            style={{
+              background: 'linear-gradient(160deg, rgba(30,35,45,0.95), rgba(15,19,26,0.98))',
+              border: '1px solid rgba(148,163,184,0.14)',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.35)'
+            }}
+          >
+            <div className="flex items-center gap-2.5 mb-3">
+              <AppIcon icon={Globe} hex="#38BDF8" size={30} />
+              <div>
+                <p className="text-[13px] font-semibold text-white">Custom Endpoints</p>
+                <p className="text-[9px] text-slate-500 font-mono">dari config.yaml</p>
+              </div>
+              <span className="ml-auto text-[9px] px-2 py-0.5 rounded-full font-mono bg-sky-500/10 border border-sky-400/30 text-sky-400">
+                {providers.length} endpoint
+              </span>
+            </div>
+            <div className="space-y-2">
+              {providers.map((p, i) => (
+                <motion.div
+                  key={p.name}
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 1.05 + i * 0.06 }}
+                  className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/[0.03] border border-white/5"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.7)] shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold text-slate-200 truncate">{p.name}</p>
+                      <p className="text-[9px] text-slate-500 font-mono truncate">{p.endpoint}</p>
+                    </div>
+                  </div>
+                  <span className="text-[9px] px-2 py-0.5 rounded-full font-mono bg-sky-500/10 border border-sky-400/25 text-sky-300 shrink-0 ml-2">
+                    {p.model}
+                  </span>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Budget / Biaya */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.1, type: 'spring', stiffness: 150, damping: 15 }}
+            className="rounded-xl relative overflow-hidden p-4"
+            style={{
+              background: 'linear-gradient(160deg, rgba(30,35,45,0.95), rgba(15,19,26,0.98))',
+              border: '1px solid rgba(148,163,184,0.14)',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.35)'
+            }}
+          >
+            <div className="flex items-center gap-2.5 mb-3">
+              <AppIcon icon={Activity} hex="#F59E0B" size={30} />
+              <div>
+                <p className="text-[13px] font-semibold text-white">Budget Terpakai</p>
+                <p className="text-[9px] text-slate-500 font-mono">estimasi biaya • berbayar</p>
+              </div>
+              <span className="ml-auto text-sm font-black font-mono text-amber-400">
+                ${budget ? budget.total_est_usd.toFixed(2) : '—'}
+              </span>
+            </div>
+            <div className="space-y-2">
+              {budget?.rows.map((r, i) => {
+                const hex = modelHex(r.model)
+                const pct = Math.min(100, (r.est_cost_usd / Math.max(0.01, budget.total_est_usd)) * 100)
+                return (
+                  <div key={r.model} className="px-3 py-2 rounded-lg bg-white/[0.03] border border-white/5">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] font-semibold text-slate-300">{r.model}</span>
+                      <span className="text-[10px] font-mono font-bold" style={{ color: hex }}>${r.est_cost_usd.toFixed(2)}</span>
+                    </div>
+                    <div className="h-1 rounded-full bg-white/5 overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ delay: 1.15 + i * 0.06, duration: 0.9, ease: 'easeOut' }}
+                        className="h-full rounded-full"
+                        style={{ background: `linear-gradient(90deg, ${hex}, ${hex}44)` }}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </motion.div>
+        </div>
+        </>
       )}
     </motion.div>
   )
