@@ -2,7 +2,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import agents, finance, stock
+from routers import agents, finance, stock, cozy
 from services.database import init_db
 from pathlib import Path
 import os
@@ -38,6 +38,7 @@ else:
 # Routers
 app.include_router(agents.router, prefix="/api/agents")
 app.include_router(finance.router, prefix="/api/finance")
+app.include_router(cozy.router, prefix="/api/cozy")
 app.include_router(stock.router, prefix="/api/stock")
 
 @app.on_event("startup")

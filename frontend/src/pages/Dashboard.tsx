@@ -578,6 +578,167 @@ function TaskFlowCard() {
   )
 }
 
+// ── Cozy Cron (REAL data dari Hermes runtime) ─────────
+interface CronJobReal {
+  id: string
+  name: string
+  schedule: string
+  agent: string
+  status: string
+  last_run: string | null
+}
+interface SysStats {
+  cpu: number | null
+  mem: number | null
+  gateway: boolean
+  uptime: string | null
+}
+
+function CozyCronCard() {
+  const [jobs, setJobs] = useState<CronJobReal[]>([])
+  const [stats, setStats] = useState<SysStats | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [tick, setTick] = useState(0)
+
+  useEffect(() => {
+    let alive = true
+    const load = () => {
+      fetch('/api/cozy/cron')
+        .then(r => r.json())
+        .then(d => {
+          if (!alive) return
+          setJobs(d.jobs || [])
+          setStats(d.stats || null)
+          setLoading(false)
+        })
+        .catch(() => { if (alive) setLoading(false) })
+    }
+    load()
+    const iv = setInterval(load, 15000) // auto-refresh tiap 15s
+    return () => { alive = false; clearInterval(iv) }
+  }, [])
+
+  useEffect(() => {
+    const iv = setInterval(() => setTick(t => t + 1), 1000)
+    return () => clearInterval(iv)
+  }, [])
+
+  const activeCount = jobs.filter(j => j.status === 'active').length
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 48, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay: 0.5, type: 'spring', stiffness: 120, damping: 16 }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className="p-6 rounded-2xl relative overflow-hidden"
+      style={{
+        background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
+        border: '1px solid rgba(148,163,184,0.12)',
+        boxShadow: '0 0 24px rgba(245,158,11,0.1), inset 0 1px 0 rgba(255,255,255,0.06)'
+      }}
+    >
+      {/* corner glow */}
+      <div className="absolute -top-12 -right-12 w-36 h-36 rounded-full blur-3xl opacity-20 pointer-events-none bg-amber-500" />
+      {/* scan line */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4 relative z-10">
+        <div className="flex items-center gap-3">
+          <motion.div
+            initial={{ scale: 0, rotate: -30 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.6, type: 'spring', stiffness: 200, damping: 12 }}
+            className="w-9 h-9 rounded-lg flex items-center justify-center"
+            style={{ background: 'rgba(245,158,11,0.13)', border: '1px solid rgba(245,158,11,0.55)', boxShadow: '0 0 14px rgba(245,158,11,0.2)' }}
+          >
+            <CalendarClock size={16} className="text-amber-400" />
+          </motion.div>
+          <span className="text-base font-semibold text-white tracking-wide">Cozy Cron</span>
+          {stats?.gateway && (
+            <motion.span
+              animate={{ opacity: [1, 0.4, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="flex items-center gap-1 text-[10px] text-emerald-400 font-mono"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+              GATEWAY
+            </motion.span>
+          )}
+        </div>
+        <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/20 text-emerald-400 font-mono">
+          {activeCount}/{jobs.length || 0} active
+        </span>
+      </div>
+
+      {/* System stats strip (REAL) */}
+      <div className="flex items-center gap-4 mb-4 text-xs font-mono relative z-10">
+        <span className="text-slate-500">CPU <span className="text-amber-300 font-bold">{stats?.cpu ?? '–'}%</span></span>
+        <span className="text-slate-500">MEM <span className="text-purple-300 font-bold">{stats?.mem ?? '–'}%</span></span>
+        <span className="text-slate-500">UP <span className="text-cyan-300 font-bold">{stats?.uptime ?? '–'}</span></span>
+      </div>
+
+      {/* Job list */}
+      {loading ? (
+        <div className="flex items-center justify-center h-[180px] text-slate-500 text-sm font-mono relative z-10">
+          <Sparkles size={18} className="animate-pulse mr-2 text-amber-400" /> Membaca Hermes runtime...
+        </div>
+      ) : jobs.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-[180px] text-slate-500 text-sm font-mono gap-2 relative z-10">
+          <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ duration: 2, repeat: Infinity }}>
+            <CalendarClock size={28} className="text-slate-600" />
+          </motion.div>
+          Belum ada cron job terjadwal
+        </div>
+      ) : (
+        <div className="space-y-2.5 relative z-10">
+          <AnimatePresence>
+            {jobs.map((job, idx) => (
+              <motion.div
+                key={job.id + tick * 0}
+                initial={{ opacity: 0, x: -16 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.55 + idx * 0.07 }}
+                whileHover={{ x: 4 }}
+                className="flex items-center justify-between p-3.5 rounded-xl bg-white/[0.03] border border-white/5 hover:border-amber-400/30 transition-colors group relative overflow-hidden"
+              >
+                {/* running shimmer */}
+                {job.status === 'active' && (
+                  <motion.div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{ background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.06), transparent)' }}
+                    animate={{ x: ['-100%', '100%'] }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: 'linear', delay: idx * 0.4 }}
+                  />
+                )}
+                <div className="flex items-center gap-3 relative z-10">
+                  <motion.div
+                    animate={job.status === 'active' ? { scale: [1, 1.3, 1] } : {}}
+                    transition={{ duration: 1.6, repeat: Infinity, delay: idx * 0.3 }}
+                  >
+                    <div className={`w-2 h-2 rounded-full ${job.status === 'active' ? 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.7)]' : 'bg-slate-600'}`} />
+                  </motion.div>
+                  <div>
+                    <p className="font-semibold text-white text-sm">{job.name}</p>
+                    <p className="text-xs text-slate-500 font-mono">{job.schedule} → {job.agent}</p>
+                  </div>
+                </div>
+                <div className="text-right relative z-10">
+                  <p className="text-sm font-bold text-amber-400 font-mono">
+                    {job.last_run ? `last ${job.last_run.slice(11, 16)}` : 'pending'}
+                  </p>
+                  <PlayCircle size={14} className="ml-auto text-slate-600 group-hover:text-amber-400 cursor-pointer transition-colors" />
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      )}
+    </motion.div>
+  )
+}
+
 export default function Dashboard() {
   const [pulseActive, setPulseActive] = useState(true)
 
@@ -650,49 +811,8 @@ export default function Dashboard() {
         {/* Agent Performance — stat-card style */}
         <AgentPerformanceCard />
 
-        {/* Cron Jobs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
-          className="p-6 rounded-2xl relative overflow-hidden"
-          style={{
-            background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
-            border: '1px solid rgba(148,163,184,0.12)',
-            boxShadow: '0 0 24px rgba(245,158,11,0.08)'
-          }}
-        >
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <CalendarClock size={20} className="text-amber-400" />
-              Cozy Cron
-            </h2>
-            <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/20 text-emerald-400 font-mono">
-              {activeCrons}/{cronJobs.length} active
-            </span>
-          </div>
-          <div className="space-y-2.5">
-            {cronJobs.map((job, idx) => (
-              <motion.div
-                key={job.id}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.55 + idx * 0.06 }}
-                className="flex items-center justify-between p-3.5 rounded-xl bg-white/[0.03] border border-white/5 hover:border-cyan-400/20 transition-colors group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${job.status === 'active' ? 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.6)] animate-pulse' : 'bg-slate-600'}`} />
-                  <div>
-                    <p className="font-semibold text-white text-sm">{job.name}</p>
-                    <p className="text-xs text-slate-500 font-mono">{job.schedule} → {job.agent}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-cyan-400 font-mono">next {job.next}</p>
-                  <PlayCircle size={14} className="ml-auto text-slate-600 group-hover:text-cyan-400 cursor-pointer transition-colors" />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
+        {/* Cron Jobs — REAL Hermes data */}
+        <CozyCronCard />
       </div>
 
       {/* ═══ Live Tasks Table (Stakely-style) ═══ */}
