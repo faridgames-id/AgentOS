@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Cpu, Activity, Clock, TrendingUp, ArrowUpRight, ArrowDownRight,
   Zap, Radio, Bot, Users, CalendarClock, ListTodo, Orbit,
-  Sparkles, PlayCircle, CheckCircle2, CircleDot, Terminal, Globe
+  Sparkles, PlayCircle, CheckCircle2, CircleDot, Terminal, Globe,
+  Gamepad2, Package, ShoppingCart
 } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 
@@ -899,6 +900,237 @@ function LiveTaskQueue() {
   )
 }
 
+// ── ZEPHRA Stock Dashboard (filter bulan/tahun global) ─
+interface StockAccount {
+  id?: string
+  game?: string
+  status?: string
+  tanggalMasuk?: string
+  hargaBeli?: number
+  hargaJual?: number
+}
+
+const STOCK_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+const STOCK_YEARS = ['all', '2025', '2026', '2027', '2028', '2029', '2030']
+
+function StockDashboard() {
+  const [accounts, setAccounts] = useState<StockAccount[]>([])
+  const [loading, setLoading] = useState(true)
+  const [month, setMonth] = useState<number | 'all'>('all')
+  const [year, setYear] = useState<string>('all')
+  const [openDrop, setOpenDrop] = useState<'month' | 'year' | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    fetch('/api/stock/')
+      .then(r => r.json())
+      .then(d => {
+        if (!alive) return
+        const arr = Array.isArray(d) ? d : d.accounts || []
+        setAccounts(arr)
+        setLoading(false)
+      })
+      .catch(() => { if (alive) setLoading(false) })
+    return () => { alive = false }
+  }, [])
+
+  // Filter by tanggalMasuk (YYYY-MM-DD)
+  const filtered = accounts.filter(a => {
+    const t = String(a.tanggalMasuk || '')
+    if (!t) return month === 'all' && year === 'all' ? true : false
+    const y = t.slice(0, 4)
+    const m = parseInt(t.slice(5, 7), 10)
+    if (year !== 'all' && y !== year) return false
+    if (month !== 'all' && m !== month) return false
+    return true
+  })
+
+  const isFF = (a: StockAccount) => a.game === 'Free Fire'
+  const isML = (a: StockAccount) => a.game === 'Mobile Legends'
+  const isReady = (a: StockAccount) => a.status === 'Ready'
+
+  const stats = [
+    { icon: Gamepad2, label: 'Total Akun FF', value: filtered.filter(isFF).length, sub: 'Semua status', hex: '#22D3EE' },
+    { icon: CheckCircle2, label: 'FF Ready', value: filtered.filter(a => isFF(a) && isReady(a)).length, sub: 'Siap jual', hex: '#34D399' },
+    { icon: Gamepad2, label: 'Total Akun ML', value: filtered.filter(isML).length, sub: 'Semua status', hex: '#A78BFA' },
+    { icon: CheckCircle2, label: 'ML Ready', value: filtered.filter(a => isML(a) && isReady(a)).length, sub: 'Siap jual', hex: '#34D399' },
+    { icon: Package, label: 'Total Semua', value: filtered.length, sub: 'Seluruh akun', hex: '#60A5FA' },
+    { icon: CheckCircle2, label: 'Semua Ready', value: filtered.filter(isReady).length, sub: 'Siap jual', hex: '#34D399' },
+    { icon: ShoppingCart, label: 'Terjual', value: filtered.filter(a => a.status === 'Terjual').length, sub: 'Sukses terjual', hex: '#FBBF24' },
+    { icon: Clock, label: 'Cicilan', value: filtered.filter(a => a.status === 'Cicilan').length, sub: 'Pending payment', hex: '#F87171' },
+  ]
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 48 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.6, type: 'spring', stiffness: 110, damping: 16 }}
+      className="p-6 rounded-2xl relative overflow-hidden"
+      style={{
+        background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
+        border: '1px solid rgba(148,163,184,0.12)',
+        boxShadow: '0 0 24px rgba(239,68,68,0.08), inset 0 1px 0 rgba(255,255,255,0.06)'
+      }}
+    >
+      {/* scan line */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+
+      {/* Header + Global Filters */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5 relative z-10">
+        <div className="flex items-center gap-3">
+          <motion.div
+            initial={{ scale: 0, rotate: -30 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.7, type: 'spring', stiffness: 200, damping: 12 }}
+            className="w-9 h-9 rounded-lg flex items-center justify-center"
+            style={{ background: 'rgba(239,68,68,0.13)', border: '1px solid rgba(239,68,68,0.55)', boxShadow: '0 0 14px rgba(239,68,68,0.2)' }}
+          >
+            <Gamepad2 size={16} className="text-red-400" />
+          </motion.div>
+          <span className="text-base font-semibold text-white tracking-wide">ZEPHRA Stock Dashboard</span>
+          <span className="text-[10px] text-slate-500 font-mono hidden md:inline">• farid-shop-enterprise</span>
+        </div>
+
+        {/* Filter bulan + tahun */}
+        <div className="flex items-center gap-2">
+          {/* Month */}
+          <div className="relative">
+            <button
+              onClick={() => setOpenDrop(openDrop === 'month' ? null : 'month')}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10 hover:border-red-400/40 transition-colors"
+            >
+              <CalendarClock size={13} className="text-red-400" />
+              <span className="text-xs text-white font-mono font-bold">
+                {month === 'all' ? 'Semua Bulan' : STOCK_MONTHS[month - 1]}
+              </span>
+              <motion.span animate={{ rotate: openDrop === 'month' ? 180 : 0 }} className="text-slate-500 text-[10px]">▼</motion.span>
+            </button>
+            <AnimatePresence>
+              {openDrop === 'month' && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                  transition={{ duration: 0.16 }}
+                  className="absolute right-0 top-full mt-2 z-50 p-2 rounded-xl w-44 grid grid-cols-3 gap-1.5"
+                  style={{ background: 'rgba(10,15,30,0.97)', border: '1px solid rgba(239,68,68,0.35)', boxShadow: '0 8px 30px rgba(0,0,0,0.5)' }}
+                >
+                  <button
+                    onClick={() => { setMonth('all'); setOpenDrop(null) }}
+                    className={`col-span-3 px-3 py-1.5 rounded-lg text-xs font-mono transition-all ${month === 'all' ? 'bg-red-500/25 text-red-300 border border-red-400/40' : 'text-slate-300 border border-transparent hover:bg-white/5'}`}
+                  >
+                    Semua Bulan
+                  </button>
+                  {STOCK_MONTHS.map((m, i) => (
+                    <button
+                      key={m}
+                      onClick={() => { setMonth(i + 1); setOpenDrop(null) }}
+                      className={`px-2 py-1.5 rounded-lg text-xs font-mono transition-all ${month === i + 1 ? 'bg-red-500/25 text-red-300 border border-red-400/40' : 'text-slate-300 border border-transparent hover:bg-white/5'}`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Year */}
+          <div className="relative">
+            <button
+              onClick={() => setOpenDrop(openDrop === 'year' ? null : 'year')}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10 hover:border-red-400/40 transition-colors"
+            >
+              <CalendarClock size={13} className="text-red-400" />
+              <span className="text-xs text-white font-mono font-bold">{year === 'all' ? 'Semua Tahun' : year}</span>
+              <motion.span animate={{ rotate: openDrop === 'year' ? 180 : 0 }} className="text-slate-500 text-[10px]">▼</motion.span>
+            </button>
+            <AnimatePresence>
+              {openDrop === 'year' && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                  transition={{ duration: 0.16 }}
+                  className="absolute right-0 top-full mt-2 z-50 p-2 rounded-xl w-36 grid grid-cols-3 gap-1.5"
+                  style={{ background: 'rgba(10,15,30,0.97)', border: '1px solid rgba(239,68,68,0.35)', boxShadow: '0 8px 30px rgba(0,0,0,0.5)' }}
+                >
+                  {STOCK_YEARS.map(y => (
+                    <button
+                      key={y}
+                      onClick={() => { setYear(y); setOpenDrop(null) }}
+                      className={`px-2 py-1.5 rounded-lg text-xs font-mono transition-all ${year === y ? 'bg-red-500/25 text-red-300 border border-red-400/40' : y === 'all' ? 'col-span-3 text-slate-300 border border-transparent hover:bg-white/5' : 'text-slate-300 border border-transparent hover:bg-white/5'}`}
+                    >
+                      {y === 'all' ? 'Semua Tahun' : y}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+
+      {/* 8 stat cards dalam satu kotak */}
+      {loading ? (
+        <div className="flex items-center justify-center h-[180px] text-slate-500 text-sm font-mono relative z-10">
+          <Sparkles size={18} className="animate-pulse mr-2 text-red-400" /> Memuat stok ZEPHRA...
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 relative z-10">
+          {stats.map((s, idx) => {
+            const n = useCountUpSafe(s.value, 900, 650 + idx * 70)
+            return (
+              <motion.div
+                key={s.label}
+                initial={{ opacity: 0, y: 24, scale: 0.94 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ delay: 0.7 + idx * 0.06, type: 'spring', stiffness: 150, damping: 15 }}
+                whileHover={{ y: -4, transition: { duration: 0.18 } }}
+                className="p-4 rounded-xl relative overflow-hidden"
+                style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(148,163,184,0.1)'
+                }}
+              >
+                <div className="flex items-center gap-2.5 mb-2.5">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ background: `${s.hex}1f`, border: `1px solid ${s.hex}55` }}>
+                    <s.icon size={14} style={{ color: s.hex }} />
+                  </div>
+                  <span className="text-[11px] font-semibold text-slate-300 tracking-wide leading-tight">{s.label}</span>
+                </div>
+                <p className="text-2xl font-black text-white font-mono leading-none">{n}</p>
+                <p className="text-[10px] text-slate-500 mt-1.5">{s.sub}</p>
+              </motion.div>
+            )
+          })}
+        </div>
+      )}
+    </motion.div>
+  )
+}
+
+// count-up yang aman dipanggil dalam loop (versi sederhana)
+function useCountUpSafe(target: number, duration: number, delay: number) {
+  const [val, setVal] = useState(0)
+  useEffect(() => {
+    let raf = 0
+    let start: number | null = null
+    const timer = setTimeout(() => {
+      const step = (ts: number) => {
+        if (start === null) start = ts
+        const p = Math.min((ts - start) / duration, 1)
+        setVal(Math.round(target * (1 - Math.pow(1 - p, 3))))
+        if (p < 1) raf = requestAnimationFrame(step)
+      }
+      raf = requestAnimationFrame(step)
+    }, delay)
+    return () => { clearTimeout(timer); cancelAnimationFrame(raf) }
+  }, [target, duration, delay])
+  return val
+}
+
 export default function Dashboard() {
   const [pulseActive, setPulseActive] = useState(true)
 
@@ -977,6 +1209,9 @@ export default function Dashboard() {
 
       {/* ═══ Live Task Queue — REAL Hermes activity ═══ */}
       <LiveTaskQueue />
+
+      {/* ═══ ZEPHRA Stock Dashboard (filter global) ═══ */}
+      <StockDashboard />
     </div>
   )
 }
