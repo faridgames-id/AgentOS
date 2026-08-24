@@ -303,7 +303,7 @@ export default function Chat() {
       </motion.div>
 
       <motion.h2
-        className="mt-20 text-3xl font-bold font-display tracking-tight"
+        className="mt-20 text-4xl font-bold font-display tracking-tight"
         animate={isListening ? {
           background: [
             'linear-gradient(90deg,#67e8f9,#e879f9)',

@@ -15,6 +15,7 @@ export default {
       },
       fontFamily: {
         body: ['"Inter"', 'sans-serif'],
+        display: ['"Dancing Script"', 'cursive'],
         mono: ['"JetBrains Mono"', 'monospace'],
       },
       animation: {
