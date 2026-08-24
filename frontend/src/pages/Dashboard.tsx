@@ -133,10 +133,10 @@ function StatCard({ stat, idx }: { stat: StatItem; idx: number }) {
   const sparkData = stat.spark.map((v, i) => ({ i, v }))
   return (
     <motion.div
-      initial={{ opacity: 0, y: 48, scale: 0.92 }}
+      initial={{ opacity: 0, y: 30, scale: 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: idx * 0.13, type: 'spring', stiffness: 130, damping: 15 }}
-      whileHover={{ y: -6, scale: 1.02, transition: { duration: 0.2 } }}
+      transition={{ delay: 0.05 + idx * 0.06, type: 'spring', stiffness: 260, damping: 20 }}
+      whileHover={{ y: -4, transition: { duration: 0.15 } }}
       className="relative p-5 rounded-2xl overflow-hidden group cursor-default"
       style={{
         background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
@@ -153,9 +153,9 @@ function StatCard({ stat, idx }: { stat: StatItem; idx: number }) {
       {/* header: icon tile + label */}
       <div className="flex items-center gap-3 mb-4 relative z-10">
         <motion.div
-          initial={{ scale: 0, rotate: -30 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ delay: 0.25 + idx * 0.13, type: 'spring', stiffness: 200, damping: 12 }}
+          initial={{ scale: 0, rotate: -12, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.12 + idx * 0.04, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         >
           <AppIcon icon={stat.icon} hex={stat.hex} size={38} />
         </motion.div>
@@ -179,7 +179,7 @@ function StatCard({ stat, idx }: { stat: StatItem; idx: number }) {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.55 + idx * 0.13, duration: 0.6 }}
+        transition={{ delay: 0.3, duration: 0.4 }}
         className="relative z-10 -mx-1"
         style={{ filter: `drop-shadow(0 0 6px ${stat.hex}55)` }}
       >
@@ -254,9 +254,9 @@ function IncomeTracker() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 48, scale: 0.95 }}
+      initial={{ opacity: 0, y: 26, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: 0.4, type: 'spring', stiffness: 120, damping: 16 }}
+      transition={{ delay: 0.1, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
       className="p-6 rounded-2xl relative overflow-hidden"
       style={{
         background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
@@ -273,9 +273,9 @@ function IncomeTracker() {
       <div className="flex items-center justify-between mb-4 relative z-10">
         <div className="flex items-center gap-3">
           <motion.div
-            initial={{ scale: 0, rotate: -30 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ delay: 0.5, type: 'spring', stiffness: 200, damping: 12 }}
+            initial={{ scale: 0, rotate: -12, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.1, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
             <AppIcon icon={TrendingUp} hex="#34D399" size={38} />
           </motion.div>
@@ -297,7 +297,7 @@ function IncomeTracker() {
             {open && (
               <motion.div
                 initial={{ opacity: 0, y: -8, scale: 0.96 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
+                animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8, scale: 0.96 }}
                 transition={{ duration: 0.18 }}
                 className="absolute right-0 top-full mt-2 z-50 p-2 grid grid-cols-3 gap-1.5 rounded-xl min-w-[180px]"
@@ -422,9 +422,9 @@ function AgentPerformanceCard() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 48, scale: 0.95 }}
+      initial={{ opacity: 0, y: 26, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: 0.45, type: 'spring', stiffness: 120, damping: 16 }}
+      transition={{ delay: 0.15, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
       whileHover={{ y: -4, transition: { duration: 0.2 } }}
       className="p-6 rounded-2xl relative overflow-hidden"
       style={{
@@ -442,9 +442,9 @@ function AgentPerformanceCard() {
       <div className="flex items-center justify-between mb-4 relative z-10">
         <div className="flex items-center gap-3">
           <motion.div
-            initial={{ scale: 0, rotate: -30 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ delay: 0.55, type: 'spring', stiffness: 200, damping: 12 }}
+            initial={{ scale: 0, rotate: -12, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.1, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
             <AppIcon icon={Bot} hex="#34D399" size={38} />
           </motion.div>
@@ -541,9 +541,9 @@ function TaskFlowCard() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 48, scale: 0.95 }}
+      initial={{ opacity: 0, y: 26, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: 0.35, type: 'spring', stiffness: 120, damping: 16 }}
+      transition={{ delay: 0.05, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
       whileHover={{ y: -4, transition: { duration: 0.2 } }}
       className="p-6 rounded-2xl relative overflow-hidden"
       style={{
@@ -561,9 +561,9 @@ function TaskFlowCard() {
       <div className="flex items-center justify-between mb-4 relative z-10">
         <div className="flex items-center gap-3">
           <motion.div
-            initial={{ scale: 0, rotate: -30 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ delay: 0.45, type: 'spring', stiffness: 200, damping: 12 }}
+            initial={{ scale: 0, rotate: -12, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.1, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
             <AppIcon icon={Radio} hex="#22D3EE" size={38} />
           </motion.div>
@@ -695,8 +695,8 @@ function CozyCronCard() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 48, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.5, type: 'spring', stiffness: 120, damping: 16 }}
       whileHover={{ y: -4, transition: { duration: 0.2 } }}
       className="p-6 rounded-2xl relative overflow-hidden"
@@ -715,9 +715,9 @@ function CozyCronCard() {
       <div className="flex items-center justify-between mb-4 relative z-10">
         <div className="flex items-center gap-3">
           <motion.div
-            initial={{ scale: 0, rotate: -30 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ delay: 0.6, type: 'spring', stiffness: 200, damping: 12 }}
+            initial={{ scale: 0, rotate: -12, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.1, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
             <AppIcon icon={CalendarClock} hex="#FBBF24" size={38} />
           </motion.div>
@@ -842,9 +842,9 @@ function LiveTaskQueue() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 48 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.55, type: 'spring', stiffness: 110, damping: 16 }}
+      initial={{ opacity: 0, y: 26, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay: 0.25, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
       className="rounded-2xl overflow-hidden relative"
       style={{
         background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
@@ -858,9 +858,9 @@ function LiveTaskQueue() {
       <div className="flex items-center justify-between p-6 pb-4 relative z-10">
         <div className="flex items-center gap-3">
           <motion.div
-            initial={{ scale: 0, rotate: -30 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ delay: 0.65, type: 'spring', stiffness: 200, damping: 12 }}
+            initial={{ scale: 0, rotate: -12, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.1, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
             <AppIcon icon={Terminal} hex="#22D3EE" size={38} />
           </motion.div>
@@ -1018,9 +1018,9 @@ function StockDashboard() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 48 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.6, type: 'spring', stiffness: 110, damping: 16 }}
+      initial={{ opacity: 0, y: 26, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay: 0.3, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
       className="p-6 rounded-2xl relative overflow-hidden"
       style={{
         background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
@@ -1035,9 +1035,9 @@ function StockDashboard() {
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5 relative z-10">
         <div className="flex items-center gap-3">
           <motion.div
-            initial={{ scale: 0, rotate: -30 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ delay: 0.7, type: 'spring', stiffness: 200, damping: 12 }}
+            initial={{ scale: 0, rotate: -12, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.1, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
             <AppIcon icon={Gamepad2} hex="#EF4444" size={38} />
           </motion.div>
@@ -1063,7 +1063,7 @@ function StockDashboard() {
               {openDrop === 'month' && (
                 <motion.div
                   initial={{ opacity: 0, y: -8, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8, scale: 0.96 }}
                   transition={{ duration: 0.16 }}
                   className="absolute right-0 top-full mt-2 z-50 p-2 rounded-xl w-44 grid grid-cols-3 gap-1.5"
@@ -1103,7 +1103,7 @@ function StockDashboard() {
               {openDrop === 'year' && (
                 <motion.div
                   initial={{ opacity: 0, y: -8, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8, scale: 0.96 }}
                   transition={{ duration: 0.16 }}
                   className="absolute right-0 top-full mt-2 z-50 p-2 rounded-xl w-36 grid grid-cols-3 gap-1.5"
@@ -1165,10 +1165,10 @@ function StockStatCard({ s, idx }: { s: { icon: typeof Gamepad2; label: string; 
   const n = useCountUpSafe(s.value, 900, 650 + idx * 70)
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24, scale: 0.94 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: 0.7 + idx * 0.06, type: 'spring', stiffness: 150, damping: 15 }}
-      whileHover={{ y: -5, transition: { duration: 0.18 } }}
+      initial={{ opacity: 0, x: idx % 2 === 0 ? -36 : 36, y: 14 }}
+      animate={{ opacity: 1, x: 0, y: 0 }}
+      transition={{ delay: 0.1 + idx * 0.05, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{ y: -4, transition: { duration: 0.15 } }}
       className="rounded-xl relative overflow-hidden group"
       style={{
         background: 'linear-gradient(160deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))',
@@ -1180,9 +1180,9 @@ function StockStatCard({ s, idx }: { s: { icon: typeof Gamepad2; label: string; 
       <div className="px-4 pt-3.5 pb-3 flex items-center justify-between relative">
         <div className="flex items-center gap-2.5 relative z-10">
           <motion.div
-            initial={{ scale: 0, rotate: -30 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ delay: 0.75 + idx * 0.06, type: 'spring', stiffness: 220, damping: 12 }}
+            initial={{ scale: 0, rotate: -12, opacity: 0 }}
+            animate={{ scale: 1, rotate: 0, opacity: 1 }}
+            transition={{ delay: 0.2, type: 'spring', stiffness: 300, damping: 18 }}
           >
             <AppIcon icon={s.icon} hex={s.hex} size={32} />
           </motion.div>
@@ -1306,9 +1306,9 @@ function AiModelsDashboard() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 48 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.55, type: 'spring', stiffness: 110, damping: 16 }}
+      initial={{ opacity: 0, y: 26, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay: 0.25, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
       className="p-6 rounded-2xl relative overflow-hidden"
       style={{
         background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
@@ -1321,8 +1321,8 @@ function AiModelsDashboard() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5 relative z-10">
         <div className="flex items-center gap-3">
-          <motion.div initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }}
-            transition={{ delay: 0.65, type: 'spring', stiffness: 200, damping: 12 }}>
+          <motion.div initial={{ scale: 0, rotate: -12, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.1, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}>
             <AppIcon icon={BrainCircuit} hex="#8B5CF6" size={38} />
           </motion.div>
           <div>
@@ -1356,12 +1356,13 @@ function AiModelsDashboard() {
             return (
               <motion.div
                 key={m.name}
-                initial={{ opacity: 0, y: 24, scale: 0.94 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ delay: 0.7 + idx * 0.07, type: 'spring', stiffness: 150, damping: 15 }}
-                whileHover={{ y: -5, transition: { duration: 0.18 } }}
+                initial={{ opacity: 0, y: 40, rotateX: -12, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
+                transition={{ delay: 0.1 + idx * 0.05, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                whileHover={{ y: -5, transition: { duration: 0.15 } }}
                 className="rounded-xl relative overflow-hidden group"
                 style={{
+                  transformPerspective: 800,
                   background: 'linear-gradient(160deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))',
                   border: '1px solid rgba(96,140,220,0.22)',
                   boxShadow: '0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)'
@@ -1403,7 +1404,7 @@ function AiModelsDashboard() {
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${ctxPct}%` }}
-                        transition={{ delay: 0.9 + idx * 0.07, duration: 1, ease: 'easeOut' }}
+                        transition={{ delay: 0.35, duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }}
                         className="h-full rounded-full"
                         style={{ background: `linear-gradient(90deg, ${hex}, ${hex}44)`, boxShadow: `0 0 8px ${hex}66` }}
                       />
@@ -1419,9 +1420,9 @@ function AiModelsDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 mt-3.5 relative z-10">
           {/* Custom Endpoints */}
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.0, type: 'spring', stiffness: 150, damping: 15 }}
+            initial={{ opacity: 0, x: -32 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.25, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             className="rounded-xl relative overflow-hidden p-4"
             style={{
               background: 'linear-gradient(160deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))',
@@ -1443,9 +1444,9 @@ function AiModelsDashboard() {
               {providers.map((p, i) => (
                 <motion.div
                   key={p.name}
-                  initial={{ opacity: 0, x: -12 }}
+                  initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 1.05 + i * 0.06 }}
+                  transition={{ delay: 0.35 + i * 0.04, duration: 0.3, ease: 'easeOut' }}
                   className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/[0.03] border border-white/5"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -1465,9 +1466,9 @@ function AiModelsDashboard() {
 
           {/* Budget / Biaya */}
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.1, type: 'spring', stiffness: 150, damping: 15 }}
+            initial={{ opacity: 0, x: 32 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             className="rounded-xl relative overflow-hidden p-4"
             style={{
               background: 'linear-gradient(160deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))',
@@ -1499,7 +1500,7 @@ function AiModelsDashboard() {
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${pct}%` }}
-                        transition={{ delay: 1.15 + i * 0.06, duration: 0.9, ease: 'easeOut' }}
+                        transition={{ delay: 0.5, duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }}
                         className="h-full rounded-full"
                         style={{ background: `linear-gradient(90deg, ${hex}, ${hex}44)` }}
                       />
