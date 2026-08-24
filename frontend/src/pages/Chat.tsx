@@ -131,69 +131,155 @@ export default function Chat() {
 
   // ════════════════ VOICE TAB (Jarvis) ════════════════
   const VoiceTab = () => (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] relative">
-      {/* Background rings */}
+    <div className="flex flex-col items-center justify-center min-h-[70vh] relative overflow-hidden">
+      {/* Background rings — halus, jauh */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        {[220, 320, 420].map((size, i) => (
+        {[260, 380, 520].map((size, i) => (
           <motion.div
             key={size}
-            className="absolute rounded-full border border-cyan-400/10"
-            style={{ width: size, height: size }}
-            animate={{ scale: [1, 1.08, 1], opacity: [0.5, 0.15, 0.5] }}
-            transition={{ duration: 3, repeat: Infinity, delay: i * 0.7 }}
+            className="absolute rounded-full"
+            style={{
+              width: size, height: size,
+              border: '1px solid rgba(99,102,241,0.12)',
+            }}
+            animate={{ scale: [1, 1.06, 1], opacity: [0.4, 0.1, 0.4] }}
+            transition={{ duration: 4, repeat: Infinity, delay: i * 0.9, ease: 'easeInOut' }}
           />
         ))}
       </div>
 
-      {/* Central Orb */}
+      {/* ═══ CENTRAL ORB — ala Siri: sphere gradient + ring energi ═══ */}
       <motion.div
-        animate={{ scale: isListening ? orbIntensity : [1, 1.04, 1] }}
-        transition={isListening ? { duration: 0.18 } : { duration: 3, repeat: Infinity }}
-        className="relative w-52 h-52 rounded-full cursor-pointer select-none"
+        className="relative cursor-pointer select-none"
         onClick={() => setIsListening(!isListening)}
-        style={{
-          background: 'radial-gradient(circle at 35% 30%, rgba(255,255,255,0.25), rgba(0,212,255,0.35) 30%, rgba(139,92,246,0.5) 65%, rgba(10,15,30,0.95) 100%)',
-          boxShadow: isListening
-            ? '0 0 80px rgba(0,212,255,0.55), 0 0 140px rgba(139,92,246,0.35), inset 0 0 50px rgba(255,255,255,0.15)'
-            : '0 0 40px rgba(0,212,255,0.25), 0 0 90px rgba(139,92,246,0.15), inset 0 0 40px rgba(255,255,255,0.08)',
-          border: '1px solid rgba(0,212,255,0.3)'
-        }}
+        animate={{ scale: isListening ? orbIntensity : 1 }}
+        transition={isListening ? { duration: 0.18 } : { duration: 1.2 }}
       >
-        {/* inner grid sphere effect */}
-        <div className="absolute inset-3 rounded-full opacity-30" style={{
-          backgroundImage: 'radial-gradient(circle, transparent 60%, rgba(255,255,255,0.15) 61%, transparent 62%), radial-gradient(circle, transparent 78%, rgba(255,255,255,0.12) 79%, transparent 80%)',
-        }} />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <AnimatePresence mode="wait">
-            {isListening ? (
-              <motion.div key="mic" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                <AudioLines size={44} className="text-white drop-shadow-[0_0_12px_rgba(0,212,255,0.9)]" />
-              </motion.div>
-            ) : (
-              <motion.div key="idle" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                <Mic size={40} className="text-white/90" />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        {/* Orb utama — gradient gelap dengan aurora dalam */}
+        <motion.div
+          className="relative w-56 h-56 rounded-full"
+          animate={isListening
+            ? { background: [
+                'radial-gradient(circle at 30% 70%, #d946ef 0%, #ef4444 35%, #1a0b2e 75%)',
+                'radial-gradient(circle at 60% 40%, #f97316 0%, #d946ef 40%, #1a0b2e 75%)',
+                'radial-gradient(circle at 40% 60%, #ef4444 0%, #8b5cf6 45%, #1a0b2e 75%)',
+              ] }
+            : { background: 'radial-gradient(circle at 35% 65%, rgba(217,70,239,0.85) 0%, rgba(239,68,68,0.6) 35%, rgba(20,10,40,0.98) 72%)' }}
+          transition={{ duration: 2.2, repeat: isListening ? Infinity : 0, ease: 'easeInOut' }}
+          style={{
+            boxShadow: isListening
+              ? '0 0 90px rgba(217,70,239,0.45), 0 0 160px rgba(239,68,68,0.25), inset 0 0 60px rgba(0,0,0,0.55)'
+              : '0 0 50px rgba(217,70,239,0.25), 0 0 110px rgba(239,68,68,0.12), inset 0 0 50px rgba(0,0,0,0.5)',
+            border: '1.5px solid rgba(216,180,254,0.35)',
+          }}
+        >
+          {/* aurora swirl dalam orb */}
+          <motion.div
+            className="absolute inset-0 rounded-full"
+            style={{
+              background: 'conic-gradient(from 180deg, transparent, rgba(249,115,22,0.5), transparent 40%, rgba(217,70,239,0.4), transparent 75%)',
+              filter: 'blur(14px)',
+            }}
+            animate={{ rotate: 360 }}
+            transition={{ duration: isListening ? 4 : 9, repeat: Infinity, ease: 'linear' }}
+          />
+          {/* highlight kiri atas */}
+          <div className="absolute inset-0 rounded-full" style={{
+            background: 'radial-gradient(circle at 32% 26%, rgba(255,255,255,0.22), transparent 42%)',
+          }} />
+          {/* gelap tepi bawah biar sphere */}
+          <div className="absolute inset-0 rounded-full" style={{
+            background: 'radial-gradient(circle at 50% 115%, rgba(0,0,0,0.55), transparent 55%)',
+          }} />
+
+          {/* Icon tengah */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <AnimatePresence mode="wait">
+              {isListening ? (
+                <motion.div key="mic" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ duration: 0.2 }}>
+                  <AudioLines size={48} className="text-white drop-shadow-[0_0_16px_rgba(217,70,239,0.9)]" />
+                </motion.div>
+              ) : (
+                <motion.div key="idle" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ duration: 0.2 }}>
+                  <Mic size={42} className="text-white/90" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.div>
+
+        {/* ═══ RING ENERGI — plasma ring ala referensi ke-2 ═══ */}
+        {/* ring 1: ungu-biru */}
+        <motion.div
+          className="absolute -inset-5 rounded-full pointer-events-none"
+          style={{
+            border: '3px solid transparent',
+            borderTopColor: 'rgba(139,92,246,0.85)',
+            borderLeftColor: 'rgba(99,102,241,0.5)',
+            filter: 'blur(2px)',
+          }}
+          animate={{ rotate: 360 }}
+          transition={{ duration: isListening ? 2.2 : 7, repeat: Infinity, ease: 'linear' }}
+        />
+        {/* ring 2: pink-putih berlawanan arah */}
+        <motion.div
+          className="absolute -inset-8 rounded-full pointer-events-none"
+          style={{
+            border: '2px solid transparent',
+            borderBottomColor: 'rgba(232,121,249,0.7)',
+            borderRightColor: 'rgba(251,207,232,0.35)',
+            filter: 'blur(1.5px)',
+          }}
+          animate={{ rotate: -360 }}
+          transition={{ duration: isListening ? 3 : 10, repeat: Infinity, ease: 'linear' }}
+        />
+        {/* ring 3: tipis luar */}
+        <motion.div
+          className="absolute -inset-11 rounded-full pointer-events-none"
+          style={{
+            border: '1.5px solid transparent',
+            borderTopColor: 'rgba(251,113,133,0.5)',
+            borderLeftColor: 'rgba(196,181,253,0.3)',
+            filter: 'blur(1px)',
+          }}
+          animate={{ rotate: 360 }}
+          transition={{ duration: isListening ? 3.5 : 13, repeat: Infinity, ease: 'linear' }}
+        />
+        {/* halo glow di belakang orb */}
+        <motion.div
+          className="absolute -inset-16 rounded-full pointer-events-none"
+          style={{
+            background: isListening
+              ? 'radial-gradient(circle, rgba(217,70,239,0.18), rgba(99,102,241,0.08) 55%, transparent 75%)'
+              : 'radial-gradient(circle, rgba(139,92,246,0.1), transparent 70%)',
+            filter: 'blur(10px)',
+          }}
+          animate={{ scale: isListening ? [1, 1.12, 1] : 1 }}
+          transition={{ duration: 1.6, repeat: isListening ? Infinity : 0, ease: 'easeInOut' }}
+        />
       </motion.div>
 
-      <h2 className="mt-10 text-3xl font-bold text-white font-display">
-        {isListening ? 'Listening...' : "Hey Cozy!"}
+      <h2 className="mt-12 text-3xl font-bold text-white font-display tracking-tight">
+        {isListening ? 'Listening...' : 'Hey Cozy!'}
       </h2>
       <p className="text-slate-400 mt-2 text-sm">
         {isListening ? 'Speak now — saya dengar Bos 👂' : 'Tap orb atau tekan mic untuk ngobrol via voice'}
       </p>
 
-      {/* Waveform bars */}
-      <div className="flex items-center gap-1.5 h-16 mt-6">
-        {Array.from({ length: 28 }).map((_, i) => (
+      {/* Waveform dots — ala referensi 1: deretan titik biru */}
+      <div className="flex items-center gap-[7px] h-8 mt-7">
+        {Array.from({ length: 32 }).map((_, i) => (
           <motion.div
             key={i}
-            className="w-1.5 rounded-full"
-            style={{ background: 'linear-gradient(180deg,#00D4FF,#8B5CF6)' }}
-            animate={isListening ? { height: [8, 20 + Math.random() * 40, 8] } : { height: 8 }}
-            transition={isListening ? { duration: 0.5, repeat: Infinity, delay: i * 0.04 } : { duration: 0.3 }}
+            className="w-[5px] rounded-full bg-sky-400"
+            animate={isListening
+              ? { height: [6, 6 + Math.random() * 18, 6], opacity: [0.5, 1, 0.5] }
+              : { height: 6, opacity: [0.35, 0.8, 0.35] }}
+            transition={
+              isListening
+                ? { duration: 0.45, repeat: Infinity, delay: i * 0.035, ease: 'easeInOut' }
+                : { duration: 2.2, repeat: Infinity, delay: i * 0.08, ease: 'easeInOut' }
+            }
           />
         ))}
       </div>
@@ -205,7 +291,7 @@ export default function Chat() {
             key={i}
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 + i * 0.07 }}
+            transition={{ delay: 0.25 + i * 0.07 }}
             whileHover={{ y: -3, boxShadow: `0 0 20px ${s.color}44` }}
             className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-white/25 transition-all"
           >
