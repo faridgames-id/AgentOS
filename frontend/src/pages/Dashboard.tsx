@@ -345,6 +345,124 @@ function IncomeTracker() {
   )
 }
 
+// ── Agent Performance (stat-card style + fancy chart) ─
+function AgentPerformanceCard() {
+  const totalTasks = agentSystemData.reduce((a, b) => a + b.tasks, 0)
+  const activeAgents = agentSystemData.filter(a => a.status === 'working').length
+  const n = useCountUp(totalTasks, 1400, 500)
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 48, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay: 0.45, type: 'spring', stiffness: 120, damping: 16 }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className="p-6 rounded-2xl relative overflow-hidden"
+      style={{
+        background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
+        border: '1px solid rgba(148,163,184,0.12)',
+        boxShadow: '0 0 24px rgba(16,185,129,0.1), inset 0 1px 0 rgba(255,255,255,0.06)'
+      }}
+    >
+      {/* corner glow */}
+      <div className="absolute -top-12 -right-12 w-36 h-36 rounded-full blur-3xl opacity-20 pointer-events-none bg-emerald-500" />
+      {/* scan line */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+
+      {/* Header — icon tile + label (Active Crons style) */}
+      <div className="flex items-center justify-between mb-4 relative z-10">
+        <div className="flex items-center gap-3">
+          <motion.div
+            initial={{ scale: 0, rotate: -30 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.55, type: 'spring', stiffness: 200, damping: 12 }}
+            className="w-9 h-9 rounded-lg flex items-center justify-center"
+            style={{ background: 'rgba(16,185,129,0.13)', border: '1px solid rgba(16,185,129,0.55)', boxShadow: '0 0 14px rgba(16,185,129,0.2)' }}
+          >
+            <Bot size={16} className="text-emerald-400" />
+          </motion.div>
+          <span className="text-base font-semibold text-white tracking-wide">Agent Performance</span>
+        </div>
+        <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/20 text-emerald-400 font-mono">
+          {activeAgents}/{agentSystemData.length} active
+        </span>
+      </div>
+
+      {/* Big number + trend */}
+      <div className="flex items-end gap-3 mb-4 relative z-10">
+        <p className="text-3xl font-black text-white font-mono leading-none">{n.toLocaleString('en-US')}</p>
+        <div className="flex items-center gap-1.5 pb-0.5">
+          <span className="text-xs font-bold text-emerald-400 flex items-center gap-0.5">
+            <ArrowUpRight size={12} />+12%
+          </span>
+          <span className="text-xs text-slate-500">vs last week</span>
+        </div>
+      </div>
+
+      {/* Fancy bar chart */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.7, duration: 0.5 }}
+        className="relative z-10 -mx-2"
+        style={{ filter: 'drop-shadow(0 0 10px rgba(34,211,238,0.18))' }}
+      >
+        <ResponsiveContainer width="100%" height={210}>
+          <BarChart data={agentSystemData} barCategoryGap="28%">
+            <defs>
+              <linearGradient id="barActive" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#67E8F9" stopOpacity={1} />
+                <stop offset="55%" stopColor="#22D3EE" stopOpacity={0.9} />
+                <stop offset="100%" stopColor="#0E7490" stopOpacity={0.55} />
+              </linearGradient>
+              <linearGradient id="barIdle" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#64748B" stopOpacity={0.75} />
+                <stop offset="100%" stopColor="#334155" stopOpacity={0.4} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="4 6" stroke="rgba(148,163,184,0.07)" vertical={false} />
+            <XAxis dataKey="name" stroke="#475569" fontSize={10} tickLine={false} axisLine={false} dy={6} />
+            <YAxis stroke="#475569" fontSize={10} tickLine={false} axisLine={false} width={34} />
+            <Tooltip
+              cursor={{ fill: 'rgba(34,211,238,0.06)' }}
+              contentStyle={{
+                backgroundColor: 'rgba(10, 15, 30, 0.95)',
+                border: '1px solid rgba(34,211,238,0.3)',
+                borderRadius: '12px',
+                color: '#fff',
+                backdropFilter: 'blur(10px)',
+                boxShadow: '0 0 20px rgba(34,211,238,0.15)'
+              }}
+              labelStyle={{ color: '#E2E8F0', fontWeight: 'bold' }}
+              formatter={(value: number | string, nameKey: string, entry: { payload?: { status?: string; efficiency?: number } }) => [
+                `${Number(value).toLocaleString()} tasks • ${entry?.payload?.efficiency ?? 0}% eff • ${entry?.payload?.status === 'working' ? '🟢 working' : '⚪ idle'}`,
+                ''
+              ]}
+            />
+            <Bar
+              dataKey="tasks"
+              radius={[7, 7, 2, 2]}
+              isAnimationActive
+              animationDuration={1100}
+              animationBegin={700}
+              animationEasing="ease-out"
+            >
+              {agentSystemData.map((entry, index) => (
+                <Cell
+                  key={index}
+                  fill={entry.status === 'working' ? 'url(#barActive)' : 'url(#barIdle)'}
+                  stroke={entry.status === 'working' ? 'rgba(103,232,249,0.5)' : 'rgba(100,116,139,0.3)'}
+                  strokeWidth={1}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </motion.div>
+    </motion.div>
+  )
+}
+
 export default function Dashboard() {
   const [pulseActive, setPulseActive] = useState(true)
 
@@ -448,37 +566,8 @@ export default function Dashboard() {
 
       {/* ═══ Row 2: Agent Perf + Cron Jobs ═══ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Agent Performance */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}
-          className="p-6 rounded-2xl relative overflow-hidden"
-          style={{
-            background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
-            border: '1px solid rgba(148,163,184,0.12)',
-            boxShadow: '0 0 24px rgba(16,185,129,0.08)'
-          }}
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Bot size={20} className="text-emerald-400" />
-              Agent Performance
-            </h2>
-            <span className="text-xs text-slate-500 font-mono">{totalTasks.toLocaleString()} tasks</span>
-          </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={agentSystemData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.08)" />
-              <XAxis dataKey="name" stroke="#475569" fontSize={10} tickLine={false} />
-              <YAxis stroke="#475569" fontSize={11} tickLine={false} />
-              <Tooltip {...darkTooltip} cursor={{ fill: 'rgba(0,212,255,0.05)' }} />
-              <Bar dataKey="tasks" radius={[6, 6, 0, 0]} >
-                {agentSystemData.map((entry, index) => (
-                  <Cell key={index} fill={entry.status === 'working' ? '#00D4FF' : '#475569'} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </motion.div>
+        {/* Agent Performance — stat-card style */}
+        <AgentPerformanceCard />
 
         {/* Cron Jobs */}
         <motion.div
