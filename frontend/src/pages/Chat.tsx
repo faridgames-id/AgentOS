@@ -873,7 +873,7 @@ export default function Chat() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-black font-display">
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-sky-300 to-violet-300 drop-shadow-[0_0_22px_rgba(56,189,248,0.65)]">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-sky-100 to-white drop-shadow-[0_0_22px_rgba(125,211,252,0.7)]">
             Cozy Agentic
           </span>
           <Sparkles className="inline-block text-yellow-300 ml-3 animate-pulse" size={26} />
