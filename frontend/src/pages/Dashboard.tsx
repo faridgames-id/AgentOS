@@ -926,7 +926,8 @@ function StockDashboard() {
       .then(r => r.json())
       .then(d => {
         if (!alive) return
-        const arr = Array.isArray(d) ? d : d.accounts || []
+        // API bisa balikin {items:[...]} atau array langsung
+        const arr = Array.isArray(d) ? d : (Array.isArray(d.items) ? d.items : (Array.isArray(d.accounts) ? d.accounts : []))
         setAccounts(arr)
         setLoading(false)
       })
@@ -1078,40 +1079,16 @@ function StockDashboard() {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 relative z-10">
-          {stats.map((s, idx) => {
-            const n = useCountUpSafe(s.value, 900, 650 + idx * 70)
-            return (
-              <motion.div
-                key={s.label}
-                initial={{ opacity: 0, y: 24, scale: 0.94 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ delay: 0.7 + idx * 0.06, type: 'spring', stiffness: 150, damping: 15 }}
-                whileHover={{ y: -4, transition: { duration: 0.18 } }}
-                className="p-4 rounded-xl relative overflow-hidden"
-                style={{
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(148,163,184,0.1)'
-                }}
-              >
-                <div className="flex items-center gap-2.5 mb-2.5">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ background: `${s.hex}1f`, border: `1px solid ${s.hex}55` }}>
-                    <s.icon size={14} style={{ color: s.hex }} />
-                  </div>
-                  <span className="text-[11px] font-semibold text-slate-300 tracking-wide leading-tight">{s.label}</span>
-                </div>
-                <p className="text-2xl font-black text-white font-mono leading-none">{n}</p>
-                <p className="text-[10px] text-slate-500 mt-1.5">{s.sub}</p>
-              </motion.div>
-            )
-          })}
+          {stats.map((s, idx) => (
+            <StockStatCard key={s.label} s={s} idx={idx} />
+          ))}
         </div>
       )}
     </motion.div>
   )
 }
 
-// count-up yang aman dipanggil dalam loop (versi sederhana)
+// count-up yang aman dipanggil dalam komponen tile
 function useCountUpSafe(target: number, duration: number, delay: number) {
   const [val, setVal] = useState(0)
   useEffect(() => {
@@ -1129,6 +1106,33 @@ function useCountUpSafe(target: number, duration: number, delay: number) {
     return () => { clearTimeout(timer); cancelAnimationFrame(raf) }
   }, [target, duration, delay])
   return val
+}
+
+function StockStatCard({ s, idx }: { s: { icon: typeof Gamepad2; label: string; value: number; sub: string; hex: string }; idx: number }) {
+  const n = useCountUpSafe(s.value, 900, 650 + idx * 70)
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24, scale: 0.94 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay: 0.7 + idx * 0.06, type: 'spring', stiffness: 150, damping: 15 }}
+      whileHover={{ y: -4, transition: { duration: 0.18 } }}
+      className="p-4 rounded-xl relative overflow-hidden"
+      style={{
+        background: 'rgba(255,255,255,0.03)',
+        border: '1px solid rgba(148,163,184,0.1)'
+      }}
+    >
+      <div className="flex items-center gap-2.5 mb-2.5">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+          style={{ background: `${s.hex}1f`, border: `1px solid ${s.hex}55` }}>
+          <s.icon size={14} style={{ color: s.hex }} />
+        </div>
+        <span className="text-[11px] font-semibold text-slate-300 tracking-wide leading-tight">{s.label}</span>
+      </div>
+      <p className="text-2xl font-black text-white font-mono leading-none">{n}</p>
+      <p className="text-[10px] text-slate-500 mt-1.5">{s.sub}</p>
+    </motion.div>
+  )
 }
 
 export default function Dashboard() {
