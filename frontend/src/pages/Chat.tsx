@@ -131,7 +131,7 @@ export default function Chat() {
 
   // ════════════════ VOICE TAB (Jarvis) ════════════════
   const VoiceTab = () => (
-    <div className="flex flex-col items-center justify-start pt-6 min-h-[70vh] relative overflow-hidden">
+    <div className="flex flex-col items-center pt-2 relative">
       {/* Background rings — halus, jauh */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         {[260, 380, 520].map((size, i) => (
@@ -157,7 +157,7 @@ export default function Chat() {
       >
         {/* Orb utama — gradient gelap dengan aurora dalam */}
         <motion.div
-          className="relative w-64 h-64 rounded-full"
+          className="relative w-52 h-52 rounded-full"
           animate={isListening
             ? { background: [
                 'radial-gradient(circle at 30% 70%, #d946ef 0%, #ef4444 35%, #1a0b2e 75%)',
@@ -248,7 +248,7 @@ export default function Chat() {
         {/* ═══ PARTIKEL ENERGI — orbit di sekeliling orb ═══ */}
         {Array.from({ length: 10 }).map((_, i) => {
           const angle = (i / 10) * Math.PI * 2
-          const r = 150
+          const r = 130
           const size = 4 + (i % 3) * 2
           const colors = ['#e879f9', '#fb7185', '#a78bfa', '#f97316']
           return (
@@ -280,7 +280,7 @@ export default function Chat() {
 
         {/* ring 4: dashed halus terluar */}
         <motion.div
-          className="absolute -inset-[58px] rounded-full pointer-events-none opacity-40"
+          className="absolute -inset-[44px] rounded-full pointer-events-none opacity-40"
           style={{
             border: '1px dashed rgba(216,180,254,0.35)',
           }}
@@ -290,7 +290,7 @@ export default function Chat() {
 
         {/* halo glow di belakang orb */}
         <motion.div
-          className="absolute -inset-16 rounded-full pointer-events-none"
+          className="absolute -inset-12 rounded-full pointer-events-none"
           style={{
             background: isListening
               ? 'radial-gradient(circle, rgba(217,70,239,0.18), rgba(99,102,241,0.08) 55%, transparent 75%)'
@@ -303,7 +303,7 @@ export default function Chat() {
       </motion.div>
 
       <motion.h2
-        className="mt-8 text-3xl font-bold font-display tracking-tight"
+        className="mt-6 text-3xl font-bold font-display tracking-tight"
         animate={isListening ? {
           background: [
             'linear-gradient(90deg,#67e8f9,#e879f9)',
@@ -339,7 +339,7 @@ export default function Chat() {
       </div>
 
       {/* Quick voice actions — iOS widget style */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-7 w-full max-w-lg pb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-5 w-full max-w-lg pb-2">
         {suggestions.map((s, i) => (
           <motion.button
             key={i}
