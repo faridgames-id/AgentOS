@@ -70,7 +70,7 @@ export default function Chat() {
   // Telegram sync state — di level atas biar tidak reset saat re-render
   const [tgSessions, setTgSessions] = useState<Array<{ id: string; name: string; preview: string; last_role: string; time: string; message_count: number }>>([])
   const [tgActive, setTgActive] = useState<string | null>(null)
-  const [tgMessages, setTgMessages] = useState<Array<{ role: string; text: string; time: string }>>([])
+  const [tgMessages, setTgMessages] = useState<Array<{ role: string; text: string; time: string; attachments?: string[] }>>([])
   const [tgLoading, setTgLoading] = useState(true)
 
   useEffect(() => {
@@ -560,27 +560,56 @@ export default function Chat() {
                   <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
                   <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Sesi Telegram • {tgActive.slice(0, 15)}</p>
                 </div>
-                {tgMessages.map((m, i) => (
-                  <motion.div
-                    key={`tg-${i}`}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div className={`max-w-[78%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${m.role === 'user'
-                      ? 'text-white rounded-br-md'
-                      : 'bg-white/[0.06] text-slate-200 border border-white/5 rounded-bl-md'
-                      }`}
-                      style={m.role === 'user' ? {
-                        background: 'linear-gradient(160deg,#38BDF8E6,#0284C7)',
-                        boxShadow: '0 4px 14px rgba(56,189,248,0.25)'
-                      } : {}}
+                {tgMessages.map((m, i) => {
+                  const cleanText = m.text.replace(/\s*\[Image attached at:[^\]]*\]/g, '').replace(/\s*\[screenshot\]/g, '').trim()
+                  const atts = m.attachments || []
+                  return (
+                    <motion.div
+                      key={`tg-${i}`}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
-                      <p>{m.text}</p>
-                      {m.time && <p className={`text-[10px] mt-1 text-right ${m.role === 'user' ? 'text-white/70' : 'text-slate-500'}`}>{m.time}</p>}
-                    </div>
-                  </motion.div>
-                ))}
+                      <div className={`max-w-[78%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${m.role === 'user'
+                        ? 'text-white rounded-br-md'
+                        : 'bg-white/[0.06] text-slate-200 border border-white/5 rounded-bl-md'
+                        }`}
+                        style={m.role === 'user' ? {
+                          background: 'linear-gradient(160deg,#38BDF8E6,#0284C7)',
+                          boxShadow: '0 4px 14px rgba(56,189,248,0.25)'
+                        } : {}}
+                      >
+                        {atts.length > 0 && (
+                          <div className={`flex flex-wrap gap-2 mb-2 ${m.role === 'user' ? 'justify-end' : ''}`}>
+                            {atts.map(a => {
+                              const ext = a.split('.').pop()?.toLowerCase()
+                              const isImg = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '')
+                              const src = `/api/media/file?path=${encodeURIComponent(a)}`
+                              return isImg ? (
+                                <a key={a} href={src} target="_blank" rel="noreferrer" className="block">
+                                  <img
+                                    src={src}
+                                    alt="attachment"
+                                    className="max-h-52 rounded-xl border border-white/20 hover:border-white/50 transition-colors cursor-zoom-in"
+                                    style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.4)' }}
+                                    loading="lazy"
+                                  />
+                                </a>
+                              ) : (
+                                <a key={a} href={src} target="_blank" rel="noreferrer"
+                                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-[11px] font-semibold text-white hover:bg-white/20 transition-colors">
+                                  📎 {a.split('/').pop()}
+                                </a>
+                              )
+                            })}
+                          </div>
+                        )}
+                        {cleanText && <p className="whitespace-pre-wrap break-words">{cleanText}</p>}
+                        {m.time && <p className={`text-[10px] mt-1 text-right ${m.role === 'user' ? 'text-white/70' : 'text-slate-500'}`}>{m.time}</p>}
+                      </div>
+                    </motion.div>
+                  )
+                })}
                 {tgMessages.length === 0 && (
                   <div className="h-40 flex items-center justify-center text-slate-500 text-sm font-mono">Memuat pesan Telegram...</div>
                 )}

@@ -3,6 +3,8 @@ import sqlite3
 import time
 from pathlib import Path
 
+from .media import extract_media_paths
+
 from fastapi import APIRouter
 
 router = APIRouter()
@@ -111,14 +113,17 @@ def get_messages(session_id: str, limit: int = 50):
     messages = []
     for r in rows:
         content = r['content'] or ''
+        # ambil path media SEBELUM marker dibuang
+        attachments = extract_media_paths(content)[:4]
         # bersihkan marker attachment dari tampilan
         for marker in ['[Image attached', '[screenshot]', '[OUT-OF-BAND USER MESSAGE', '[/OUT-OF-BAND USER MESSAGE]']:
             idx = content.find(marker)
             if idx > 0:
                 content = content[:idx]
         content = content.strip()
-        if not content:
+        if not content and not attachments:
             continue
+        content = content or '[gambar]'
         ts_raw = str(r['timestamp'] or '')
         # timestamp kadang aneh (year 2100+) — ambil dari session id kalau begitu
         try:
@@ -130,6 +135,7 @@ def get_messages(session_id: str, limit: int = 50):
             "role": r['role'],
             "text": content[:2000],
             "time": ts_raw[11:16] if len(ts_raw) >= 16 else '',
+            "attachments": attachments,
         })
 
     con.close()

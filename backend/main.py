@@ -6,6 +6,7 @@ from routers import agents, finance, stock, cozy, models
 from routers import model_providers
 from routers import skills
 from routers import telegram_chat
+from routers import media
 from services.database import init_db
 from pathlib import Path
 import os
@@ -46,6 +47,7 @@ app.include_router(models.router, prefix="/api/models")
 app.include_router(model_providers.router, prefix="/api/models")
 app.include_router(skills.router, prefix="/api/skills")
 app.include_router(telegram_chat.router, prefix="/api/telegram")
+app.include_router(media.router, prefix="/api/media")
 app.include_router(stock.router, prefix="/api/stock")
 
 @app.on_event("startup")
