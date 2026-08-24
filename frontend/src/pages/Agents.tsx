@@ -123,57 +123,79 @@ function WorkflowView({ onOpen, selectedId }: { onOpen: (a: SubAgent) => void; s
         onClick={() => onOpen(a)}
         className={`relative text-left rounded-2xl p-4 cursor-pointer group transition-shadow ${isCozy ? 'w-64' : 'w-[13.5rem]'}`}
         style={{
-          background: 'linear-gradient(150deg, rgba(17,26,48,0.96), rgba(10,15,30,0.98))',
-          border: selected ? `1.5px solid ${a.color}` : `1px solid ${a.color}44`,
+          background: 'linear-gradient(160deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))',
+          border: selected ? `1.5px solid ${a.color}` : '1px solid rgba(96,140,220,0.22)',
           boxShadow: selected
-            ? `0 0 30px ${a.color}66, inset 0 1px 0 rgba(255,255,255,0.06)`
-            : `0 0 18px ${a.color}22, inset 0 1px 0 rgba(255,255,255,0.05)`,
+            ? `0 12px 36px rgba(0,0,0,0.45), 0 0 24px ${a.color}44`
+            : '0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(140,180,255,0.08)',
         }}
       >
-        {/* accent bar */}
-        <div className="absolute top-0 left-4 right-4 h-0.5 rounded-full" style={{ background: `linear-gradient(90deg, transparent, ${a.color}, transparent)` }} />
+        {/* corner glow */}
+        <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full blur-2xl opacity-15 pointer-events-none transition-opacity group-hover:opacity-30"
+          style={{ background: a.color }} />
 
+        {/* header: AppIcon iOS + nama + status chip */}
         <div className="flex items-center gap-3">
           <div className="relative flex-shrink-0">
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center"
-              style={{ background: `${a.color}1A`, border: `1px solid ${a.color}55`, boxShadow: `0 0 14px ${a.color}33` }}>
-              <a.icon size={20} style={{ color: a.color }} />
+            {/* AppIcon squircle gradient */}
+            <div
+              className="relative flex items-center justify-center w-11 h-11 rounded-[13px]"
+              style={{
+                background: `linear-gradient(160deg, ${a.color}E6, ${a.color})`,
+                boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.35), inset 0 -2px 4px rgba(0,0,0,0.15)',
+              }}
+            >
+              <div
+                className="absolute inset-x-0 top-0 pointer-events-none"
+                style={{
+                  height: '46%',
+                  borderRadius: '13px 13px 40% 40% / 13px 13px 70% 70%',
+                  background: 'linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.02))',
+                }}
+              />
+              <a.icon size={20} className="relative z-10 text-white" strokeWidth={2.4} />
             </div>
             <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-slate-950"
               style={{ backgroundColor: meta.dot, boxShadow: `0 0 8px ${meta.dot}`, opacity: a.status === 'working' ? undefined : 0.75 }} />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="font-black tracking-wide text-sm leading-tight" style={{ color: a.color }}>{a.name}</p>
             <p className="text-[10px] text-slate-400 truncate">{a.role}</p>
           </div>
+          {/* status chip ala Total Tasks badge */}
+          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border shrink-0"
+            style={{ color: meta.dot, borderColor: `${meta.dot}55`, background: `${meta.dot}14` }}>
+            {meta.label}
+          </span>
+        </div>
+
+        {/* angka besar ala Total Tasks */}
+        <p className="mt-3 text-[26px] font-black font-mono leading-none text-white tracking-tight">
+          {a.tasks.toLocaleString('en-US')}
+        </p>
+
+        {/* trend row */}
+        <div className="mt-1.5 flex items-center gap-2 text-[10px]">
+          <span className="flex items-center gap-0.5 text-emerald-400 font-bold">
+            ↗ {a.efficiency}%
+          </span>
+          <span className="text-slate-500">efficiency</span>
+          <span className="ml-auto text-slate-600 font-mono truncate max-w-[70px] text-right">{a.model}</span>
         </div>
 
         {/* activity */}
-        <p className="mt-2.5 text-[11px] text-slate-300 leading-snug line-clamp-1 min-h-[16px]">{a.activity}</p>
-
-        {/* metrics row */}
-        <div className="mt-2 flex items-center gap-2.5 text-[10px] font-mono">
-          <span className="flex items-center gap-1 text-cyan-300"><ListTodo size={10} />{a.tasks.toLocaleString()}</span>
-          <span className="flex items-center gap-1 text-emerald-300"><Activity size={10} />{a.efficiency}%</span>
-          <span className="ml-auto text-slate-500 truncate max-w-[76px] text-right">{a.model}</span>
-        </div>
+        <p className="mt-2 text-[11px] text-slate-300 leading-snug line-clamp-1 min-h-[16px]">{a.activity}</p>
 
         {/* efficiency bar */}
-        <div className="mt-2 h-1 rounded-full bg-slate-800 overflow-hidden">
+        <div className="mt-2 h-1 rounded-full bg-white/5 overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${a.efficiency}%` }}
             transition={{ duration: 0.8, delay: 0.3 }}
             className="h-full rounded-full"
-            style={{ background: `linear-gradient(90deg, ${a.color}, ${a.color}88)` }}
+            style={{ background: `linear-gradient(90deg, ${a.color}, ${a.color}88)`, boxShadow: `0 0 8px ${a.color}66` }}
           />
         </div>
-
-        {/* status chip */}
-        <span className="absolute -top-2.5 right-3 text-[9px] font-bold px-2 py-0.5 rounded-full border"
-          style={{ color: meta.dot, borderColor: `${meta.dot}55`, background: 'rgba(10,15,30,0.95)' }}>
-          {meta.label}
-        </span>
       </motion.button>
     )
   }
