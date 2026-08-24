@@ -131,7 +131,7 @@ export default function Chat() {
 
   // ════════════════ VOICE TAB (Jarvis) ════════════════
   const VoiceTab = () => (
-    <div className="flex flex-col items-center pt-16 relative">
+    <div className="flex flex-col items-center pt-7 relative">
       {/* Background rings — halus, jauh */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         {[260, 380, 520].map((size, i) => (
@@ -321,7 +321,7 @@ export default function Chat() {
       </p>
 
       {/* Waveform dots — ala referensi 1: deretan titik biru */}
-      <div className="flex items-center gap-[7px] h-8 mt-14">
+      <div className="flex items-center gap-[7px] h-8 mt-10">
         {Array.from({ length: 32 }).map((_, i) => (
           <motion.div
             key={i}
@@ -339,7 +339,7 @@ export default function Chat() {
       </div>
 
       {/* Quick voice actions — iOS widget style */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-12 w-full max-w-lg pb-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-9 w-full max-w-lg pb-2">
         {suggestions.map((s, i) => (
           <motion.button
             key={i}
