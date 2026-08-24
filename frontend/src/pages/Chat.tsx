@@ -321,7 +321,7 @@ export default function Chat() {
       </p>
 
       {/* Waveform dots — ala referensi 1: deretan titik biru */}
-      <div className="flex items-center gap-[7px] h-8 mt-5">
+      <div className="flex items-center gap-[7px] h-8 mt-14">
         {Array.from({ length: 32 }).map((_, i) => (
           <motion.div
             key={i}
@@ -339,7 +339,7 @@ export default function Chat() {
       </div>
 
       {/* Quick voice actions — iOS widget style */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-5 w-full max-w-lg pb-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-12 w-full max-w-lg pb-2">
         {suggestions.map((s, i) => (
           <motion.button
             key={i}
