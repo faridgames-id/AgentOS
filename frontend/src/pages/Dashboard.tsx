@@ -1193,6 +1193,9 @@ export default function Dashboard() {
         ))}
       </div>
 
+      {/* ═══ ZEPHRA Stock Dashboard (filter global) ═══ */}
+      <StockDashboard />
+
       {/* ═══ Charts Row: Task Flow + Income Tracker ═══ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 1. Task Flow — stat-card style */}
@@ -1201,7 +1204,6 @@ export default function Dashboard() {
         {/* 2. Income Tracker (Jan–Dec, year picker) */}
         <IncomeTracker />
       </div>
-
       {/* ═══ Row 2: Agent Perf + Cron Jobs ═══ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Agent Performance — stat-card style */}
@@ -1213,9 +1215,6 @@ export default function Dashboard() {
 
       {/* ═══ Live Task Queue — REAL Hermes activity ═══ */}
       <LiveTaskQueue />
-
-      {/* ═══ ZEPHRA Stock Dashboard (filter global) ═══ */}
-      <StockDashboard />
     </div>
   )
 }
