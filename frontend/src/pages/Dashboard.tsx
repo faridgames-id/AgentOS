@@ -463,6 +463,121 @@ function AgentPerformanceCard() {
   )
 }
 
+// ── Task Flow (stat-card style + revenue-style chart) ─
+function TaskFlowCard() {
+  const totalToday = taskFlowData.reduce((a, b) => a + b.tasks, 0)
+  const peak = Math.max(...taskFlowData.map(d => d.tasks))
+  const n = useCountUp(totalToday, 1400, 450)
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 48, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay: 0.35, type: 'spring', stiffness: 120, damping: 16 }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className="p-6 rounded-2xl relative overflow-hidden"
+      style={{
+        background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
+        border: '1px solid rgba(148,163,184,0.12)',
+        boxShadow: '0 0 24px rgba(0,212,255,0.1), inset 0 1px 0 rgba(255,255,255,0.06)'
+      }}
+    >
+      {/* corner glow */}
+      <div className="absolute -top-12 -right-12 w-36 h-36 rounded-full blur-3xl opacity-20 pointer-events-none bg-cyan-500" />
+      {/* scan line */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+
+      {/* Header — icon tile + label + LIVE badge */}
+      <div className="flex items-center justify-between mb-4 relative z-10">
+        <div className="flex items-center gap-3">
+          <motion.div
+            initial={{ scale: 0, rotate: -30 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.45, type: 'spring', stiffness: 200, damping: 12 }}
+            className="w-9 h-9 rounded-lg flex items-center justify-center"
+            style={{ background: 'rgba(34,211,238,0.13)', border: '1px solid rgba(34,211,238,0.55)', boxShadow: '0 0 14px rgba(34,211,238,0.2)' }}
+          >
+            <Radio size={16} className="text-cyan-400" />
+          </motion.div>
+          <span className="text-base font-semibold text-white tracking-wide">Task Flow Monitor</span>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-400/20">
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+          <span className="text-xs text-cyan-400 font-mono">LIVE</span>
+        </div>
+      </div>
+
+      {/* Big number + trend */}
+      <div className="flex items-end gap-3 mb-3 relative z-10">
+        <p className="text-3xl font-black text-white font-mono leading-none">{n.toLocaleString('en-US')}</p>
+        <span className="text-xs text-slate-500 pb-0.5">tasks today</span>
+        <div className="flex items-center gap-1.5 pb-0.5 ml-auto">
+          <span className="text-xs font-bold text-emerald-400 flex items-center gap-0.5">
+            <ArrowUpRight size={12} />+18%
+          </span>
+          <span className="text-xs text-slate-500">vs yesterday</span>
+        </div>
+      </div>
+
+      {/* Revenue-style area chart */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.6, duration: 0.5 }}
+        className="relative z-10 -mx-2"
+        style={{ filter: 'drop-shadow(0 0 12px rgba(34,211,238,0.22))' }}
+      >
+        <ResponsiveContainer width="100%" height={215}>
+          <AreaChart data={taskFlowData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
+            <defs>
+              <linearGradient id="flowGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#38BDF8" stopOpacity={0.55} />
+                <stop offset="55%" stopColor="#22D3EE" stopOpacity={0.18} />
+                <stop offset="100%" stopColor="#22D3EE" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="4 6" stroke="rgba(148,163,184,0.07)" vertical={false} />
+            <XAxis dataKey="time" stroke="#475569" fontSize={10} tickLine={false} axisLine={false} dy={6} />
+            <YAxis stroke="#475569" fontSize={10} tickLine={false} axisLine={false} width={32} />
+            <Tooltip
+              cursor={{ stroke: 'rgba(34,211,238,0.35)', strokeWidth: 1, strokeDasharray: '4 4' }}
+              contentStyle={{
+                backgroundColor: 'rgba(10, 15, 30, 0.95)',
+                border: '1px solid rgba(34,211,238,0.3)',
+                borderRadius: '12px',
+                color: '#fff',
+                backdropFilter: 'blur(10px)',
+                boxShadow: '0 0 20px rgba(34,211,238,0.15)'
+              }}
+              labelStyle={{ color: '#E2E8F0', fontWeight: 'bold' }}
+              formatter={(value: number | string) => [`${value} tasks`, '']}
+            />
+            <Area
+              type="monotone"
+              dataKey="tasks"
+              stroke="#38BDF8"
+              strokeWidth={2.5}
+              fill="url(#flowGrad)"
+              dot={{ r: 3, fill: '#38BDF8', stroke: '#0B1120', strokeWidth: 2 }}
+              activeDot={{ r: 6, fill: '#7DD3FC', stroke: '#0B1120', strokeWidth: 2 }}
+              isAnimationActive
+              animationDuration={1300}
+              animationBegin={550}
+              animationEasing="ease-out"
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </motion.div>
+
+      {/* Footer stats */}
+      <div className="flex items-center gap-5 mt-3 px-1 relative z-10">
+        <span className="text-xs text-slate-500">Peak <span className="text-cyan-300 font-bold font-mono">{peak}</span></span>
+        <span className="text-xs text-slate-500">Window <span className="text-slate-300 font-mono">24h</span></span>
+      </div>
+    </motion.div>
+  )
+}
+
 export default function Dashboard() {
   const [pulseActive, setPulseActive] = useState(true)
 
@@ -523,42 +638,8 @@ export default function Dashboard() {
 
       {/* ═══ Charts Row: Task Flow + Income Tracker ═══ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* 1. Task Flow */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
-          className="p-6 rounded-2xl relative overflow-hidden"
-          style={{
-            background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
-            border: '1px solid rgba(148,163,184,0.12)',
-            boxShadow: '0 0 24px rgba(0,212,255,0.08)'
-          }}
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Radio size={20} className="text-cyan-400" />
-              Task Flow Monitor
-            </h2>
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-400/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
-              <span className="text-xs text-cyan-400 font-mono">LIVE</span>
-            </div>
-          </div>
-          <ResponsiveContainer width="100%" height={230}>
-            <AreaChart data={taskFlowData}>
-              <defs>
-                <linearGradient id="colorTasks" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#00D4FF" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="#00D4FF" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.08)" />
-              <XAxis dataKey="time" stroke="#475569" fontSize={11} tickLine={false} />
-              <YAxis stroke="#475569" fontSize={11} tickLine={false} />
-              <Tooltip {...darkTooltip} />
-              <Area type="monotone" dataKey="tasks" stroke="#00D4FF" strokeWidth={2} fillOpacity={1} fill="url(#colorTasks)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </motion.div>
+        {/* 1. Task Flow — stat-card style */}
+        <TaskFlowCard />
 
         {/* 2. Income Tracker (Jan–Dec, year picker) */}
         <IncomeTracker />
