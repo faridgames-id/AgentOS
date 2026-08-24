@@ -391,114 +391,209 @@ export default function Chat() {
     </div>
   )
 
-  // ════════════════ CHAT TAB (Telegram-style) ════════════════
-  const ChatTab = () => (
-    <div className="flex gap-4 h-[calc(100vh-160px)]">
-      {/* Session list */}
-      <div className="w-64 flex-shrink-0 flex flex-col rounded-2xl overflow-hidden"
-        style={{ background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(148,163,184,0.12)' }}>
-        <button
-          onClick={newSession}
-          className="m-3 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-bold hover:shadow-lg hover:shadow-cyan-500/30 transition-shadow"
+  // ════════════════ CHAT TAB (Orion-style) ════════════════
+  const ChatTab = () => {
+    const hasMessages = (session?.messages.length ?? 0) > 0
+    const hour = new Date().getHours()
+    const greet = hour < 11 ? 'Good Morning' : hour < 15 ? 'Good Afternoon' : hour < 19 ? 'Good Evening' : 'Good Night'
+
+    return (
+      <div className="flex gap-4 h-[calc(100vh-190px)]">
+        {/* ── History Chat (ala referensi 3) ── */}
+        <div
+          className="w-[264px] flex-shrink-0 flex flex-col rounded-2xl overflow-hidden"
+          style={{
+            background: 'linear-gradient(170deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))',
+            border: '1px solid rgba(96,140,220,0.22)',
+            boxShadow: '0 12px 36px rgba(0,0,0,0.4), inset 0 1px 0 rgba(140,180,255,0.08)'
+          }}
         >
-          <Plus size={16} /> New Session
-        </button>
-        <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-1">
-          {sessions.map(s => (
-            <div
-              key={s.id}
-              onClick={() => setActiveSession(s.id)}
-              className={`group flex items-center gap-2 px-3 py-2.5 rounded-xl cursor-pointer transition-all ${activeSession === s.id
-                ? 'bg-cyan-500/15 border border-cyan-400/30'
-                : 'hover:bg-white/5 border border-transparent'
-                }`}
+          <div className="flex items-center justify-between px-4 pt-4 pb-3">
+            <p className="text-base font-bold text-white">History Chat</p>
+            <button
+              onClick={newSession}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold text-white transition-transform hover:scale-105 active:scale-95"
+              style={{ background: 'linear-gradient(160deg, #22D3EEE6, #22D3EE)', boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.35), 0 3px 10px rgba(34,211,238,0.35)' }}
             >
-              <MessageSquare size={14} className={activeSession === s.id ? 'text-cyan-400' : 'text-slate-500'} />
-              <span className={`text-sm flex-1 truncate ${activeSession === s.id ? 'text-white' : 'text-slate-400'}`}>{s.name}</span>
-              <Trash2 size={13} className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-opacity"
-                onClick={(e) => { e.stopPropagation(); deleteSession(s.id) }} />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Chat area */}
-      <div className="flex-1 flex flex-col rounded-2xl overflow-hidden relative"
-        style={{ background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(148,163,184,0.12)' }}>
-        {/* Header */}
-        <div className="flex items-center gap-3 px-5 py-3.5 border-b border-white/5">
-          <div className="relative">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center">
-              <Bot size={17} className="text-white" />
-            </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-slate-900" />
-          </div>
-          <div>
-            <p className="text-white font-bold text-sm">Cozy</p>
-            <p className="text-emerald-400 text-[11px] flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />online
-            </p>
-          </div>
-        </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          {session?.messages.length === 0 && (
-            <div className="h-full flex flex-col items-center justify-center text-center">
-              <Sparkles size={32} className="text-cyan-400 mb-3" />
-              <p className="text-slate-300 font-medium">Mulai percakapan dengan Cozy</p>
-              <p className="text-slate-500 text-sm mt-1">Chat ini tersinkron dengan Telegram kamu 📱</p>
-            </div>
-          )}
-          {session?.messages.map((m, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${m.role === 'user'
-                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-br-md'
-                : 'bg-white/[0.06] text-slate-200 border border-white/5 rounded-bl-md'
-                }`}>
-                <p>{m.text}</p>
-                <p className={`text-[10px] mt-1 text-right ${m.role === 'user' ? 'text-white/60' : 'text-slate-500'}`}>{m.time}</p>
-              </div>
-            </motion.div>
-          ))}
-          {typing && (
-            <div className="flex justify-start">
-              <div className="bg-white/[0.06] border border-white/5 px-4 py-3 rounded-2xl rounded-bl-md flex gap-1">
-                {[0, 1, 2].map(d => (
-                  <motion.span key={d} className="w-2 h-2 bg-slate-400 rounded-full"
-                    animate={{ y: [0, -4, 0] }}
-                    transition={{ duration: 0.6, repeat: Infinity, delay: d * 0.15 }} />
-                ))}
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input */}
-        <div className="p-4 border-t border-white/5">
-          <div className="flex items-center gap-2 bg-white/[0.04] border border-white/10 rounded-2xl px-4 py-2.5 focus-within:border-cyan-400/40 transition-colors">
-            <input
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && sendMessage()}
-              placeholder="Ask me anything..."
-              className="flex-1 bg-transparent outline-none text-sm text-white placeholder:text-slate-500"
-            />
-            <Mic size={17} className="text-slate-500 hover:text-cyan-400 cursor-pointer transition-colors" />
-            <button onClick={sendMessage} className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 flex items-center justify-center hover:shadow-lg hover:shadow-cyan-500/30 transition-shadow">
-              <Send size={14} className="text-white" />
+              <Plus size={12} strokeWidth={3} /> New Chat
             </button>
           </div>
+          <div className="px-4 pb-1">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Today</p>
+          </div>
+          <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-1.5">
+            {sessions.map(s => (
+              <div
+                key={s.id}
+                onClick={() => setActiveSession(s.id)}
+                className={`group flex items-center gap-2.5 px-3 py-2.5 rounded-2xl cursor-pointer transition-all ${activeSession === s.id ? '' : 'hover:bg-white/[0.04]'}`}
+                style={activeSession === s.id ? {
+                  background: 'rgba(34,211,238,0.08)',
+                  border: '1px solid rgba(34,211,238,0.3)',
+                  boxShadow: '0 0 16px rgba(34,211,238,0.12)'
+                } : { border: '1px solid rgba(148,163,184,0.08)' }}
+              >
+                <span
+                  className="flex items-center justify-center shrink-0 w-7 h-7 rounded-full"
+                  style={{
+                    background: activeSession === s.id ? 'linear-gradient(160deg,#22D3EEE6,#22D3EE)' : 'rgba(148,163,184,0.12)',
+                    boxShadow: activeSession === s.id ? '0 0 10px rgba(34,211,238,0.4)' : 'none'
+                  }}
+                >
+                  <MessageSquare size={12} className="text-white" />
+                </span>
+                <span className={`text-[12px] flex-1 truncate font-medium ${activeSession === s.id ? 'text-white' : 'text-slate-400'}`}>{s.name}</span>
+                <Trash2 size={12} className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-opacity shrink-0"
+                  onClick={(e) => { e.stopPropagation(); deleteSession(s.id) }} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Chat area ── */}
+        <div
+          className="flex-1 flex flex-col rounded-2xl overflow-hidden relative"
+          style={{
+            background: 'linear-gradient(170deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))',
+            border: '1px solid rgba(96,140,220,0.22)',
+            boxShadow: '0 12px 36px rgba(0,0,0,0.4), inset 0 1px 0 rgba(140,180,255,0.08)'
+          }}
+        >
+          {/* Header */}
+          <div className="flex items-center gap-3 px-5 py-3.5 border-b border-white/5">
+            <div className="relative">
+              <div className="w-9 h-9 rounded-full flex items-center justify-center"
+                style={{ background: 'linear-gradient(160deg,#22D3EEE6,#22D3EE)', boxShadow: '0 0 14px rgba(34,211,238,0.4)' }}>
+                <Bot size={17} className="text-white" />
+              </div>
+              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2" style={{ borderColor: '#0a1020' }} />
+            </div>
+            <div>
+              <p className="text-white font-bold text-sm">Cozy</p>
+              <p className="text-emerald-400 text-[11px] flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />online
+              </p>
+            </div>
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-5 space-y-4">
+            {!hasMessages && (
+              <div className="h-full flex flex-col items-center justify-center text-center px-4">
+                {/* mini orb ala voice */}
+                <motion.div
+                  className="relative w-24 h-24 rounded-full mb-6"
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                  style={{
+                    background: 'radial-gradient(circle at 35% 65%, rgba(217,70,239,0.85) 0%, rgba(239,68,68,0.55) 35%, rgba(20,10,40,0.98) 72%)',
+                    boxShadow: '0 0 40px rgba(217,70,239,0.3), inset 0 0 24px rgba(0,0,0,0.5)',
+                    border: '1px solid rgba(216,180,254,0.35)'
+                  }}
+                >
+                  <motion.div
+                    className="absolute inset-0 rounded-full"
+                    style={{ background: 'conic-gradient(from 180deg, transparent, rgba(249,115,22,0.5), transparent 40%, rgba(217,70,239,0.4), transparent 75%)', filter: 'blur(7px)' }}
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Sparkles size={26} className="text-white/90" />
+                  </div>
+                </motion.div>
+                <h3 className="text-2xl font-bold text-white font-display">
+                  {greet}, Bos Farid! 👋
+                </h3>
+                <p className="text-slate-400 mt-2 text-sm">How can I assist you today?</p>
+                <p className="text-slate-500 text-xs mt-4 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Chat ini tersinkron dengan Telegram kamu 📱
+                </p>
+              </div>
+            )}
+            {hasMessages && session?.messages.map((m, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${m.role === 'user'
+                  ? 'text-white rounded-br-md'
+                  : 'bg-white/[0.06] text-slate-200 border border-white/5 rounded-bl-md'
+                  }`}
+                  style={m.role === 'user' ? {
+                    background: 'linear-gradient(160deg,#22D3EEE6,#0EA5E9)',
+                    boxShadow: '0 4px 14px rgba(34,211,238,0.25)'
+                  } : {}}
+                >
+                  <p>{m.text}</p>
+                  <p className={`text-[10px] mt-1 text-right ${m.role === 'user' ? 'text-white/70' : 'text-slate-500'}`}>{m.time}</p>
+                </div>
+              </motion.div>
+            ))}
+            {typing && (
+              <div className="flex justify-start">
+                <div className="bg-white/[0.06] border border-white/5 px-4 py-3 rounded-2xl rounded-bl-md flex gap-1">
+                  {[0, 1, 2].map(d => (
+                    <motion.span key={d} className="w-2 h-2 bg-slate-400 rounded-full"
+                      animate={{ y: [0, -4, 0] }}
+                      transition={{ duration: 0.6, repeat: Infinity, delay: d * 0.15 }} />
+                  ))}
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Composer besar ala Orion */}
+          <div className="p-4 pt-1">
+            <div
+              className="rounded-3xl px-4 pt-3.5 pb-2.5 transition-colors"
+              style={{
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(96,140,220,0.25)',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.3)'
+              }}
+            >
+              <div className="flex items-center gap-2.5 mb-2.5">
+                <Sparkles size={14} className="text-fuchsia-400 shrink-0" />
+                <input
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && sendMessage()}
+                  placeholder="Start your request, and let Cozy handle everything..."
+                  className="flex-1 bg-transparent outline-none text-sm text-white placeholder:text-slate-500"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <button className="w-8 h-8 rounded-full flex items-center justify-center bg-white/[0.05] border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all" title="Attach">
+                    <Plus size={14} />
+                  </button>
+                  <button className="w-8 h-8 rounded-full flex items-center justify-center bg-white/[0.05] border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all" title="Voice">
+                    <Mic size={14} />
+                  </button>
+                  <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.05] border border-white/10 text-[11px] font-semibold text-slate-300 hover:text-white hover:bg-white/10 transition-all">
+                    <Brain size={12} /> Reasoning
+                  </button>
+                  <button className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.05] border border-white/10 text-[11px] font-semibold text-slate-300 hover:text-white hover:bg-white/10 transition-all">
+                    <Globe size={12} /> Deep Research
+                  </button>
+                </div>
+                <button
+                  onClick={sendMessage}
+                  className="w-9 h-9 rounded-full flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
+                  style={{ background: 'linear-gradient(160deg,#34D399E6,#10B981)', boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.35), 0 4px 12px rgba(16,185,129,0.4)' }}
+                >
+                  <Send size={15} className="text-white ml-0.5" />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   // ════════════════ MEMORY TAB ════════════════
   const MemoryTab = () => (
