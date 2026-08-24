@@ -64,6 +64,34 @@ const darkTooltip = {
   labelStyle: { color: '#94A3B8' }
 }
 
+// ── AppIcon: tile gradient ala iOS (referensi hijau/oranye/ungu) ──
+function AppIcon({ icon: Icon, hex, size = 40, iconSize }: { icon: typeof Users; hex: string; size?: number; iconSize?: number }) {
+  const isz = iconSize ?? Math.round(size * 0.52)
+  return (
+    <div
+      className="relative flex items-center justify-center shrink-0 select-none"
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size * 0.28, // squircle-ish
+        background: `linear-gradient(160deg, ${hex}E6, ${hex})`,
+        boxShadow: `0 ${size * 0.14}px ${size * 0.3}px -${size * 0.08}px ${hex}99, inset 0 1px 1px rgba(255,255,255,0.35), inset 0 -2px 4px rgba(0,0,0,0.15)`,
+      }}
+    >
+      {/* highlight kiri-atas ala glossy iOS */}
+      <div
+        className="absolute inset-x-0 top-0 pointer-events-none"
+        style={{
+          height: '46%',
+          borderRadius: `${size * 0.28}px ${size * 0.28}px 40% 40% / ${size * 0.28}px ${size * 0.28}px 70% 70%`,
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.02))',
+        }}
+      />
+      <Icon size={isz} className="relative z-10 text-white" strokeWidth={2.4} />
+    </div>
+  )
+}
+
 // ── Count Up Hook ─────────────────────────────────────
 function useCountUp(target: number, duration = 1400, delay = 0) {
   const [val, setVal] = useState(0)
@@ -127,10 +155,8 @@ function StatCard({ stat, idx }: { stat: StatItem; idx: number }) {
           initial={{ scale: 0, rotate: -30 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ delay: 0.25 + idx * 0.13, type: 'spring', stiffness: 200, damping: 12 }}
-          className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-          style={{ background: `${stat.hex}22`, border: `1px solid ${stat.hex}55`, boxShadow: `0 0 14px ${stat.hex}33` }}
         >
-          <stat.icon size={16} style={{ color: stat.hex }} />
+          <AppIcon icon={stat.icon} hex={stat.hex} size={38} />
         </motion.div>
         <span className="text-sm font-semibold text-slate-300 tracking-wide">{stat.label}</span>
       </div>
@@ -249,10 +275,8 @@ function IncomeTracker() {
             initial={{ scale: 0, rotate: -30 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ delay: 0.5, type: 'spring', stiffness: 200, damping: 12 }}
-            className="w-9 h-9 rounded-lg flex items-center justify-center"
-            style={{ background: 'rgba(139,92,246,0.13)', border: '1px solid rgba(139,92,246,0.55)', boxShadow: '0 0 14px rgba(139,92,246,0.2)' }}
           >
-            <TrendingUp size={16} className="text-purple-400" />
+            <AppIcon icon={TrendingUp} hex="#34D399" size={38} />
           </motion.div>
           <span className="text-base font-semibold text-white tracking-wide">Income Tracker</span>
         </div>
@@ -385,10 +409,8 @@ function AgentPerformanceCard() {
             initial={{ scale: 0, rotate: -30 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ delay: 0.55, type: 'spring', stiffness: 200, damping: 12 }}
-            className="w-9 h-9 rounded-lg flex items-center justify-center"
-            style={{ background: 'rgba(16,185,129,0.13)', border: '1px solid rgba(16,185,129,0.55)', boxShadow: '0 0 14px rgba(16,185,129,0.2)' }}
           >
-            <Bot size={16} className="text-emerald-400" />
+            <AppIcon icon={Bot} hex="#34D399" size={38} />
           </motion.div>
           <span className="text-base font-semibold text-white tracking-wide">Agent Performance</span>
         </div>
@@ -503,10 +525,8 @@ function TaskFlowCard() {
             initial={{ scale: 0, rotate: -30 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ delay: 0.45, type: 'spring', stiffness: 200, damping: 12 }}
-            className="w-9 h-9 rounded-lg flex items-center justify-center"
-            style={{ background: 'rgba(34,211,238,0.13)', border: '1px solid rgba(34,211,238,0.55)', boxShadow: '0 0 14px rgba(34,211,238,0.2)' }}
           >
-            <Radio size={16} className="text-cyan-400" />
+            <AppIcon icon={Radio} hex="#22D3EE" size={38} />
           </motion.div>
           <span className="text-base font-semibold text-white tracking-wide">Task Flow Monitor</span>
         </div>
@@ -659,10 +679,8 @@ function CozyCronCard() {
             initial={{ scale: 0, rotate: -30 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ delay: 0.6, type: 'spring', stiffness: 200, damping: 12 }}
-            className="w-9 h-9 rounded-lg flex items-center justify-center"
-            style={{ background: 'rgba(245,158,11,0.13)', border: '1px solid rgba(245,158,11,0.55)', boxShadow: '0 0 14px rgba(245,158,11,0.2)' }}
           >
-            <CalendarClock size={16} className="text-amber-400" />
+            <AppIcon icon={CalendarClock} hex="#FBBF24" size={38} />
           </motion.div>
           <span className="text-base font-semibold text-white tracking-wide">Cozy Cron</span>
           {stats?.gateway && (
@@ -804,10 +822,8 @@ function LiveTaskQueue() {
             initial={{ scale: 0, rotate: -30 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ delay: 0.65, type: 'spring', stiffness: 200, damping: 12 }}
-            className="w-9 h-9 rounded-lg flex items-center justify-center"
-            style={{ background: 'rgba(34,211,238,0.13)', border: '1px solid rgba(34,211,238,0.55)', boxShadow: '0 0 14px rgba(34,211,238,0.2)' }}
           >
-            <Terminal size={16} className="text-cyan-400" />
+            <AppIcon icon={Terminal} hex="#22D3EE" size={38} />
           </motion.div>
           <span className="text-base font-semibold text-white tracking-wide">Live Task Queue</span>
           <span className="text-[10px] text-slate-500 font-mono hidden md:inline">• real activity dari Hermes runtime</span>
@@ -983,10 +999,8 @@ function StockDashboard() {
             initial={{ scale: 0, rotate: -30 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ delay: 0.7, type: 'spring', stiffness: 200, damping: 12 }}
-            className="w-9 h-9 rounded-lg flex items-center justify-center"
-            style={{ background: 'rgba(239,68,68,0.13)', border: '1px solid rgba(239,68,68,0.55)', boxShadow: '0 0 14px rgba(239,68,68,0.2)' }}
           >
-            <Gamepad2 size={16} className="text-red-400" />
+            <AppIcon icon={Gamepad2} hex="#EF4444" size={38} />
           </motion.div>
           <span className="text-base font-semibold text-white tracking-wide">ZEPHRA Stock Dashboard</span>
           <span className="text-[10px] text-slate-500 font-mono hidden md:inline">• farid-shop-enterprise</span>
@@ -1130,10 +1144,8 @@ function StockStatCard({ s, idx }: { s: { icon: typeof Gamepad2; label: string; 
             initial={{ scale: 0, rotate: -30 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ delay: 0.75 + idx * 0.06, type: 'spring', stiffness: 220, damping: 12 }}
-            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-            style={{ background: `${s.hex}1e`, border: `1px solid ${s.hex}55`, boxShadow: `0 0 12px ${s.hex}33` }}
           >
-            <s.icon size={14} style={{ color: s.hex }} />
+            <AppIcon icon={s.icon} hex={s.hex} size={32} />
           </motion.div>
           <span className="text-[12px] font-semibold text-slate-200 tracking-wide">{s.label}</span>
         </div>
