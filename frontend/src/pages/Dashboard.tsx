@@ -1468,11 +1468,11 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* ═══ ZEPHRA Stock Dashboard (filter global) ═══ */}
-      <StockDashboard />
-
       {/* ═══ AI Models Dashboard (usage & context) ═══ */}
       <AiModelsDashboard />
+
+      {/* ═══ ZEPHRA Stock Dashboard (filter global) ═══ */}
+      <StockDashboard />
 
       {/* ═══ Charts Row: Task Flow + Income Tracker ═══ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
