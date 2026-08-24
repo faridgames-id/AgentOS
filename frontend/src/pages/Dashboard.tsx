@@ -63,6 +63,123 @@ const darkTooltip = {
   labelStyle: { color: '#94A3B8' }
 }
 
+// ── Count Up Hook ─────────────────────────────────────
+function useCountUp(target: number, duration = 1400, delay = 0) {
+  const [val, setVal] = useState(0)
+  useEffect(() => {
+    let raf = 0
+    let start: number | null = null
+    const timer = setTimeout(() => {
+      const step = (ts: number) => {
+        if (start === null) start = ts
+        const p = Math.min((ts - start) / duration, 1)
+        const eased = 1 - Math.pow(1 - p, 3)
+        setVal(Math.round(target * eased))
+        if (p < 1) raf = requestAnimationFrame(step)
+      }
+      raf = requestAnimationFrame(step)
+    }, delay)
+    return () => { clearTimeout(timer); cancelAnimationFrame(raf) }
+  }, [target, duration, delay])
+  return val
+}
+
+// ── Stat Card (sparkline style) ───────────────────────
+interface StatItem {
+  icon: typeof Users
+  label: string
+  value: number
+  format: (n: number) => string
+  trend: string
+  up: boolean
+  hex: string
+  glow: string
+  spark: number[]
+}
+
+function StatCard({ stat, idx }: { stat: StatItem; idx: number }) {
+  const delay = 150 + idx * 130
+  const n = useCountUp(stat.value, 1400, delay)
+  const sparkData = stat.spark.map((v, i) => ({ i, v }))
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 48, scale: 0.92 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay: idx * 0.13, type: 'spring', stiffness: 130, damping: 15 }}
+      whileHover={{ y: -6, scale: 1.02, transition: { duration: 0.2 } }}
+      className="relative p-5 rounded-2xl overflow-hidden group cursor-default"
+      style={{
+        background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
+        border: '1px solid rgba(148,163,184,0.12)',
+        boxShadow: `0 0 24px ${stat.glow}, inset 0 1px 0 rgba(255,255,255,0.06)`
+      }}
+    >
+      {/* corner glow blob */}
+      <div className="absolute -top-12 -right-12 w-36 h-36 rounded-full blur-3xl opacity-20 pointer-events-none"
+        style={{ background: stat.hex }} />
+      {/* scan line */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+
+      {/* header: icon tile + label */}
+      <div className="flex items-center gap-3 mb-4 relative z-10">
+        <motion.div
+          initial={{ scale: 0, rotate: -30 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ delay: 0.25 + idx * 0.13, type: 'spring', stiffness: 200, damping: 12 }}
+          className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+          style={{ background: `${stat.hex}22`, border: `1px solid ${stat.hex}55`, boxShadow: `0 0 14px ${stat.hex}33` }}
+        >
+          <stat.icon size={16} style={{ color: stat.hex }} />
+        </motion.div>
+        <span className="text-sm font-semibold text-slate-300 tracking-wide">{stat.label}</span>
+      </div>
+
+      {/* big value */}
+      <p className="text-3xl font-black text-white font-mono leading-none relative z-10">
+        {stat.format(n)}
+      </p>
+
+      {/* trend row */}
+      <div className="flex items-center gap-2 mt-2 mb-3 relative z-10">
+        <span className={`text-xs font-bold flex items-center gap-0.5 ${stat.up ? 'text-emerald-400' : 'text-red-400'}`}>
+          {stat.up ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}{stat.trend}
+        </span>
+        <span className="text-xs text-slate-500">vs last week</span>
+      </div>
+
+      {/* sparkline with glow */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.55 + idx * 0.13, duration: 0.6 }}
+        className="relative z-10 -mx-1"
+        style={{ filter: `drop-shadow(0 0 6px ${stat.hex}55)` }}
+      >
+        <ResponsiveContainer width="100%" height={46}>
+          <AreaChart data={sparkData} margin={{ top: 4, right: 2, bottom: 0, left: 2 }}>
+            <defs>
+              <linearGradient id={`sparkGrad-${idx}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={stat.hex} stopOpacity={0.45} />
+                <stop offset="100%" stopColor={stat.hex} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <Area
+              type="monotone"
+              dataKey="v"
+              stroke={stat.hex}
+              strokeWidth={2}
+              fill={`url(#sparkGrad-${idx})`}
+              isAnimationActive={true}
+              animationDuration={1200}
+              animationBegin={500 + idx * 130}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </motion.div>
+    </motion.div>
+  )
+}
+
 export default function Dashboard() {
   const [pulseActive, setPulseActive] = useState(true)
 
@@ -109,41 +226,15 @@ export default function Dashboard() {
         </div>
       </motion.div>
 
-      {/* ═══ Stat Cards — Holographic ═══ */}
+      {/* ═══ Stat Cards — Sparkline Style ═══ */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { icon: Users, label: 'Agents Online', value: activeAgents, trend: '+12%', up: true, color: 'cyan', glow: 'rgba(0,212,255,0.25)' },
-          { icon: ListTodo, label: 'Total Tasks', value: totalTasks.toLocaleString(), trend: '+8.2%', up: true, color: 'purple', glow: 'rgba(139,92,246,0.25)' },
-          { icon: CalendarClock, label: 'Active Crons', value: activeCrons, trend: '+2', up: true, color: 'green', glow: 'rgba(16,185,129,0.25)' },
-          { icon: Activity, label: 'Efficiency', value: `${avgEfficiency}%`, trend: '+0.02%', up: true, color: 'amber', glow: 'rgba(245,158,11,0.25)' },
+          { icon: Users, label: 'Agents Online', value: activeAgents, format: (n: number) => `${n}`, trend: '+12%', up: true, hex: '#22D3EE', glow: 'rgba(34,211,238,0.25)', spark: [4, 6, 5, 7, 6, 8, 7, 7] },
+          { icon: ListTodo, label: 'Total Tasks', value: totalTasks, format: (n: number) => n.toLocaleString('en-US'), trend: '+8.2%', up: true, hex: '#A78BFA', glow: 'rgba(139,92,246,0.25)', spark: [3200, 3600, 3400, 4100, 3900, 4400, 4600, totalTasks] },
+          { icon: CalendarClock, label: 'Active Crons', value: activeCrons, format: (n: number) => `${n}`, trend: '+2', up: true, hex: '#34D399', glow: 'rgba(16,185,129,0.25)', spark: [1, 2, 2, 3, 2, 3, 3, activeCrons] },
+          { icon: Activity, label: 'Efficiency', value: avgEfficiency, format: (n: number) => `${n}%`, trend: '+0.02%', up: true, hex: '#FBBF24', glow: 'rgba(245,158,11,0.25)', spark: [88, 89, 91, 90, 92, 91, 92, avgEfficiency] },
         ].map((stat, idx) => (
-          <motion.div
-            key={idx}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 + idx * 0.08 }}
-            whileHover={{ y: -4 }}
-            className="relative p-5 rounded-2xl overflow-hidden group"
-            style={{
-              background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
-              border: '1px solid rgba(148,163,184,0.12)',
-              boxShadow: `0 0 24px ${stat.glow}, inset 0 1px 0 rgba(255,255,255,0.06)`
-            }}
-          >
-            {/* scan line */}
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center relative"
-                style={{ background: stat.glow, boxShadow: `0 0 18px ${stat.glow}` }}>
-                <stat.icon size={20} className="text-white" />
-              </div>
-              <span className={`text-xs font-bold flex items-center gap-1 ${stat.up ? 'text-emerald-400' : 'text-red-400'}`}>
-                {stat.up ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}{stat.trend}
-              </span>
-            </div>
-            <p className="text-3xl font-black text-white font-mono">{stat.value}</p>
-            <p className="text-xs text-slate-500 mt-1 tracking-widest">{stat.label}</p>
-          </motion.div>
+          <StatCard key={idx} stat={stat as StatItem} idx={idx} />
         ))}
       </div>
 
