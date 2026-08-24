@@ -157,7 +157,7 @@ export default function Chat() {
       >
         {/* Orb utama — gradient gelap dengan aurora dalam */}
         <motion.div
-          className="relative w-56 h-56 rounded-full"
+          className="relative w-64 h-64 rounded-full"
           animate={isListening
             ? { background: [
                 'radial-gradient(circle at 30% 70%, #d946ef 0%, #ef4444 35%, #1a0b2e 75%)',
@@ -245,6 +245,49 @@ export default function Chat() {
           animate={{ rotate: 360 }}
           transition={{ duration: isListening ? 3.5 : 13, repeat: Infinity, ease: 'linear' }}
         />
+        {/* ═══ PARTIKEL ENERGI — orbit di sekeliling orb ═══ */}
+        {Array.from({ length: 10 }).map((_, i) => {
+          const angle = (i / 10) * Math.PI * 2
+          const r = 150
+          const size = 4 + (i % 3) * 2
+          const colors = ['#e879f9', '#fb7185', '#a78bfa', '#f97316']
+          return (
+            <motion.div
+              key={`p-${i}`}
+              className="absolute rounded-full pointer-events-none"
+              style={{
+                width: size, height: size,
+                background: colors[i % colors.length],
+                boxShadow: `0 0 ${size}px ${colors[i % colors.length]}`,
+                left: '50%', top: '50%',
+                marginLeft: -size / 2, marginTop: -size / 2,
+              }}
+              animate={{
+                x: [Math.cos(angle) * r * 0.85, Math.cos(angle + Math.PI * 1.6) * r * 1.1, Math.cos(angle + Math.PI * 3.2) * r * 0.85],
+                y: [Math.sin(angle) * r * 0.5, Math.sin(angle + Math.PI * 1.6) * r * 0.65, Math.sin(angle + Math.PI * 3.2) * r * 0.5],
+                opacity: [0.3, 1, 0.3],
+                scale: [0.8, 1.3, 0.8],
+              }}
+              transition={{
+                duration: isListening ? 3 + i * 0.15 : 6 + i * 0.3,
+                repeat: Infinity,
+                ease: 'easeInOut',
+                delay: i * 0.12,
+              }}
+            />
+          )
+        })}
+
+        {/* ring 4: dashed halus terluar */}
+        <motion.div
+          className="absolute -inset-[58px] rounded-full pointer-events-none opacity-40"
+          style={{
+            border: '1px dashed rgba(216,180,254,0.35)',
+          }}
+          animate={{ rotate: isListening ? -360 : 360 }}
+          transition={{ duration: isListening ? 14 : 30, repeat: Infinity, ease: 'linear' }}
+        />
+
         {/* halo glow di belakang orb */}
         <motion.div
           className="absolute -inset-16 rounded-full pointer-events-none"
@@ -259,9 +302,20 @@ export default function Chat() {
         />
       </motion.div>
 
-      <h2 className="mt-12 text-3xl font-bold text-white font-display tracking-tight">
+      <motion.h2
+        className="mt-12 text-3xl font-bold font-display tracking-tight"
+        animate={isListening ? {
+          background: [
+            'linear-gradient(90deg,#67e8f9,#e879f9)',
+            'linear-gradient(90deg,#e879f9,#fb923c)',
+            'linear-gradient(90deg,#fb923c,#67e8f9)',
+          ],
+        } : {}}
+        transition={{ duration: 2, repeat: isListening ? Infinity : 0 }}
+        style={isListening ? { WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' } : { color: '#fff' }}
+      >
         {isListening ? 'Listening...' : 'Hey Cozy!'}
-      </h2>
+      </motion.h2>
       <p className="text-slate-400 mt-2 text-sm">
         {isListening ? 'Speak now — saya dengar Bos 👂' : 'Tap orb atau tekan mic untuk ngobrol via voice'}
       </p>
@@ -271,7 +325,7 @@ export default function Chat() {
         {Array.from({ length: 32 }).map((_, i) => (
           <motion.div
             key={i}
-            className="w-[5px] rounded-full bg-sky-400"
+            className={`w-[5px] rounded-full ${i % 2 === 0 ? 'bg-sky-400' : 'bg-fuchsia-400'}`}
             animate={isListening
               ? { height: [6, 6 + Math.random() * 18, 6], opacity: [0.5, 1, 0.5] }
               : { height: 6, opacity: [0.35, 0.8, 0.35] }}
