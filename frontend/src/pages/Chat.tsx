@@ -67,6 +67,39 @@ export default function Chat() {
   const [orbIntensity, setOrbIntensity] = useState(1)
   const [typing, setTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // ── Kirim pesan teks ke Telegram (REAL) ──
+  const sendToTelegram = (text: string) => {
+    fetch('/api/send/text', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    }).catch(() => {})
+  }
+
+  // ── Kirim file dari server ke Telegram ──
+  const sendFileToTelegram = (path: string, caption: string) => {
+    fetch('/api/send/file', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path, caption }),
+    }).catch(() => {})
+  }
+
+  // ── Upload file dari laptop Bos: simpan sementara di cache lalu kirim ──
+  const uploadAndSend = async (file: File) => {
+    const buf = await file.arrayBuffer()
+    const bytes = new Uint8Array(buf)
+    // simpan ke server via endpoint upload
+    const fd = new FormData()
+    fd.append('file', file)
+    try {
+      const res = await fetch('/api/send/upload', { method: 'POST', body: fd })
+      const d = await res.json()
+      if (d.path) sendFileToTelegram(d.path, file.name)
+    } catch { /* diam */ }
+  }
   // Telegram sync state — di level atas biar tidak reset saat re-render
   const [tgSessions, setTgSessions] = useState<Array<{ id: string; name: string; preview: string; last_role: string; time: string; message_count: number }>>([])
   const [tgActive, setTgActive] = useState<string | null>(null)
@@ -119,6 +152,8 @@ export default function Chat() {
 
   const sendMessage = () => {
     if (!input.trim() || !session) return
+    // kirim juga ke Telegram Bos (real) — dashboard & Telegram selaras
+    sendToTelegram(input.trim())
     const now = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
     const userMsg = { role: 'user' as const, text: input, time: now }
     setSessions(prev => prev.map(s => s.id === activeSession
