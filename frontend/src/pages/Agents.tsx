@@ -874,7 +874,7 @@ export default function AgentsPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+      <div className="flex flex-col gap-4 mb-6">
         <div>
           <h1 className="text-4xl font-black font-display">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-sky-100 to-white drop-shadow-[0_0_22px_rgba(125,211,252,0.7)]">
@@ -882,27 +882,61 @@ export default function AgentsPage() {
             </span>
             <Network className="inline-block text-cyan-200 ml-3 animate-pulse" size={28} />
           </h1>
-          <p className="text-slate-400 text-sm font-mono mt-1">Workflow orchestration • COZY = manager utama • klik agent untuk chat & assign task</p>
+          <p className="text-slate-400 text-sm font-mono mt-1 mb-4">Workflow orchestration • COZY = manager utama • klik agent untuk chat & assign task</p>
         </div>
 
-        {/* view switcher */}
-        <div className="flex items-center gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/10">
+        {/* view switcher — floating pill iOS ala Cozy Agentic */}
+        <div
+          className="inline-flex items-center gap-1 p-1.5 rounded-full self-start"
+          style={{
+            background: 'linear-gradient(160deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))',
+            border: '1px solid rgba(96,140,220,0.22)',
+            boxShadow: '0 10px 32px rgba(0,0,0,0.45), inset 0 1px 0 rgba(140,180,255,0.08)'
+          }}
+        >
           {([
-            { key: 'workflow', icon: LayoutGrid, label: 'Workflow Cards' },
-            { key: 'office', icon: Building2, label: 'Robot Office 3D' },
-          ] as { key: ViewMode; icon: typeof LayoutGrid; label: string }[]).map(v => (
-            <button
-              key={v.key}
-              onClick={() => setView(v.key)}
-              className={`relative flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${view === v.key ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
-            >
-              {view === v.key && (
-                <motion.div layoutId="agent-view-pill" className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/25" />
-              )}
-              <v.icon size={15} className="relative z-10" />
-              <span className="relative z-10">{v.label}</span>
-            </button>
-          ))}
+            { key: 'workflow', icon: LayoutGrid, label: 'Workflow Cards', hex: '#22d3ee' },
+            { key: 'office', icon: Building2, label: 'Robot Office 3D', hex: '#a78bfa' },
+          ] as { key: ViewMode; icon: typeof LayoutGrid; label: string; hex: string }[]).map(v => {
+            const isActive = view === v.key
+            return (
+              <button
+                key={v.key}
+                onClick={() => setView(v.key)}
+                className="relative flex items-center gap-2 px-4 py-2.5 rounded-full transition-all"
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="agent-view-pill"
+                    className="absolute inset-0 rounded-full"
+                    transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                  >
+                    <div
+                      className="absolute inset-0 rounded-full"
+                      style={{
+                        background: `linear-gradient(160deg, ${v.hex}E6, ${v.hex})`,
+                        boxShadow: `inset 0 1px 1px rgba(255,255,255,0.35), inset 0 -2px 3px rgba(0,0,0,0.15), 0 4px 14px ${v.hex}55`
+                      }}
+                    />
+                    <div
+                      className="absolute inset-x-0 top-0"
+                      style={{
+                        height: '46%',
+                        borderRadius: '999px 999px 40% 40% / 999px 999px 70% 70%',
+                        background: 'linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.02))'
+                      }}
+                    />
+                  </motion.div>
+                )}
+                <v.icon size={15} className={`relative z-10 ${isActive ? 'text-white' : 'text-slate-500'}`} strokeWidth={isActive ? 2.5 : 2} />
+                <span className={`relative z-10 text-[13px] font-semibold tracking-wide ${
+                  isActive ? 'text-white' : 'text-slate-500 hover:text-slate-300'
+                }`}>
+                  {v.label}
+                </span>
+              </button>
+            )
+          })}
         </div>
       </div>
 
