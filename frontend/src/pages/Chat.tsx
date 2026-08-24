@@ -92,7 +92,14 @@ export default function Chat() {
     let alive = true
     fetch(`/api/telegram/messages/${tgActive}`)
       .then(r => r.json())
-      .then(d => { if (alive) setTgMessages(d.messages || []) })
+      .then(d => {
+        if (!alive) return
+        setTgMessages(d.messages || [])
+        // langsung lompat ke chat terbaru (bawah) begitu pesan termuat
+        requestAnimationFrame(() => {
+          messagesEndRef.current?.scrollIntoView({ block: 'end' })
+        })
+      })
       .catch(() => {})
     return () => { alive = false }
   }, [tgActive])
@@ -101,7 +108,7 @@ export default function Chat() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [session?.messages.length])
+  }, [session?.messages.length, tgMessages.length, tgActive])
 
   // Fake voice orb pulse when listening
   useEffect(() => {
