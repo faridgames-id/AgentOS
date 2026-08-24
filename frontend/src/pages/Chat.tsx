@@ -590,11 +590,10 @@ export default function Chat() {
           </span>
           <Sparkles className="inline-block text-yellow-300 ml-3 animate-pulse" size={26} />
         </h1>
-        <p className="text-slate-400 text-sm font-mono mt-1">Neural Link Interface • v3.0</p>
-      </div>
+        <p className="text-slate-400 text-sm font-mono mt-1 mb-4">Neural Link Interface • v3.0</p>
 
-      {/* Tab switcher — floating pill center ala referensi */}
-      <div className="flex justify-center mb-8 -mt-2">
+        {/* Tab switcher — floating pill kiri, di bawah judul */}
+        <div className="flex justify-start">
         <div
           className="inline-flex items-center gap-1 p-1.5 rounded-full"
           style={{
@@ -648,6 +647,7 @@ export default function Chat() {
               </button>
             )
           })}
+        </div>
         </div>
       </div>
 
