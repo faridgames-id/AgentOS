@@ -4,7 +4,8 @@ import {
   Cpu, Activity, Clock, TrendingUp, ArrowUpRight, ArrowDownRight,
   Zap, Radio, Bot, Users, CalendarClock, ListTodo, Orbit,
   Sparkles, PlayCircle, CheckCircle2, CircleDot, Terminal, Globe,
-  Gamepad2, Package, ShoppingCart
+  Gamepad2, Package, ShoppingCart, Boxes, BrainCircuit, Wallet,
+  Layers, Gauge
 } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 
@@ -1006,13 +1007,13 @@ function StockDashboard() {
 
   const stats = [
     { icon: Gamepad2, label: 'Total Akun FF', value: filtered.filter(isFF).length, sub: 'Semua status', hex: '#22D3EE' },
-    { icon: CheckCircle2, label: 'FF Ready', value: filtered.filter(a => isFF(a) && isReady(a)).length, sub: 'Siap jual', hex: '#34D399' },
+    { icon: Zap, label: 'FF Ready', value: filtered.filter(a => isFF(a) && isReady(a)).length, sub: 'Siap jual', hex: '#34D399' },
     { icon: Gamepad2, label: 'Total Akun ML', value: filtered.filter(isML).length, sub: 'Semua status', hex: '#A78BFA' },
-    { icon: CheckCircle2, label: 'ML Ready', value: filtered.filter(a => isML(a) && isReady(a)).length, sub: 'Siap jual', hex: '#34D399' },
-    { icon: Package, label: 'Total Semua', value: filtered.length, sub: 'Seluruh akun', hex: '#60A5FA' },
-    { icon: CheckCircle2, label: 'Semua Ready', value: filtered.filter(isReady).length, sub: 'Siap jual', hex: '#34D399' },
+    { icon: Zap, label: 'ML Ready', value: filtered.filter(a => isML(a) && isReady(a)).length, sub: 'Siap jual', hex: '#34D399' },
+    { icon: Boxes, label: 'Total Semua', value: filtered.length, sub: 'Seluruh akun', hex: '#60A5FA' },
+    { icon: Gauge, label: 'Semua Ready', value: filtered.filter(isReady).length, sub: 'Siap jual', hex: '#34D399' },
     { icon: ShoppingCart, label: 'Terjual', value: filtered.filter(a => a.status === 'Terjual').length, sub: 'Sukses terjual', hex: '#FBBF24' },
-    { icon: Clock, label: 'Cicilan', value: filtered.filter(a => a.status === 'Cicilan').length, sub: 'Pending payment', hex: '#F87171' },
+    { icon: Wallet, label: 'Cicilan', value: filtered.filter(a => a.status === 'Cicilan').length, sub: 'Pending payment', hex: '#F87171' },
   ]
 
   return (
@@ -1322,7 +1323,7 @@ function AiModelsDashboard() {
         <div className="flex items-center gap-3">
           <motion.div initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }}
             transition={{ delay: 0.65, type: 'spring', stiffness: 200, damping: 12 }}>
-            <AppIcon icon={Cpu} hex="#8B5CF6" size={38} />
+            <AppIcon icon={BrainCircuit} hex="#8B5CF6" size={38} />
           </motion.div>
           <div>
             <span className="text-base font-semibold text-white tracking-wide block">AI Models</span>
@@ -1475,7 +1476,7 @@ function AiModelsDashboard() {
             }}
           >
             <div className="flex items-center gap-2.5 mb-3">
-              <AppIcon icon={Activity} hex="#F59E0B" size={30} />
+              <AppIcon icon={Wallet} hex="#F59E0B" size={30} />
               <div>
                 <p className="text-[13px] font-semibold text-white">Budget Terpakai</p>
                 <p className="text-[9px] text-slate-500 font-mono">estimasi biaya • berbayar</p>
@@ -1545,10 +1546,10 @@ export default function Dashboard() {
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-black mb-1 font-display">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-sky-300 to-violet-300 drop-shadow-[0_0_22px_rgba(56,189,248,0.65)]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-100 to-white drop-shadow-[0_0_22px_rgba(125,211,252,0.7)]">
               Mission Control
             </span>
-            <Orbit className="inline-block text-cyan-200 ml-3 animate-spin-slow" size={30} />
+            <Orbit className="inline-block text-sky-200 ml-3 animate-spin-slow" size={30} />
           </h1>
           <p className="text-slate-400 text-sm font-mono tracking-wide">Selamat datang kembali, Bos Farid • Neural Link Active</p>
         </div>
@@ -1564,8 +1565,8 @@ export default function Dashboard() {
       {/* ═══ Stat Cards — Sparkline Style ═══ */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { icon: Users, label: 'Agents Online', value: activeAgents, format: (n: number) => `${n}`, trend: '+12%', up: true, hex: '#22D3EE', glow: 'rgba(34,211,238,0.25)', spark: [4, 6, 5, 7, 6, 8, 7, 7] },
-          { icon: ListTodo, label: 'Total Tasks', value: totalTasks, format: (n: number) => n.toLocaleString('en-US'), trend: '+8.2%', up: true, hex: '#A78BFA', glow: 'rgba(139,92,246,0.25)', spark: [3200, 3600, 3400, 4100, 3900, 4400, 4600, totalTasks] },
+          { icon: Bot, label: 'Agents Online', value: activeAgents, format: (n: number) => `${n}`, trend: '+12%', up: true, hex: '#22D3EE', glow: 'rgba(34,211,238,0.25)', spark: [4, 6, 5, 7, 6, 8, 7, 7] },
+          { icon: Layers, label: 'Total Tasks', value: totalTasks, format: (n: number) => n.toLocaleString('en-US'), trend: '+8.2%', up: true, hex: '#A78BFA', glow: 'rgba(139,92,246,0.25)', spark: [3200, 3600, 3400, 4100, 3900, 4400, 4600, totalTasks] },
           { icon: CalendarClock, label: 'Active Crons', value: activeCrons, format: (n: number) => `${n}`, trend: '+2', up: true, hex: '#34D399', glow: 'rgba(16,185,129,0.25)', spark: [1, 2, 2, 3, 2, 3, 3, activeCrons] },
           { icon: Activity, label: 'Efficiency', value: avgEfficiency, format: (n: number) => `${n}%`, trend: '+0.02%', up: true, hex: '#FBBF24', glow: 'rgba(245,158,11,0.25)', spark: [88, 89, 91, 90, 92, 91, 92, avgEfficiency] },
         ].map((stat, idx) => (
