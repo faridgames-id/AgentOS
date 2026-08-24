@@ -316,7 +316,7 @@ export default function Chat() {
       >
         {isListening ? 'Listening...' : 'Hey Cozy!'}
       </motion.h2>
-      <p className="text-slate-400 mt-2 text-sm">
+      <p className="text-slate-400 mt-6 text-sm">
         {isListening ? 'Speak now — saya dengar Bos 👂' : 'Tap orb atau tekan mic untuk ngobrol via voice'}
       </p>
 
