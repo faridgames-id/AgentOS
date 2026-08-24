@@ -1110,27 +1110,85 @@ function useCountUpSafe(target: number, duration: number, delay: number) {
 
 function StockStatCard({ s, idx }: { s: { icon: typeof Gamepad2; label: string; value: number; sub: string; hex: string }; idx: number }) {
   const n = useCountUpSafe(s.value, 900, 650 + idx * 70)
+  const pct = Math.min(100, Math.round((s.value / Math.max(1, s.value + 20)) * 100))
   return (
     <motion.div
       initial={{ opacity: 0, y: 24, scale: 0.94 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ delay: 0.7 + idx * 0.06, type: 'spring', stiffness: 150, damping: 15 }}
-      whileHover={{ y: -4, transition: { duration: 0.18 } }}
-      className="p-4 rounded-xl relative overflow-hidden"
+      whileHover={{ y: -5, transition: { duration: 0.18 } }}
+      className="p-4 rounded-xl relative overflow-hidden group"
       style={{
-        background: 'rgba(255,255,255,0.03)',
-        border: '1px solid rgba(148,163,184,0.1)'
+        background: `linear-gradient(135deg, ${s.hex}14, rgba(15,23,42,0.6) 45%, rgba(10,15,30,0.85))`,
+        border: `1px solid ${s.hex}30`,
+        boxShadow: `0 0 18px ${s.hex}18, inset 0 1px 0 rgba(255,255,255,0.05)`
       }}
     >
-      <div className="flex items-center gap-2.5 mb-2.5">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-          style={{ background: `${s.hex}1f`, border: `1px solid ${s.hex}55` }}>
-          <s.icon size={14} style={{ color: s.hex }} />
+      {/* motif: dot grid */}
+      <div
+        className="absolute inset-0 opacity-[0.12] pointer-events-none"
+        style={{
+          backgroundImage: `radial-gradient(${s.hex} 1px, transparent 1px)`,
+          backgroundSize: '12px 12px'
+        }}
+      />
+      {/* motif: diagonal lines */}
+      <div
+        className="absolute inset-0 opacity-[0.06] pointer-events-none"
+        style={{
+          backgroundImage: `repeating-linear-gradient(45deg, ${s.hex} 0, ${s.hex} 1px, transparent 1px, transparent 9px)`
+        }}
+      />
+      {/* corner glow blob */}
+      <div
+        className="absolute -top-10 -right-10 w-28 h-28 rounded-full blur-2xl opacity-25 pointer-events-none transition-opacity group-hover:opacity-45"
+        style={{ background: s.hex }}
+      />
+      {/* accent bar atas */}
+      <div
+        className="absolute top-0 left-0 h-[2.5px] w-full"
+        style={{ background: `linear-gradient(90deg, ${s.hex}, transparent 70%)` }}
+      />
+      {/* ring dekoratif bawah kanan */}
+      <div
+        className="absolute -bottom-8 -right-8 w-24 h-24 rounded-full border pointer-events-none opacity-20"
+        style={{ borderColor: `${s.hex}55` }}
+      />
+      <div
+        className="absolute -bottom-4 -right-4 w-14 h-14 rounded-full border pointer-events-none opacity-15"
+        style={{ borderColor: `${s.hex}77` }}
+      />
+
+      <div className="relative z-10">
+        <div className="flex items-center gap-2.5 mb-2.5">
+          <motion.div
+            initial={{ scale: 0, rotate: -30 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.75 + idx * 0.06, type: 'spring', stiffness: 220, damping: 12 }}
+            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+            style={{ background: `${s.hex}22`, border: `1px solid ${s.hex}66`, boxShadow: `0 0 12px ${s.hex}44` }}
+          >
+            <s.icon size={14} style={{ color: s.hex }} />
+          </motion.div>
+          <span className="text-[11px] font-semibold text-slate-300 tracking-wide leading-tight">{s.label}</span>
         </div>
-        <span className="text-[11px] font-semibold text-slate-300 tracking-wide leading-tight">{s.label}</span>
+
+        <p className="text-2xl font-black text-white font-mono leading-none drop-shadow-[0_0_10px_rgba(255,255,255,0.15)]">
+          {n.toLocaleString('id-ID')}
+        </p>
+        <p className="text-[10px] text-slate-500 mt-1.5 mb-2">{s.sub}</p>
+
+        {/* progress bar dekoratif */}
+        <div className="h-1 rounded-full bg-white/5 overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${pct}%` }}
+            transition={{ delay: 0.9 + idx * 0.06, duration: 0.9, ease: 'easeOut' }}
+            className="h-full rounded-full"
+            style={{ background: `linear-gradient(90deg, ${s.hex}, ${s.hex}44)`, boxShadow: `0 0 8px ${s.hex}66` }}
+          />
+        </div>
       </div>
-      <p className="text-2xl font-black text-white font-mono leading-none">{n}</p>
-      <p className="text-[10px] text-slate-500 mt-1.5">{s.sub}</p>
     </motion.div>
   )
 }
