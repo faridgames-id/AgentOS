@@ -738,12 +738,25 @@ export default function Chat() {
                   placeholder="Start your request, and let Cozy handle everything..."
                   className="flex-1 bg-transparent outline-none text-sm text-white placeholder:text-slate-500"
                 />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,.pdf,.txt,.csv,.xlsx,.docx"
+                  className="hidden"
+                  onChange={e => {
+                    const f = e.target.files?.[0]
+                    if (f) uploadAndSend(f)
+                    e.target.value = ''
+                  }}
+                />
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <button className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-white transition-all"
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:scale-110 transition-all"
                     style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.14)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12)' }}
-                    title="Attach">
+                    title="Kirim gambar / dokumen ke Telegram">
                     <Plus size={14} />
                   </button>
                   <button className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-white transition-all"
