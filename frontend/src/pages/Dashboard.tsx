@@ -739,6 +739,158 @@ function CozyCronCard() {
   )
 }
 
+// ── Live Task Queue (REAL Hermes activity feed) ───────
+interface ActivityItem {
+  agent: string
+  task: string
+  status: string
+  time: string
+}
+
+const AGENT_COLORS: Record<string, string> = {
+  COZY: '#00D4FF', ATLAS: '#10B981', ZEPHRA: '#EF4444', CIPHER: '#06B6D4',
+  NOVA: '#FF6B35', SENTINEL: '#F59E0B', PHOENIX: '#F97316', ORACLE: '#8B5CF6',
+  PIXEL: '#EC4899', AURORA: '#14B8A6', CRON: '#A78BFA',
+}
+
+function LiveTaskQueue() {
+  const [items, setItems] = useState<ActivityItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [tab, setTab] = useState('All')
+
+  useEffect(() => {
+    let alive = true
+    const load = () => {
+      fetch('/api/cozy/activity')
+        .then(r => r.json())
+        .then(d => { if (alive) { setItems(d.activities || []); setLoading(false) } })
+        .catch(() => { if (alive) setLoading(false) })
+    }
+    load()
+    const iv = setInterval(load, 20000) // refresh tiap 20s
+    return () => { alive = false; clearInterval(iv) }
+  }, [])
+
+  const tabs = ['All', 'running', 'done', 'failed']
+  const filtered = tab === 'All' ? items : items.filter(i => i.status === tab)
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 48 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.55, type: 'spring', stiffness: 110, damping: 16 }}
+      className="rounded-2xl overflow-hidden relative"
+      style={{
+        background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
+        border: '1px solid rgba(148,163,184,0.12)',
+        boxShadow: '0 0 24px rgba(0,212,255,0.08), inset 0 1px 0 rgba(255,255,255,0.06)'
+      }}
+    >
+      {/* scan line */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+
+      <div className="flex items-center justify-between p-6 pb-4 relative z-10">
+        <div className="flex items-center gap-3">
+          <motion.div
+            initial={{ scale: 0, rotate: -30 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.65, type: 'spring', stiffness: 200, damping: 12 }}
+            className="w-9 h-9 rounded-lg flex items-center justify-center"
+            style={{ background: 'rgba(34,211,238,0.13)', border: '1px solid rgba(34,211,238,0.55)', boxShadow: '0 0 14px rgba(34,211,238,0.2)' }}
+          >
+            <Terminal size={16} className="text-cyan-400" />
+          </motion.div>
+          <span className="text-base font-semibold text-white tracking-wide">Live Task Queue</span>
+          <span className="text-[10px] text-slate-500 font-mono hidden md:inline">• real activity dari Hermes runtime</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {tabs.map(t => (
+            <button key={t}
+              onClick={() => setTab(t)}
+              className={`text-xs px-3 py-1.5 rounded-full transition-all ${tab === t
+                ? 'bg-purple-500/20 border border-purple-400/40 text-purple-300'
+                : 'text-slate-500 hover:text-slate-300 border border-transparent'
+                }`}>
+              {t === 'All' ? 'All' : t}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center h-[160px] text-slate-500 text-sm font-mono relative z-10">
+          <Sparkles size={18} className="animate-pulse mr-2 text-cyan-400" /> Membaca aktivitas Hermes...
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-[140px] gap-2 relative z-10">
+          <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: 2.4, repeat: Infinity }}>
+            <Terminal size={26} className="text-slate-600" />
+          </motion.div>
+          <p className="text-slate-500 text-sm font-mono">Belum ada aktivitas tercatat</p>
+        </div>
+      ) : (
+        <table className="w-full relative z-10">
+          <thead>
+            <tr className="border-y border-white/5">
+              {['Activity', 'Agent', 'Time', 'Status'].map(h => (
+                <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-slate-500 tracking-wider">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <AnimatePresence>
+              {filtered.slice(0, 8).map((item, idx) => {
+                const color = AGENT_COLORS[item.agent] || '#94A3B8'
+                return (
+                  <motion.tr
+                    key={`${item.time}-${idx}-${item.task.slice(0, 12)}`}
+                    initial={{ opacity: 0, x: -14 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ delay: idx * 0.04 }}
+                    className="border-b border-white/[0.03] hover:bg-cyan-500/[0.03] transition-colors group"
+                  >
+                    <td className="px-6 py-3.5">
+                      <span className="text-sm text-slate-200">{item.task}</span>
+                    </td>
+                    <td className="px-6 py-3.5">
+                      <span className="inline-flex items-center gap-2 text-xs font-bold font-mono" style={{ color }}>
+                        <CircleDot size={12} style={{ color }} />
+                        {item.agent}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3.5">
+                      <span className="text-xs text-slate-500 font-mono">{item.time || '--:--'}</span>
+                    </td>
+                    <td className="px-6 py-3.5">
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
+                        item.status === 'running' ? 'text-cyan-400'
+                          : item.status === 'failed' ? 'text-red-400'
+                            : 'text-emerald-400'
+                      }`}>
+                        {item.status === 'running' && (
+                          <motion.span
+                            animate={{ scale: [1, 1.4, 1], opacity: [1, 0.5, 1] }}
+                            transition={{ duration: 1.4, repeat: Infinity }}
+                            className="w-1.5 h-1.5 rounded-full bg-cyan-400"
+                          />
+                        )}
+                        {item.status === 'done' && <CheckCircle2 size={12} />}
+                        {item.status === 'failed' && <span className="w-1.5 h-1.5 rounded-full bg-red-400" />}
+                        {item.status}
+                      </span>
+                    </td>
+                  </motion.tr>
+                )
+              })}
+            </AnimatePresence>
+          </tbody>
+        </table>
+      )}
+    </motion.div>
+  )
+}
+
 export default function Dashboard() {
   const [pulseActive, setPulseActive] = useState(true)
 
@@ -815,103 +967,8 @@ export default function Dashboard() {
         <CozyCronCard />
       </div>
 
-      {/* ═══ Live Tasks Table (Stakely-style) ═══ */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}
-        className="rounded-2xl overflow-hidden relative"
-        style={{
-          background: 'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(10,15,30,0.9))',
-          border: '1px solid rgba(148,163,184,0.12)',
-          boxShadow: '0 0 24px rgba(0,212,255,0.06)'
-        }}
-      >
-        <div className="flex items-center justify-between p-6 pb-4">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <Terminal size={20} className="text-cyan-400" />
-            Live Task Queue
-          </h2>
-          <div className="flex items-center gap-3">
-            {['All', 'Running', 'Queued', 'Done'].map((tab, i) => (
-              <button key={tab}
-                className={`text-xs px-3 py-1.5 rounded-full transition-all ${i === 0
-                  ? 'bg-purple-500/20 border border-purple-400/40 text-purple-300'
-                  : 'text-slate-500 hover:text-slate-300 border border-transparent'
-                  }`}>
-                {tab}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Table */}
-        <table className="w-full">
-          <thead>
-            <tr className="border-y border-white/5">
-              {['Task', 'Agent', 'Priority', 'Progress', 'Status'].map(h => (
-                <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-slate-500 tracking-wider">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {liveTasks.map((task, idx) => (
-              <motion.tr
-                key={task.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.65 + idx * 0.05 }}
-                className="border-b border-white/[0.03] hover:bg-cyan-500/[0.03] transition-colors"
-              >
-                <td className="px-6 py-4">
-                  <span className="text-sm text-slate-200">{task.task}</span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="inline-flex items-center gap-2 text-xs font-bold text-cyan-400 font-mono">
-                    <CircleDot size={12} />{task.agent}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${task.priority === 'high'
-                    ? 'bg-red-500/10 text-red-400 border border-red-400/20'
-                    : task.priority === 'medium'
-                      ? 'bg-amber-500/10 text-amber-400 border border-amber-400/20'
-                      : 'bg-slate-500/10 text-slate-400 border border-slate-400/20'
-                    }`}>
-                    {task.priority}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${task.progress}%` }}
-                        transition={{ duration: 1, delay: 0.7 + idx * 0.05 }}
-                        className="h-full rounded-full"
-                        style={{
-                          background: task.status === 'done' ? '#10B981' : 'linear-gradient(90deg,#00D4FF,#8B5CF6)'
-                        }}
-                      />
-                    </div>
-                    <span className="text-xs text-slate-500 font-mono">{task.progress}%</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${task.status === 'running'
-                    ? 'text-cyan-400'
-                    : task.status === 'done'
-                      ? 'text-emerald-400'
-                      : 'text-slate-400'
-                    }`}>
-                    {task.status === 'running' && <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />}
-                    {task.status === 'done' && <CheckCircle2 size={12} />}
-                    {task.status}
-                  </span>
-                </td>
-              </motion.tr>
-            ))}
-          </tbody>
-        </table>
-      </motion.div>
+      {/* ═══ Live Task Queue — REAL Hermes activity ═══ */}
+      <LiveTaskQueue />
     </div>
   )
 }

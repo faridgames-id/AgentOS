@@ -108,20 +108,27 @@ def _recent_activity(limit: int = 8):
         pass
 
     # gateway log lines (tool calls, errors, model switches)
-    for line in _read_gateway_log_tail(200)[::-1]:
+    seen_msgs = set()
+    for line in _read_gateway_log_tail(400)[::-1]:
         low = line.lower()
         agent = "COZY"
         for name in ["atlas", "zephra", "cipher", "nova", "sentinel", "phoenix", "oracle", "pixel", "aurora"]:
             if name in low:
                 agent = name.upper()
                 break
-        if "tool" in low or "cron" in low or "error" in low or "model" in low or "telegram" in low:
-            msg = re.sub(r"^\S+\s*", "", line)[:70]
+        # bersihkan prefix systemd: "2026-08-24T10:00:00+0000 vm-host python[123]: pesan"
+        msg = re.sub(r'^\S+\s+\S+\s+\S+:\s*', '', line)
+        msg = re.sub(r'^(WARNING|INFO|ERROR)\s*:?\s*', '', msg, flags=re.IGNORECASE)
+        msg = re.sub(r'\s+', ' ', msg).strip()[:70]
+        if not msg or len(msg) < 8 or msg in seen_msgs:
+            continue
+        if any(kw in low for kw in ["tool", "cron", "model", "telegram", "gateway", "session", "skill", "agent.", "response"]):
             status = "done"
-            if "error" in low or "fail" in low:
+            if "error" in low or "fail" in low or "warning" in low or "empty response" in low:
                 status = "failed"
-            elif "run" in low or "start" in low:
+            elif "run" in low or "start" in low or "connect" in low:
                 status = "running"
+            seen_msgs.add(msg)
             activities.append({
                 "agent": agent,
                 "task": msg,
