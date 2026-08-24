@@ -242,11 +242,19 @@ function IncomeTracker() {
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-5 relative z-10">
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-          <TrendingUp size={20} className="text-emerald-400" />
-          Income Tracker
-        </h2>
+      <div className="flex items-center justify-between mb-4 relative z-10">
+        <div className="flex items-center gap-3">
+          <motion.div
+            initial={{ scale: 0, rotate: -30 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.5, type: 'spring', stiffness: 200, damping: 12 }}
+            className="w-9 h-9 rounded-lg flex items-center justify-center"
+            style={{ background: 'rgba(139,92,246,0.13)', border: '1px solid rgba(139,92,246,0.55)', boxShadow: '0 0 14px rgba(139,92,246,0.2)' }}
+          >
+            <TrendingUp size={16} className="text-purple-400" />
+          </motion.div>
+          <span className="text-base font-semibold text-white tracking-wide">Income Tracker</span>
+        </div>
 
         {/* Year picker dengan ikon kalender */}
         <div className="relative">
