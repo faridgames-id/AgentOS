@@ -6,7 +6,7 @@ import { OrbitControls, Html, RoundedBox, Text } from '@react-three/drei'
 import {
   Flame, Code, BarChart3, Palette, Eye, Shield, PenTool, Bird, Gamepad2,
   Network, X, Send, Zap, MessageSquare, Cpu, Activity, ListTodo,
-  LayoutGrid, Building2
+  LayoutGrid, Building2, Brain
 } from 'lucide-react'
 
 // ─────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ function WorkflowView({ onOpen, selectedId }: { onOpen: (a: SubAgent) => void; s
         transition={{ delay: tier * 0.1 }}
         whileHover={{ y: -4 }}
         onClick={() => onOpen(a)}
-        className={`relative text-left rounded-2xl p-4 cursor-pointer group transition-shadow ${isCozy ? 'w-64' : 'w-52'}`}
+        className={`relative text-left rounded-2xl p-4 cursor-pointer group transition-shadow ${isCozy ? 'w-64' : 'w-[13.5rem]'}`}
         style={{
           background: 'linear-gradient(150deg, rgba(17,26,48,0.96), rgba(10,15,30,0.98))',
           border: selected ? `1.5px solid ${a.color}` : `1px solid ${a.color}44`,
@@ -149,13 +149,13 @@ function WorkflowView({ onOpen, selectedId }: { onOpen: (a: SubAgent) => void; s
         </div>
 
         {/* activity */}
-        <p className="mt-2.5 text-[11px] text-slate-300 leading-snug line-clamp-2 min-h-[28px]">{a.activity}</p>
+        <p className="mt-2.5 text-[11px] text-slate-300 leading-snug line-clamp-1 min-h-[16px]">{a.activity}</p>
 
         {/* metrics row */}
-        <div className="mt-2.5 flex items-center gap-3 text-[10px] font-mono">
+        <div className="mt-2 flex items-center gap-2.5 text-[10px] font-mono">
           <span className="flex items-center gap-1 text-cyan-300"><ListTodo size={10} />{a.tasks.toLocaleString()}</span>
           <span className="flex items-center gap-1 text-emerald-300"><Activity size={10} />{a.efficiency}%</span>
-          <span className="ml-auto text-slate-500 truncate max-w-[80px]">{a.model}</span>
+          <span className="ml-auto text-slate-500 truncate max-w-[76px] text-right">{a.model}</span>
         </div>
 
         {/* efficiency bar */}
@@ -215,7 +215,7 @@ function WorkflowView({ onOpen, selectedId }: { onOpen: (a: SubAgent) => void; s
       {/* Tier rows */}
       <div className="relative" style={{ zIndex: 2 }}>
         {/* Tier 1 — Manager */}
-        <div className="flex justify-center mb-10">
+        <div className="flex justify-center mb-12">
           <div className="flex flex-col items-center gap-2">
             <span className="text-[10px] font-bold tracking-[0.25em] text-amber-300/70 uppercase">Manager</span>
             {pick(TIER1).map(a => <AgentCard key={a.id} a={a} tier={1} />)}
@@ -223,10 +223,10 @@ function WorkflowView({ onOpen, selectedId }: { onOpen: (a: SubAgent) => void; s
         </div>
 
         {/* Tier 2 — Core squad */}
-        <div className="flex justify-center mb-10">
+        <div className="flex justify-center mb-12">
           <div className="flex flex-col items-center gap-2">
             <span className="text-[10px] font-bold tracking-[0.25em] text-cyan-300/70 uppercase">Core Squad</span>
-            <div className="flex flex-wrap justify-center gap-4">
+            <div className="flex flex-wrap justify-center gap-4 max-w-5xl mx-auto">
               {pick(TIER2).map(a => <AgentCard key={a.id} a={a} tier={2} />)}
             </div>
           </div>
@@ -236,7 +236,7 @@ function WorkflowView({ onOpen, selectedId }: { onOpen: (a: SubAgent) => void; s
         <div className="flex justify-center">
           <div className="flex flex-col items-center gap-2">
             <span className="text-[10px] font-bold tracking-[0.25em] text-violet-300/70 uppercase">Ops Squad</span>
-            <div className="flex flex-wrap justify-center gap-4">
+            <div className="flex flex-wrap justify-center gap-4 max-w-4xl mx-auto">
               {pick(TIER3).map(a => <AgentCard key={a.id} a={a} tier={3} />)}
             </div>
           </div>
@@ -635,31 +635,86 @@ function OfficeView({ onOpen, selectedId }: { onOpen: (a: SubAgent) => void; sel
 // ─────────────────────────────────────────────────────────
 function ChatSessionPanel({ agent, onClose }: { agent: SubAgent | null; onClose: () => void }) {
   const [chat, setChat] = useState<{ role: 'user' | 'agent'; text: string }[]>([])
+  const [memories, setMemories] = useState<{ id: number; content: string; time: string }[]>([])
   const [input, setInput] = useState('')
+  const [thinking, setThinking] = useState(false)
+  const [showMemory, setShowMemory] = useState(true)
   const [agentId, setAgentId] = useState<string | null>(null)
+  const chatEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (agent && agent.id !== agentId) {
       setAgentId(agent.id)
-      setChat([{
-        role: 'agent',
-        text: `${agent.name} online! 🤖 Status: ${STATUS_META[agent.status].label}. Sedang: ${agent.activity}. Ada tugas untuk saya, Bos?`
-      }])
+      setChat([])
       setInput('')
+      // muat otak: memori + riwayat chat dari server
+      fetch(`/api/brain/${agent.id}/memory`)
+        .then(r => r.json())
+        .then(d => {
+          setMemories(d.memories || [])
+          setChat((d.chats || []).map((c: { role: string; text: string }) => ({
+            role: c.role === 'user' ? 'user' : 'agent',
+            text: c.text,
+          })))
+          if ((d.chats || []).length === 0) {
+            setChat([{
+              role: 'agent',
+              text: `${agent.name} online! 🧠 Otak siap — ${memories.length ? memories.length : 0} memori termuat. Ada tugas, Bos?`
+            }])
+          }
+        })
+        .catch(() => setChat([{ role: 'agent', text: `${agent.name} online! (otak belum terhubung)` }]))
     }
   }, [agent])
 
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [chat, thinking])
+
   const send = () => {
-    if (!input.trim() || !agent) return
-    const q = input
+    if (!input.trim() || !agent || thinking) return
+    const q = input.trim()
     setChat(prev => [...prev, { role: 'user', text: q }])
     setInput('')
-    setTimeout(() => {
-      setChat(prev => [...prev, {
-        role: 'agent',
-        text: `✅ Tugas diterima: "${q}". Saya kerjakan sekarang — progress terlihat di Mission Control. Estimasi ${Math.floor(Math.random() * 5) + 1} menit.`
-      }])
-    }, 900)
+    setThinking(true)
+    // REAL: forward ke otak agent (LLM + memori)
+    fetch('/api/brain/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agent_id: agent.id, message: q }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        setChat(prev => [...prev, { role: 'agent', text: d.reply || '(tidak ada jawaban)' }])
+        // auto-ingat: kalau pesan user mengandung "ingat"/"catat", simpan ke memori
+        if (/\b(ingat|catat|remember)\b/i.test(q)) {
+          fetch('/api/brain/memory', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ agent_id: agent.id, content: q }),
+          }).then(() => fetch(`/api/brain/${agent.id}/memory`))
+            .then(r => r.json())
+            .then(d => setMemories(d.memories || []))
+            .catch(() => {})
+        }
+      })
+      .catch(() => setChat(prev => [...prev, { role: 'agent', text: '⚠️ Koneksi otak terganggu, coba lagi Bos.' }]))
+      .finally(() => setThinking(false))
+  }
+
+  const addManualMemory = () => {
+    if (!agent) return
+    const fact = prompt(`Memori baru untuk ${agent.name}:`)
+    if (!fact?.trim()) return
+    fetch('/api/brain/memory', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agent_id: agent.id, content: fact.trim() }),
+    })
+      .then(() => fetch(`/api/brain/${agent.id}/memory`))
+      .then(r => r.json())
+      .then(d => setMemories(d.memories || []))
+      .catch(() => {})
   }
 
   return (
@@ -672,7 +727,7 @@ function ChatSessionPanel({ agent, onClose }: { agent: SubAgent | null; onClose:
           exit={{ opacity: 0, y: 24 }}
           transition={{ type: 'spring', damping: 24 }}
           className="mt-4 rounded-2xl overflow-hidden"
-          style={{ background: 'rgba(15,23,42,0.9)', border: `1px solid ${agent.color}44`, boxShadow: `0 0 24px ${agent.color}22` }}
+          style={{ background: 'linear-gradient(170deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))', border: `1px solid ${agent.color}55`, boxShadow: `0 12px 36px rgba(0,0,0,0.45), 0 0 24px ${agent.color}18` }}
         >
           {/* panel header */}
           <div className="flex items-center gap-3 px-5 py-3.5 border-b border-white/5">
@@ -682,7 +737,7 @@ function ChatSessionPanel({ agent, onClose }: { agent: SubAgent | null; onClose:
             </div>
             <div className="flex-1">
               <p className="text-white font-bold text-sm">
-                Chat Session — <span style={{ color: agent.color }}>{agent.name}</span>
+                Otak {agent.name} — <span style={{ color: agent.color }}>REAL LLM + Memory</span>
               </p>
               <p className="text-[11px] text-slate-500">{agent.role} · {agent.model}</p>
             </div>
@@ -693,37 +748,84 @@ function ChatSessionPanel({ agent, onClose }: { agent: SubAgent | null; onClose:
             <button onClick={onClose} className="text-slate-500 hover:text-white ml-2"><X size={16} /></button>
           </div>
 
-          {/* messages */}
-          <div className="h-52 overflow-y-auto p-5 space-y-3">
-            {chat.map((m, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-                className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${m.role === 'user'
-                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-br-md'
-                  : 'bg-white/[0.06] text-slate-200 border border-white/5 rounded-bl-md'
-                  }`}>
-                  {m.text}
+          <div className="flex flex-col md:flex-row">
+            {/* ═══ Memori (kiri) ═══ */}
+            <div className="md:w-72 border-b md:border-b-0 md:border-r border-white/5 flex flex-col">
+              <div className="flex items-center justify-between px-4 pt-3 pb-2">
+                <button onClick={() => setShowMemory(!showMemory)}
+                  className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-slate-300 flex items-center gap-1.5">
+                  <Brain size={12} /> Memori ({memories.length}) {showMemory ? '▾' : '▸'}
+                </button>
+                <button onClick={addManualMemory} title="Tambah memori"
+                  className="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                  style={{ color: agent.color, border: `1px solid ${agent.color}55` }}>
+                  + ingat
+                </button>
+              </div>
+              {showMemory && (
+                <div className="px-3 pb-3 space-y-1.5 overflow-y-auto max-h-40 md:max-h-64">
+                  {memories.length === 0 && (
+                    <p className="text-[11px] text-slate-500 px-1 font-mono">Otak masih kosong — chat dulu atau + ingat</p>
+                  )}
+                  {memories.map(m => (
+                    <div key={m.id} className="px-3 py-2 rounded-xl bg-white/[0.04] border border-white/5">
+                      <p className="text-[11px] text-slate-300 leading-snug">{m.content}</p>
+                      <p className="text-[9px] text-slate-600 font-mono mt-1">{m.time}</p>
+                    </div>
+                  ))}
                 </div>
-              </motion.div>
-            ))}
-          </div>
+              )}
+            </div>
 
-          {/* input */}
-          <div className="p-4 border-t border-white/5">
-            <div className="flex items-center gap-2 bg-white/[0.04] border border-white/10 rounded-2xl px-4 py-2.5 focus-within:border-cyan-400/40 transition-colors">
-              <MessageSquare size={15} className="text-slate-500" />
-              <input
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && send()}
-                placeholder={`Tugas untuk ${agent.name}...`}
-                className="flex-1 bg-transparent outline-none text-sm text-white placeholder:text-slate-500"
-              />
-              <button onClick={send}
-                className="w-8 h-8 rounded-full flex items-center justify-center hover:shadow-lg transition-shadow"
-                style={{ background: `linear-gradient(135deg, ${agent.color}, ${agent.color}88)` }}>
-                <Send size={13} className="text-white" />
-              </button>
+            {/* ═══ Chat (kanan) ═══ */}
+            <div className="flex-1 flex flex-col">
+              <div className="h-64 overflow-y-auto p-5 space-y-3">
+                {chat.map((m, i) => (
+                  <motion.div key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                    className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${m.role === 'user'
+                      ? 'text-white rounded-br-md'
+                      : 'bg-white/[0.06] text-slate-200 border border-white/5 rounded-bl-md'
+                      }`}
+                      style={m.role === 'user' ? { background: `linear-gradient(160deg, ${agent.color}E6, ${agent.color}99)`, boxShadow: `0 4px 14px ${agent.color}33` } : {}}
+                    >
+                      {m.text}
+                    </div>
+                  </motion.div>
+                ))}
+                {thinking && (
+                  <div className="flex justify-start">
+                    <div className="bg-white/[0.06] border border-white/5 px-4 py-3 rounded-2xl rounded-bl-md flex gap-1">
+                      {[0, 1, 2].map(d => (
+                        <motion.span key={d} className="w-2 h-2 rounded-full"
+                          style={{ background: agent.color }}
+                          animate={{ y: [0, -4, 0] }}
+                          transition={{ duration: 0.6, repeat: Infinity, delay: d * 0.15 }} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* input */}
+              <div className="p-4 border-t border-white/5">
+                <div className="flex items-center gap-2 bg-white/[0.04] border border-white/10 rounded-2xl px-4 py-2.5 focus-within:border-sky-400/40 transition-colors">
+                  <MessageSquare size={15} className="text-slate-500" />
+                  <input
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && send()}
+                    placeholder={`Bicara dengan otak ${agent.name}...`}
+                    className="flex-1 bg-transparent outline-none text-sm text-white placeholder:text-slate-500"
+                  />
+                  <button onClick={send} disabled={thinking}
+                    className="w-8 h-8 rounded-full flex items-center justify-center hover:shadow-lg transition-shadow disabled:opacity-40"
+                    style={{ background: `linear-gradient(135deg, ${agent.color}, ${agent.color}88)` }}>
+                    <Send size={13} className="text-white" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </motion.div>

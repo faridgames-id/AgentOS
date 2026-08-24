@@ -8,6 +8,7 @@ from routers import skills
 from routers import telegram_chat
 from routers import media
 from routers import send
+from routers import brain
 from services.database import init_db
 from pathlib import Path
 import os
@@ -50,6 +51,7 @@ app.include_router(skills.router, prefix="/api/skills")
 app.include_router(telegram_chat.router, prefix="/api/telegram")
 app.include_router(media.router, prefix="/api/media")
 app.include_router(send.router, prefix="/api/send")
+app.include_router(brain.router, prefix="/api/brain")
 app.include_router(stock.router, prefix="/api/stock")
 
 @app.on_event("startup")
