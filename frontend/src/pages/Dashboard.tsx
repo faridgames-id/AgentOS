@@ -76,7 +76,7 @@ function AppIcon({ icon: Icon, hex, size = 40, iconSize }: { icon: typeof Users;
         height: size,
         borderRadius: size * 0.28, // squircle-ish
         background: `linear-gradient(160deg, ${hex}E6, ${hex})`,
-        boxShadow: `0 ${size * 0.14}px ${size * 0.3}px -${size * 0.08}px ${hex}99, inset 0 1px 1px rgba(255,255,255,0.35), inset 0 -2px 4px rgba(0,0,0,0.15)`,
+        boxShadow: `inset 0 1px 1px rgba(255,255,255,0.35), inset 0 -2px 4px rgba(0,0,0,0.15)`,
       }}
     >
       {/* highlight kiri-atas ala glossy iOS */}
