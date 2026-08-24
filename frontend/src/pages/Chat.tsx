@@ -303,7 +303,7 @@ export default function Chat() {
       </motion.div>
 
       <motion.h2
-        className="mt-6 text-3xl font-bold font-display tracking-tight"
+        className="mt-20 text-3xl font-bold font-display tracking-tight"
         animate={isListening ? {
           background: [
             'linear-gradient(90deg,#67e8f9,#e879f9)',
@@ -316,7 +316,7 @@ export default function Chat() {
       >
         {isListening ? 'Listening...' : 'Hey Cozy!'}
       </motion.h2>
-      <p className="text-slate-400 mt-6 text-sm">
+      <p className="text-slate-400 mt-1 text-sm">
         {isListening ? 'Speak now — saya dengar Bos 👂' : 'Tap orb atau tekan mic untuk ngobrol via voice'}
       </p>
 
