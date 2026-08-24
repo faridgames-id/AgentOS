@@ -338,19 +338,53 @@ export default function Chat() {
         ))}
       </div>
 
-      {/* Quick voice actions */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-10 w-full max-w-2xl">
+      {/* Quick voice actions — iOS widget style */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-10 w-full max-w-lg">
         {suggestions.map((s, i) => (
           <motion.button
             key={i}
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 + i * 0.07 }}
-            whileHover={{ y: -3, boxShadow: `0 0 20px ${s.color}44` }}
-            className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-white/25 transition-all"
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.3 + i * 0.08, type: 'spring', stiffness: 220, damping: 18 }}
+            whileHover={{ y: -4, scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            className="relative flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left overflow-hidden group"
+            style={{
+              background: `linear-gradient(150deg, ${s.color}14, rgba(24,29,38,0.9) 55%)`,
+              border: '1px solid rgba(148,163,184,0.12)',
+              boxShadow: '0 6px 18px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
+            }}
           >
-            <s.icon size={16} style={{ color: s.color }} />
-            <span className="text-xs text-slate-300 text-left">{s.label}</span>
+            {/* corner glow */}
+            <div
+              className="absolute -top-6 -right-6 w-16 h-16 rounded-full blur-xl opacity-15 pointer-events-none transition-opacity group-hover:opacity-35"
+              style={{ background: s.color }}
+            />
+            {/* AppIcon tile */}
+            <span
+              className="relative flex items-center justify-center shrink-0 select-none w-9 h-9"
+              style={{
+                borderRadius: 10,
+                background: `linear-gradient(160deg, ${s.color}E6, ${s.color})`,
+                boxShadow: `inset 0 1px 1px rgba(255,255,255,0.35), inset 0 -2px 3px rgba(0,0,0,0.15)`,
+              }}
+            >
+              <span
+                className="absolute inset-x-0 top-0"
+                style={{
+                  height: '46%',
+                  borderRadius: '10px 10px 40% 40% / 10px 10px 70% 70%',
+                  background: 'linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.02))',
+                }}
+              />
+              <s.icon size={17} className="relative z-10 text-white" strokeWidth={2.4} />
+            </span>
+            <span className="text-[13px] font-semibold text-slate-200 flex-1 relative z-10">{s.label}</span>
+            {/* arrow muncul saat hover */}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={s.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+              className="shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 relative z-10">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
           </motion.button>
         ))}
       </div>
