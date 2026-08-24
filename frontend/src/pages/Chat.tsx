@@ -486,14 +486,14 @@ export default function Chat() {
                   animate={{ scale: [1, 1.05, 1] }}
                   transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                   style={{
-                    background: 'radial-gradient(circle at 35% 65%, rgba(217,70,239,0.85) 0%, rgba(239,68,68,0.55) 35%, rgba(20,10,40,0.98) 72%)',
-                    boxShadow: '0 0 40px rgba(217,70,239,0.3), inset 0 0 24px rgba(0,0,0,0.5)',
-                    border: '1px solid rgba(216,180,254,0.35)'
+                    background: 'radial-gradient(circle at 32% 68%, rgba(103,232,249,0.95) 0%, rgba(56,189,248,0.85) 30%, rgba(59,130,246,0.7) 55%, rgba(15,23,60,0.98) 80%)',
+                    boxShadow: '0 0 44px rgba(56,189,248,0.4), 0 0 90px rgba(59,130,246,0.2), inset 0 0 26px rgba(2,6,23,0.55)',
+                    border: '1px solid rgba(125,211,252,0.45)'
                   }}
                 >
                   <motion.div
                     className="absolute inset-0 rounded-full"
-                    style={{ background: 'conic-gradient(from 180deg, transparent, rgba(249,115,22,0.5), transparent 40%, rgba(217,70,239,0.4), transparent 75%)', filter: 'blur(7px)' }}
+                    style={{ background: 'conic-gradient(from 180deg, transparent, rgba(125,211,252,0.55), transparent 40%, rgba(167,139,250,0.45), transparent 75%)', filter: 'blur(7px)' }}
                     animate={{ rotate: 360 }}
                     transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
                   />
