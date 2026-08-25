@@ -1393,9 +1393,79 @@ function ChatSessionPanel({ agent, onClose, tab, onTabChange }: { agent: SubAgen
 }
 
 // ─────────────────────────────────────────────────────────
+// VIEW 3: Agent Sessions — pilih sub agent lalu chat dengannya
+// ─────────────────────────────────────────────────────────
+function AgentSessionsView({ onOpen, selectedId }: { onOpen: (a: SubAgent) => void; selectedId: string | null }) {
+  return (
+    <motion.div
+      key="agents"
+      initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+      className="rounded-2xl p-6"
+      style={{
+        background: 'linear-gradient(170deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))',
+        border: '1px solid rgba(96,140,220,0.22)',
+        boxShadow: '0 12px 36px rgba(0,0,0,0.45), inset 0 1px 0 rgba(140,180,255,0.08)'
+      }}
+    >
+      <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-500 mb-4">
+        Pilih sub agent yang mau dihubungi
+      </p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        {AGENTS.map((a, i) => {
+          const active = selectedId === a.id
+          return (
+            <motion.button
+              key={a.id}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.04 }}
+              whileHover={{ y: -4 }}
+              onClick={() => onOpen(a)}
+              className="relative rounded-2xl p-3.5 text-left group overflow-hidden"
+              style={{
+                background: active ? `linear-gradient(160deg, ${a.color}22, rgba(15,19,26,0.98))` : 'linear-gradient(160deg, rgba(30,35,45,0.95), rgba(15,19,26,0.98))',
+                border: active ? `1.5px solid ${a.color}` : '1px solid rgba(148,163,184,0.14)',
+                boxShadow: active ? `0 8px 24px ${a.color}44` : '0 6px 18px rgba(0,0,0,0.3)'
+              }}
+            >
+              <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full blur-xl opacity-15 pointer-events-none group-hover:opacity-30 transition-opacity"
+                style={{ background: a.color }} />
+              {/* AppIcon iOS */}
+              <div
+                className="relative flex items-center justify-center w-10 h-10 mb-2.5 rounded-[12px]"
+                style={{
+                  background: `linear-gradient(160deg, ${a.color}E6, ${a.color})`,
+                  boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.35), inset 0 -2px 4px rgba(0,0,0,0.15)',
+                }}
+              >
+                <div
+                  className="absolute inset-x-0 top-0 pointer-events-none"
+                  style={{
+                    height: '46%',
+                    borderRadius: '12px 12px 40% 40% / 12px 12px 70% 70%',
+                    background: 'linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.02))',
+                  }}
+                />
+                <a.icon size={18} className="relative z-10 text-white" strokeWidth={2.4} />
+              </div>
+              <p className="text-[12px] font-black tracking-wide" style={{ color: a.color }}>{a.name}</p>
+              <p className="text-[9px] text-slate-500 truncate">{a.role}</p>
+              <div className="flex items-center gap-1.5 mt-2">
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: STATUS_META[a.status].dot, boxShadow: `0 0 6px ${STATUS_META[a.status].dot}` }} />
+                <span className="text-[9px] text-slate-500">{STATUS_META[a.status].label}</span>
+              </div>
+            </motion.button>
+          )
+        })}
+      </div>
+    </motion.div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────
 // Page
 // ─────────────────────────────────────────────────────────
-type ViewMode = 'workflow' | 'office'
+type ViewMode = 'workflow' | 'office' | 'agents'
 
 interface ExchangeItem {
   from: string
@@ -1477,6 +1547,7 @@ export default function AgentsPage() {
           {([
             { key: 'workflow', icon: LayoutGrid, label: 'Workflow Cards', hex: '#22d3ee' },
             { key: 'office', icon: Building2, label: 'Robot Office 3D', hex: '#a78bfa' },
+            { key: 'agents', icon: MessageSquare, label: 'Agent Sessions', hex: '#34d399' },
           ] as { key: ViewMode; icon: typeof LayoutGrid; label: string; hex: string }[]).map(v => {
             const isActive = view === v.key
             return (
@@ -1524,7 +1595,9 @@ export default function AgentsPage() {
       <AnimatePresence mode="wait">
         {view === 'workflow'
           ? <WorkflowView key="wf" onOpen={openAgent} selectedId={selectedId} />
-          : <OfficeView key="of" onOpen={openAgent} selectedId={selectedId} />}
+          : view === 'office'
+          ? <OfficeView key="of" onOpen={openAgent} selectedId={selectedId} />
+          : <AgentSessionsView key="ag" onOpen={openAgent} selectedId={selectedId} />}
       </AnimatePresence>
 
       {/* Chat session BELOW the layout */}
