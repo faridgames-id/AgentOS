@@ -1402,14 +1402,28 @@ function AgentSessionsView({ onOpen, onCloseSession, selectedId }: { onOpen: (a:
     <motion.div
       key="agents"
       initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-      className="rounded-2xl p-5"
+      className="rounded-2xl p-5 relative overflow-hidden"
       style={{
         background: 'linear-gradient(170deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))',
         border: '1px solid rgba(96,140,220,0.22)',
         boxShadow: '0 12px 36px rgba(0,0,0,0.45), inset 0 1px 0 rgba(140,180,255,0.08)'
       }}
     >
-      <div className={`flex gap-4 transition-all`}>
+      {/* scan line atas ala Total Tasks */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-300/60 to-transparent" />
+      {/* corner glow kiri atas (dalam, lembut) */}
+      <div className="absolute -top-16 -left-16 w-56 h-56 rounded-full blur-3xl opacity-[0.12] pointer-events-none"
+        style={{ background: 'radial-gradient(circle, #38BDF8, transparent 70%)' }} />
+      {/* corner glow kanan bawah */}
+      <div className="absolute -bottom-20 -right-16 w-64 h-64 rounded-full blur-3xl opacity-[0.1] pointer-events-none"
+        style={{ background: 'radial-gradient(circle, #8B5CF6, transparent 70%)' }} />
+      {/* grid halus background */}
+      <div className="absolute inset-0 opacity-[0.035] pointer-events-none" style={{
+        backgroundImage: 'linear-gradient(rgba(125,211,252,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(125,211,252,0.6) 1px, transparent 1px)',
+        backgroundSize: '44px 44px'
+      }} />
+
+      <div className={`flex gap-4 transition-all relative z-10`}>
         {/* ═══ KOLOM AGENT — menyusut jadi icon saat agent dipilih ═══ */}
         <motion.div
           animate={{ width: selected ? 64 : '100%' }}
