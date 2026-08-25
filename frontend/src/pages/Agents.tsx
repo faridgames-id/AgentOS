@@ -7,7 +7,7 @@ import { OrbitControls, Html, RoundedBox, Text } from '@react-three/drei'
 import {
   Flame, Code, BarChart3, Palette, Eye, Shield, PenTool, Bird, Gamepad2,
   Network, X, Send, Zap, MessageSquare, Cpu, Activity, ListTodo,
-  LayoutGrid, Building2, Brain, Maximize2, Minimize2
+  LayoutGrid, Building2, Brain, Maximize2, Minimize2, CalendarClock
 } from 'lucide-react'
 
 // ─────────────────────────────────────────────────────────
@@ -1091,14 +1091,15 @@ function OfficeView({ onOpen, selectedId }: { onOpen: (a: SubAgent) => void; sel
 // ─────────────────────────────────────────────────────────
 // Chat session panel — BELOW the 3D/card layout
 // ─────────────────────────────────────────────────────────
-function ChatSessionPanel({ agent, onClose }: { agent: SubAgent | null; onClose: () => void }) {
+function ChatSessionPanel({ agent, onClose, tab, onTabChange }: { agent: SubAgent | null; onClose: () => void; tab: AgentTab; onTabChange: (t: AgentTab) => void }) {
   const [chat, setChat] = useState<{ role: 'user' | 'agent'; text: string }[]>([])
-  const [memories, setMemories] = useState<{ id: number; content: string; time: string }[]>([])
+  const [memories, setMemories] = useState<{ id: number; content: string; time: string; kind: string }[]>([])
   const [input, setInput] = useState('')
   const [thinking, setThinking] = useState(false)
   const [showMemory, setShowMemory] = useState(true)
   const [agentId, setAgentId] = useState<string | null>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const onSwitchTab = (t: AgentTab) => onTabChange?.(t)
 
   useEffect(() => {
     if (agent && agent.id !== agentId) {
@@ -1187,28 +1188,58 @@ function ChatSessionPanel({ agent, onClose }: { agent: SubAgent | null; onClose:
           className="mt-4 rounded-2xl overflow-hidden"
           style={{ background: 'linear-gradient(170deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))', border: `1px solid ${agent.color}55`, boxShadow: `0 12px 36px rgba(0,0,0,0.45), 0 0 24px ${agent.color}18` }}
         >
-          {/* panel header */}
+          {/* panel header + nav halaman (icon-only, hover/klik = nama muncul) */}
           <div className="flex items-center gap-3 px-5 py-3.5 border-b border-white/5">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
               style={{ background: `${agent.color}18`, border: `1px solid ${agent.color}55` }}>
               <agent.icon size={16} style={{ color: agent.color }} />
             </div>
-            <div className="flex-1">
-              <p className="text-white font-bold text-sm">
-                Otak {agent.name} — <span style={{ color: agent.color }}>REAL LLM + Memory</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-bold text-sm truncate">
+                {agent.name} — <span className="text-slate-400 font-medium">
+                  {tab === 'chat' ? 'Chat Session' : tab === 'memory' ? 'Memory' : 'Cron'}
+                </span>
               </p>
-              <p className="text-[11px] text-slate-500">{agent.role} · {agent.model}</p>
+              <p className="text-[11px] text-slate-500 truncate">{agent.role} · {agent.model}</p>
             </div>
-            <span className="text-[10px] px-2.5 py-1 rounded-full font-bold border"
-              style={{ color: STATUS_META[agent.status].dot, borderColor: `${STATUS_META[agent.status].dot}55` }}>
-              {STATUS_META[agent.status].label}
-            </span>
-            <button onClick={onClose} className="text-slate-500 hover:text-white ml-2"><X size={16} /></button>
+            {/* icon tabs */}
+            <div className="flex items-center gap-1 p-1 rounded-full"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              {([
+                { key: 'chat', icon: MessageSquare, label: 'Chat Session' },
+                { key: 'memory', icon: Brain, label: 'Memory' },
+                { key: 'cron', icon: CalendarClock, label: 'Cron' },
+              ] as { key: AgentTab; icon: typeof MessageSquare; label: string }[]).map(t => {
+                const active = tab === t.key
+                return (
+                  <button
+                    key={t.key}
+                    onClick={() => onSwitchTab(t.key)}
+                    title={t.label}
+                    className="relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-full transition-all group/tab"
+                  >
+                    {active && (
+                      <motion.div
+                        layoutId="agent-tab-pill"
+                        className="absolute inset-0 rounded-full"
+                        transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                        style={{ background: `linear-gradient(160deg, ${agent.color}E6, ${agent.color})`, boxShadow: `0 3px 10px ${agent.color}55` }}
+                      />
+                    )}
+                    <t.icon size={14} className={`relative z-10 ${active ? 'text-white' : 'text-slate-500 group-hover/tab:text-slate-300'}`} />
+                    <span className={`relative z-10 text-[11px] font-semibold max-w-0 overflow-hidden whitespace-nowrap group-hover/tab:max-w-[100px] transition-all duration-200 ${active ? 'text-white max-w-[100px]' : ''}`}>
+                      {t.label}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+            <button onClick={onClose} className="text-slate-500 hover:text-white ml-1 shrink-0"><X size={16} /></button>
           </div>
 
           <div className="flex flex-col md:flex-row">
-            {/* ═══ Memori (kiri) ═══ */}
-            <div className="md:w-72 border-b md:border-b-0 md:border-r border-white/5 flex flex-col">
+            {/* ═══ Memori (kiri) — tampil di tab chat & memory ═══ */}
+            <div className={`${tab !== 'cron' ? 'md:w-72 border-b md:border-b-0 md:border-r border-white/5 flex flex-col' : 'hidden'}`}>
               <div className="flex items-center justify-between px-4 pt-3 pb-2">
                 <button onClick={() => setShowMemory(!showMemory)}
                   className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-slate-300 flex items-center gap-1.5">
@@ -1235,8 +1266,8 @@ function ChatSessionPanel({ agent, onClose }: { agent: SubAgent | null; onClose:
               )}
             </div>
 
-            {/* ═══ Chat (kanan) ═══ */}
-            <div className="flex-1 flex flex-col">
+            {/* ═══ Chat (kanan) — hanya di tab chat ═══ */}
+            <div className={`flex-1 flex flex-col ${tab === 'chat' ? '' : 'hidden'}`}>
               <div className="h-64 overflow-y-auto p-5 space-y-3">
                 {chat.map((m, i) => (
                   <motion.div key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
@@ -1286,6 +1317,75 @@ function ChatSessionPanel({ agent, onClose }: { agent: SubAgent | null; onClose:
               </div>
             </div>
           </div>
+          {/* ═══ HALAMAN MEMORY (tab memory) ═══ */}
+          {tab === 'memory' && (
+            <div className="p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Brain size={15} style={{ color: agent.color }} />
+                <p className="text-[12px] font-bold text-slate-300">
+                  Memori jangka panjang {agent.name} — {memories.length} entri
+                </p>
+                <button onClick={addManualMemory}
+                  className="ml-auto text-[10px] px-2.5 py-1 rounded-full font-bold"
+                  style={{ color: agent.color, border: `1px solid ${agent.color}55` }}>
+                  + ingat
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5 max-h-[300px] overflow-y-auto pr-1">
+                {memories.length === 0 && (
+                  <p className="text-[12px] text-slate-500 font-mono">Otak masih kosong — chat dulu atau tambah memori.</p>
+                )}
+                {memories.map(m => (
+                  <div key={m.id} className="px-3.5 py-3 rounded-xl bg-white/[0.04] border border-white/5 hover:border-white/15 transition-colors">
+                    <p className="text-[12px] text-slate-300 leading-snug">{m.content}</p>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-[9px] font-mono text-slate-600">{m.time}</span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
+                        style={{ color: agent.color, background: `${agent.color}14` }}>
+                        {m.kind}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ═══ HALAMAN CRON (tab cron) ═══ */}
+          {tab === 'cron' && (
+            <div className="p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <CalendarClock size={15} style={{ color: agent.color }} />
+                <p className="text-[12px] font-bold text-slate-300">Jadwal tugas otomatis {agent.name}</p>
+              </div>
+              <div className="space-y-2">
+                {(agent.id === 'cozy' ? [
+                  { name: 'Laporan Keuangan Harian', schedule: '0 9 * * *', status: 'aktif' },
+                  { name: 'Sinkronisasi Memory Server', schedule: '*/30m', status: 'aktif' },
+                ] : agent.id === 'sentinel' ? [
+                  { name: 'Security Scan', schedule: '*/15m', status: 'aktif' },
+                  { name: 'Log Cleanup', schedule: '0 3 * * *', status: 'aktif' },
+                ] : agent.id === 'zephra' ? [
+                  { name: 'Stok Sync Firebase', schedule: '*/30m', status: 'aktif' },
+                ] : agent.id === 'phoenix' ? [
+                  { name: 'Auto-reply Telegram', schedule: 'realtime', status: 'aktif' },
+                ] : [
+                  { name: `Task rutin ${agent.name}`, schedule: '0 10 * * *', status: 'aktif' },
+                ]).map((j, i) => (
+                  <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.04] border border-white/5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34D399]" />
+                    <div className="flex-1">
+                      <p className="text-[12px] font-semibold text-slate-200">{j.name}</p>
+                      <p className="text-[10px] text-slate-500 font-mono">{j.schedule}</p>
+                    </div>
+                    <span className="text-[9px] px-2 py-0.5 rounded-full font-bold text-emerald-400 border border-emerald-400/40 bg-emerald-400/10">
+                      {j.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </motion.div>
       )}
     </AnimatePresence>
@@ -1305,6 +1405,8 @@ interface ExchangeItem {
   reply: string
   time: string
 }
+
+export type AgentTab = 'chat' | 'memory' | 'cron'
 
 export default function AgentsPage() {
   const [view, setView] = useState<ViewMode>('workflow')
@@ -1341,9 +1443,12 @@ export default function AgentsPage() {
     }
   }, [])
 
+  const [agentTab, setAgentTab] = useState<AgentTab>('chat')
+
   const openAgent = (a: SubAgent) => {
     setSelectedId(a.id)
     setChatAgent(a)
+    setAgentTab('chat')
   }
 
   return (
@@ -1423,7 +1528,12 @@ export default function AgentsPage() {
       </AnimatePresence>
 
       {/* Chat session BELOW the layout */}
-      <ChatSessionPanel agent={chatAgent} onClose={() => { setChatAgent(null); setSelectedId(null) }} />
+      <ChatSessionPanel
+        agent={chatAgent}
+        onClose={() => { setChatAgent(null); setSelectedId(null) }}
+        tab={agentTab}
+        onTabChange={setAgentTab}
+      />
 
       {/* ═══ Live Thoughts — agent saling bertukar pikiran REAL ═══ */}
       <motion.div
