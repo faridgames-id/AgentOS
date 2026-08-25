@@ -1185,7 +1185,7 @@ function ChatSessionPanel({ agent, onClose, tab, onTabChange }: { agent: SubAgen
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 24 }}
           transition={{ type: 'spring', damping: 24 }}
-          className="mt-4 rounded-2xl overflow-hidden"
+          className="mb-4 rounded-2xl overflow-hidden"
           style={{ background: 'linear-gradient(170deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))', border: `1px solid ${agent.color}55`, boxShadow: `0 12px 36px rgba(0,0,0,0.45), 0 0 24px ${agent.color}18` }}
         >
           {/* panel header + nav halaman (icon-only, hover/klik = nama muncul) */}
@@ -1763,6 +1763,15 @@ export default function AgentsPage() {
       </div>
 
       {/* Active view */}
+      {/* ═══ Chat session panel — DI ATAS layout (chat/memory/cron) ═══ */}
+      <ChatSessionPanel
+        agent={chatAgent}
+        onClose={() => { setChatAgent(null); setSelectedId(null) }}
+        tab={agentTab}
+        onTabChange={setAgentTab}
+      />
+
+      {/* View aktif di bawahnya */}
       <AnimatePresence mode="wait">
         {view === 'workflow'
           ? <WorkflowView key="wf" onOpen={openAgent} selectedId={selectedId} />
@@ -1770,14 +1779,6 @@ export default function AgentsPage() {
           ? <OfficeView key="of" onOpen={openAgent} selectedId={selectedId} />
           : <AgentSessionsView key="ag" onOpen={openAgent} onCloseSession={() => setSelectedId(null)} selectedId={selectedId} />}
       </AnimatePresence>
-
-      {/* Chat session BELOW the layout */}
-      <ChatSessionPanel
-        agent={chatAgent}
-        onClose={() => { setChatAgent(null); setSelectedId(null) }}
-        tab={agentTab}
-        onTabChange={setAgentTab}
-      />
 
       {/* ═══ Live Thoughts — agent saling bertukar pikiran REAL ═══ */}
       <motion.div
