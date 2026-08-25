@@ -470,10 +470,25 @@ function BlockCharacter({ agent, position, deskPos, rotationY, onClick, isSelect
             </mesh>
           </group>
         ))}
-        <mesh position={[0, -0.16, 0.315]}>
-          <boxGeometry args={[0.16, 0.05, 0.02]} />
-          <meshLambertMaterial color="#8B5A4A" />
+        {/* mulut — senyum sesuai status */}
+        <mesh position={[0, agent.status === 'working' ? -0.13 : -0.16, 0.315]}>
+          <boxGeometry args={[0.16, agent.status === 'sleeping' ? 0.03 : 0.05, 0.02]} />
+          <meshLambertMaterial color={agent.status === 'sleeping' ? '#5B6B7F' : '#8B5A4A'} />
         </mesh>
+        {/* alis ekspresif */}
+        {[-0.14, 0.14].map((ex, i) => (
+          <mesh key={`br-${i}`} position={[ex, 0.14, 0.315]} rotation={[0, 0, i === 0 ? -0.12 : 0.12]}>
+            <boxGeometry args={[0.15, 0.045, 0.02]} />
+            <meshLambertMaterial color={HAIR} />
+          </mesh>
+        ))}
+        {/* pipi merona */}
+        {[-0.24, 0.24].map((cx, i) => (
+          <mesh key={`ch-${i}`} position={[cx, -0.08, 0.312]}>
+            <boxGeometry args={[0.08, 0.05, 0.015]} />
+            <meshLambertMaterial color="#F0A088" />
+          </mesh>
+        ))}
         {agent.status === 'sleeping' && (
           <Html center position={[0.45, 0.4, 0]} distanceFactor={5}>
             <div style={{ fontSize: 15, userSelect: 'none' }}>
@@ -542,20 +557,60 @@ function Workstation({ position, color }: { position: [number, number, number]; 
           <meshLambertMaterial color="#8B5E3C" />
         </mesh>
       ))}
-      {/* monitor stand */}
-      <mesh position={[0, 0.86, -0.12]}>
-        <cylinderGeometry args={[0.03, 0.05, 0.12, 10]} />
-        <meshStandardMaterial color="#475569" />
-      </mesh>
-      {/* monitor */}
-      <mesh position={[0, 1.08, -0.16]}>
-        <boxGeometry args={[0.62, 0.4, 0.03]} />
-        <meshStandardMaterial color="#0B1120" />
-      </mesh>
-      <mesh position={[0, 1.08, -0.142]}>
-        <planeGeometry args={[0.56, 0.34]} />
-        <meshBasicMaterial color={color} transparent opacity={0.55} />
-      </mesh>
+      {/* ═══ DUAL MONITOR canggih (bezel tipis + stand metal) ═══ */}
+      {[-0.34, 0.34].map((dx, i) => (
+        <group key={i} position={[dx, 0.86, -0.14]}>
+          {/* stand */}
+          <mesh position={[0, 0.06, 0]}>
+            <boxGeometry args={[0.16, 0.03, 0.16]} />
+            <meshStandardMaterial color="#94A3B8" metalness={0.7} roughness={0.3} />
+          </mesh>
+          <mesh position={[0, 0.16, 0]}>
+            <boxGeometry args={[0.035, 0.22, 0.035]} />
+            <meshStandardMaterial color="#94A3B8" metalness={0.7} roughness={0.3} />
+          </mesh>
+          {/* bezel */}
+          <mesh position={[0, 0.38, 0]}>
+            <boxGeometry args={[0.56, 0.36, 0.035]} />
+            <meshStandardMaterial color="#111827" metalness={0.5} roughness={0.4} />
+          </mesh>
+          {/* layar glow */}
+          <mesh position={[0, 0.38, 0.02]}>
+            <planeGeometry args={[0.51, 0.31]} />
+            <meshBasicMaterial color={color} transparent opacity={0.75} />
+          </mesh>
+          {/* lampu power bawah bezel */}
+          <mesh position={[0, 0.215, 0.02]}>
+            <boxGeometry args={[0.05, 0.012, 0.01]} />
+            <meshBasicMaterial color="#4ADE80" />
+          </mesh>
+        </group>
+      ))}
+
+      {/* ═══ PC TOWER RGB di samping meja ═══ */}
+      <group position={[0.72, 0, -0.05]}>
+        <mesh position={[0, 0.5, 0]} castShadow>
+          <boxGeometry args={[0.26, 0.72, 0.5]} />
+          <meshStandardMaterial color="#0F172A" metalness={0.6} roughness={0.35} />
+        </mesh>
+        {/* panel kaca samping */}
+        <mesh position={[0.135, 0.5, 0]}>
+          <boxGeometry args={[0.01, 0.6, 0.4]} />
+          <meshStandardMaterial color="#1E293B" metalness={0.9} roughness={0.1} transparent opacity={0.7} />
+        </mesh>
+        {/* kipas RGB 3 tingkat */}
+        {[0.28, 0.5, 0.72].map((y, i) => (
+          <mesh key={i} position={[0.14, y, 0]}>
+            <torusGeometry args={[0.07, 0.02, 8, 16]} />
+            <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.6} />
+          </mesh>
+        ))}
+        {/* power LED */}
+        <mesh position={[0, 0.9, 0.26]}>
+          <boxGeometry args={[0.04, 0.02, 0.01]} />
+          <meshBasicMaterial color="#4ADE80" />
+        </mesh>
+      </group>
     </group>
   )
 }
@@ -669,6 +724,25 @@ function OfficeScene({ onOpen, selectedId, brainAgentId }: { onOpen: (a: SubAgen
           <boxGeometry args={[6.3, 0.03, 4.4]} />
           <meshLambertMaterial color="#F5F1E8" />
         </mesh>
+        {/* ═══ PEMBATAS RUANGAN (partisi kaca premium) ═══ */}
+        {[-2.6, 2.6].map((dx, i) => (
+          <group key={`part-${i}`} position={[dx, 0.14, -0.6]}>
+            <mesh position={[0, 1.1, 0]} castShadow>
+              <boxGeometry args={[0.12, 2.2, 2.2]} />
+              <meshStandardMaterial color="#D9E4F0" metalness={0.3} roughness={0.2} transparent opacity={0.45} />
+            </mesh>
+            {/* frame emas */}
+            <mesh position={[0, 2.22, 0]}>
+              <boxGeometry args={[0.14, 0.08, 2.3]} />
+              <meshStandardMaterial color="#D4AF37" metalness={0.85} roughness={0.25} />
+            </mesh>
+            <mesh position={[0, 0.05, 0]}>
+              <boxGeometry args={[0.16, 0.1, 2.3]} />
+              <meshStandardMaterial color="#D4AF37" metalness={0.85} roughness={0.25} />
+            </mesh>
+          </group>
+        ))}
+
         {/* meja manajer premium (lebih besar, kayu gelap) */}
         <group position={[0, 0.14, -1.1]}>
           <mesh position={[0, 0.72, 0]} castShadow>
@@ -681,33 +755,50 @@ function OfficeScene({ onOpen, selectedId, brainAgentId }: { onOpen: (a: SubAgen
               <meshLambertMaterial color="#4E342E" />
             </mesh>
           ))}
-          {/* monitor ganda emas */}
-          <group position={[-0.6, 1.05, -0.2]}>
-            <mesh>
-              <boxGeometry args={[0.72, 0.46, 0.04]} />
-              <meshLambertMaterial color="#0B1120" />
+          {/* ═══ DUAL MONITOR ULTRA-WIDE premium ═══ */}
+          {[-0.62, 0.62].map((dx, i) => (
+            <group key={i} position={[dx, 1.0, -0.25]}>
+              <mesh position={[0, 0.08, 0]}>
+                <boxGeometry args={[0.18, 0.03, 0.18]} />
+                <meshStandardMaterial color="#D4AF37" metalness={0.85} roughness={0.25} />
+              </mesh>
+              <mesh position={[0, 0.22, 0]}>
+                <boxGeometry args={[0.04, 0.28, 0.04]} />
+                <meshStandardMaterial color="#D4AF37" metalness={0.85} roughness={0.25} />
+              </mesh>
+              <mesh position={[0, 0.48, 0]}>
+                <boxGeometry args={[0.95, 0.55, 0.045]} />
+                <meshStandardMaterial color="#0B1120" metalness={0.6} roughness={0.3} />
+              </mesh>
+              <mesh position={[0, 0.48, 0.028]}>
+                <planeGeometry args={[0.88, 0.48]} />
+                <meshBasicMaterial color="#FBBF24" transparent opacity={0.65} />
+              </mesh>
+              <mesh position={[0, 0.225, 0.028]}>
+                <boxGeometry args={[0.06, 0.014, 0.01]} />
+                <meshBasicMaterial color="#4ADE80" />
+              </mesh>
+            </group>
+          ))}
+          {/* PC tower emas */}
+          <group position={[1.35, 0, -0.1]}>
+            <mesh position={[0, 0.55, 0]} castShadow>
+              <boxGeometry args={[0.3, 0.85, 0.55]} />
+              <meshStandardMaterial color="#1B2536" metalness={0.7} roughness={0.3} />
             </mesh>
-            <mesh position={[0, 0, 0.03]}>
-              <planeGeometry args={[0.66, 0.4]} />
-              <meshBasicMaterial color="#FBBF24" transparent opacity={0.6} />
-            </mesh>
-          </group>
-          <group position={[0.6, 1.05, -0.2]}>
-            <mesh>
-              <boxGeometry args={[0.72, 0.46, 0.04]} />
-              <meshLambertMaterial color="#0B1120" />
-            </mesh>
-            <mesh position={[0, 0, 0.03]}>
-              <planeGeometry args={[0.66, 0.4]} />
-              <meshBasicMaterial color="#FBBF24" transparent opacity={0.6} />
-            </mesh>
+            {[0.32, 0.55, 0.78].map((y, i) => (
+              <mesh key={i} position={[0.16, y, 0]}>
+                <torusGeometry args={[0.08, 0.022, 8, 16]} />
+                <meshStandardMaterial color="#FBBF24" emissive="#FBBF24" emissiveIntensity={1.8} />
+              </mesh>
+            ))}
           </group>
           {/* tanaman meja */}
-          <mesh position={[1.1, 0.92, 0.2]}>
+          <mesh position={[-1.15, 0.92, 0.2]}>
             <boxGeometry args={[0.16, 0.14, 0.16]} />
             <meshLambertMaterial color="#8D6E63" />
           </mesh>
-          <mesh position={[1.1, 1.06, 0.2]}>
+          <mesh position={[-1.15, 1.06, 0.2]}>
             <boxGeometry args={[0.2, 0.18, 0.2]} />
             <meshLambertMaterial color="#66BB6A" />
           </mesh>
@@ -837,22 +928,25 @@ function Furniture() {
 
 /** Ruangan kotak putih ala Minecraft: lantai + 4 dinding blok */
 function MinecraftRoom() {
-  const W = 15   // half-width (lebih luas)
-  const H = 6.4  // tinggi dinding (lebih tinggi)
+  const W = 19   // half-width (mewah & luas)
+  const H = 7.5  // plafon tinggi
   return (
     <group>
-      {/* lantai blok putih */}
+      {/* lantai marmer checkerboard mewah */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[W * 2, W * 2]} />
         <meshLambertMaterial color="#F4F7FB" />
       </mesh>
-      {/* grid blok ala Minecraft di lantai */}
-      <gridHelper args={[W * 2, Math.round(W * 2), '#D7E1EC', '#E4EBF3']} position={[0, 0.002, 0]} />
+      <gridHelper args={[W * 2, 19, '#C9D6E4', '#E8EFF6']} position={[0, 0.002, 0]} />
 
-      {/* dinding belakang */}
+      {/* dinding belakang + panel bawah emas */}
       <mesh position={[0, H / 2, -W]} receiveShadow>
         <boxGeometry args={[W * 2, H, 0.4]} />
         <meshLambertMaterial color="#EDF2F8" />
+      </mesh>
+      <mesh position={[0, 0.9, -W + 0.25]}>
+        <boxGeometry args={[W * 2, 0.5, 0.06]} />
+        <meshStandardMaterial color="#D4AF37" metalness={0.7} roughness={0.35} />
       </mesh>
       {/* dinding kiri */}
       <mesh position={[-W, H / 2, 0]} receiveShadow>
@@ -869,6 +963,27 @@ function MinecraftRoom() {
         <boxGeometry args={[W * 2, 0.4, W * 2]} />
         <meshLambertMaterial color="#F8FAFD" />
       </mesh>
+      {/* chandelier kristal tengah */}
+      <group position={[0, H - 1.6, 0]}>
+        <mesh position={[0, 0.5, 0]}>
+          <cylinderGeometry args={[0.03, 0.03, 1.0, 8]} />
+          <meshStandardMaterial color="#D4AF37" metalness={0.85} roughness={0.2} />
+        </mesh>
+        <mesh position={[0, 0, 0]}>
+          <sphereGeometry args={[0.35, 12, 12]} />
+          <meshStandardMaterial color="#FFF7D6" emissive="#FFE9A8" emissiveIntensity={1.6} />
+        </mesh>
+        {[0, 1, 2, 3].map(i => {
+          const a = (i / 4) * Math.PI * 2
+          return (
+            <mesh key={i} position={[Math.cos(a) * 0.55, -0.35, Math.sin(a) * 0.55]}>
+              <sphereGeometry args={[0.12, 10, 10]} />
+              <meshStandardMaterial color="#FFF7D6" emissive="#FFE9A8" emissiveIntensity={1.3} />
+            </mesh>
+          )
+        })}
+      </group>
+
       {/* lampu plafon ala Minecraft (glowstone strip) */}
       {[-8, -4, 0, 4, 8].map((x, i) => (
         <mesh key={i} position={[x, H - 0.4, 0]}>
@@ -976,13 +1091,13 @@ function OfficeView({ onOpen, selectedId }: { onOpen: (a: SubAgent) => void; sel
         boxShadow: '0 0 40px rgba(0,212,255,0.07)'
       }}
     >
-      <Canvas shadows camera={{ position: [0, 5.4, 14.5], fov: 48 }} gl={{ antialias: true }}>
+      <Canvas shadows camera={{ position: [0, 6.2, 17], fov: 48 }} gl={{ antialias: true }}>
         <color attach="background" args={['#DDE7F2']} />
         <fog attach="fog" args={['#DDE7F2', 26, 48]} />
         <OfficeScene onOpen={onOpen} selectedId={selectedId} brainAgentId={null} />
         <OrbitControls
           target={[0, 1, 0]}
-          minDistance={6} maxDistance={22}
+          minDistance={6} maxDistance={26}
           maxPolarAngle={Math.PI / 2.1}
           enablePan={false}
           enableDamping
