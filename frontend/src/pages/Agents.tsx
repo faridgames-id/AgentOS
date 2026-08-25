@@ -1434,9 +1434,9 @@ function AgentSessionsView({ onOpen, onCloseSession, selectedId }: { onOpen: (a:
                   title={`${a.name} — ${a.role}`}
                   className={`relative rounded-2xl cursor-pointer group overflow-hidden ${selected ? 'p-2' : 'p-3.5 text-left'}`}
                   style={{
-                    background: active ? `linear-gradient(160deg, ${a.color}22, rgba(15,19,26,0.98))` : 'linear-gradient(160deg, rgba(30,35,45,0.95), rgba(15,19,26,0.98))',
-                    border: active ? `1.5px solid ${a.color}` : '1px solid rgba(148,163,184,0.14)',
-                    boxShadow: active ? `0 8px 24px ${a.color}44` : '0 6px 18px rgba(0,0,0,0.3)'
+                    background: active ? `linear-gradient(160deg, ${a.color}18, rgba(16,28,52,0.97))` : 'linear-gradient(160deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))',
+                    border: active ? `1.5px solid ${a.color}` : '1px solid rgba(96,140,220,0.22)',
+                    boxShadow: active ? `0 10px 30px rgba(0,0,0,0.45), 0 0 20px ${a.color}33` : '0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(140,180,255,0.08)'
                   }}
                 >
                   <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full blur-xl opacity-15 pointer-events-none group-hover:opacity-30 transition-opacity"
@@ -1464,14 +1464,34 @@ function AgentSessionsView({ onOpen, onCloseSession, selectedId }: { onOpen: (a:
                       style={{ background: STATUS_META[a.status].dot, boxShadow: `0 0 6px ${STATUS_META[a.status].dot}` }}
                     />
                   </div>
-                  {/* teks hanya saat mode grid */}
+                  {/* teks hanya saat mode grid — ala card Total Tasks */}
                   {!selected && (
                     <>
-                      <p className="text-[12px] font-black tracking-wide" style={{ color: a.color }}>{a.name}</p>
-                      <p className="text-[9px] text-slate-500 truncate">{a.role}</p>
-                      <div className="flex items-center gap-1.5 mt-2">
-                        <span className="text-[9px] text-slate-500">{STATUS_META[a.status].label}</span>
+                      <p className="text-[11px] font-black tracking-wide" style={{ color: a.color }}>{a.name}</p>
+                      <p className="text-[9px] text-slate-500 truncate mb-1.5">{a.role}</p>
+                      <p className="text-[22px] font-black font-mono leading-none text-white tracking-tight">
+                        {a.tasks.toLocaleString('en-US')}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className="text-[9px] font-bold text-emerald-400">↗ {a.efficiency}%</span>
+                        <span className="text-[9px] text-slate-500">efficiency</span>
                       </div>
+                      <svg viewBox="0 0 80 20" className="mt-2 w-full h-5">
+                        <defs>
+                          <linearGradient id={`spark-${a.id}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={a.color} stopOpacity="0.35" />
+                            <stop offset="100%" stopColor={a.color} stopOpacity="0" />
+                          </linearGradient>
+                        </defs>
+                        <path
+                          d={`M0,16 C15,14 30,12 45,10 60,8 70,6 80,5 L80,20 L0,20 Z`}
+                          fill={`url(#spark-${a.id})`}
+                        />
+                        <path
+                          d={`M0,16 C15,14 30,12 45,10 60,8 70,6 80,5`}
+                          fill="none" stroke={a.color} strokeWidth="1.5"
+                        />
+                      </svg>
                     </>
                   )}
                 </motion.button>
