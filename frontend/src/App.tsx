@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Dashboard from './pages/Dashboard'
 import Chat from './pages/Chat'
@@ -21,15 +21,20 @@ export default function App() {
 
   return (
     <Sidebar currentPage={currentPage} onNavigate={setCurrentPage}>
-      <AnimatePresence mode="wait">
+      {/* mode="popLayout" + sync: halaman lama langsung diganti — tidak ada jeda kosong
+          (penyebab blank sebelumnya: mode="wait" menunggu exit selesai, dan filter:blur
+          membuat konten terlihat hilang saat transisi) */}
+      <AnimatePresence mode="popLayout" initial={false}>
         <motion.div
           key={currentPage}
-          initial={{ opacity: 0, y: 28, scale: 0.985, filter: 'blur(6px)' }}
-          animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-          exit={{ opacity: 0, y: -20, scale: 0.985, filter: 'blur(6px)' }}
-          transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
         >
-          {renderPage()}
+          <Suspense fallback={null}>
+            {renderPage()}
+          </Suspense>
         </motion.div>
       </AnimatePresence>
     </Sidebar>
