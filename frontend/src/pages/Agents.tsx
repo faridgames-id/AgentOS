@@ -7,7 +7,7 @@ import { OrbitControls, Html, RoundedBox, Text } from '@react-three/drei'
 import {
   Flame, Code, BarChart3, Palette, Eye, Shield, PenTool, Bird, Gamepad2,
   Network, X, Send, Zap, MessageSquare, Cpu, Activity, ListTodo,
-  LayoutGrid, Building2, Brain, Maximize2, Minimize2, CalendarClock
+  LayoutGrid, Building2, Brain, Maximize2, Minimize2, CalendarClock, Sparkles, Plus
 } from 'lucide-react'
 
 // ─────────────────────────────────────────────────────────
@@ -1490,7 +1490,7 @@ function AgentSessionsView({ onOpen, onCloseSession, selectedId }: { onOpen: (a:
               transition={{ type: 'spring', stiffness: 240, damping: 26 }}
               className="flex-1 min-w-0"
             >
-              <div className="rounded-2xl h-full flex flex-col" style={{
+              <div className="rounded-2xl h-full min-h-[420px] flex flex-col" style={{
                 background: 'linear-gradient(160deg, rgba(22,28,40,0.98), rgba(12,16,24,0.99))',
                 border: `1px solid ${selected.color}55`,
                 boxShadow: `0 10px 32px rgba(0,0,0,0.45), 0 0 20px ${selected.color}22`
@@ -1577,8 +1577,8 @@ function MiniChat({ agent }: { agent: SubAgent }) {
   }
 
   return (
-    <>
-      <div className="h-72 overflow-y-auto p-4 space-y-3">
+    <div className="flex flex-col h-full">
+      <div className="flex-1 min-h-[220px] overflow-y-auto p-4 space-y-3">
         {chat.length === 0 && (
           <div className="h-full flex items-center justify-center text-slate-500 text-[12px] font-mono">
             Ngobrol dengan otak {agent.name}…
@@ -1608,24 +1608,50 @@ function MiniChat({ agent }: { agent: SubAgent }) {
         )}
         <div ref={endRef} />
       </div>
-      <div className="p-3 border-t border-white/5">
-        <div className="flex items-center gap-2 bg-white/[0.04] border border-white/10 rounded-2xl px-3.5 py-2 focus-within:border-sky-400/40 transition-colors">
-          <MessageSquare size={13} className="text-slate-500 shrink-0" />
-          <input
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && send()}
-            placeholder={`Pesan untuk ${agent.name}...`}
-            className="flex-1 bg-transparent outline-none text-[12px] text-white placeholder:text-slate-500"
-          />
-          <button onClick={send} disabled={thinking}
-            className="w-7 h-7 rounded-full flex items-center justify-center disabled:opacity-40"
-            style={{ background: `linear-gradient(135deg, ${agent.color}, ${agent.color}88)` }}>
-            <Send size={11} className="text-white" />
-          </button>
+      <div className="p-4 pt-2 mt-auto">
+        <div
+          className="rounded-3xl px-4 pt-3 pb-2.5 transition-all focus-within:border-sky-400/50"
+          style={{
+            background: 'linear-gradient(155deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02) 60%)',
+            backdropFilter: 'blur(18px)',
+            WebkitBackdropFilter: 'blur(18px)',
+            border: '1px solid rgba(255,255,255,0.12)',
+            boxShadow: '0 12px 36px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)'
+          }}
+        >
+          <div className="flex items-center gap-2.5 mb-2.5">
+            <Sparkles size={14} className="shrink-0" style={{ color: agent.color }} />
+            <input
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && send()}
+              placeholder={`Start your request, and let ${agent.name} handle everything...`}
+              className="flex-1 bg-transparent outline-none text-[13px] text-white placeholder:text-slate-500"
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <button
+                className="w-7 h-7 rounded-full flex items-center justify-center text-slate-300 hover:text-white transition-all"
+                style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.14)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12)' }}
+                title="Attach">
+                <Plus size={12} />
+              </button>
+              <button
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-semibold text-slate-200 hover:text-white transition-all"
+                style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.14)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12)' }}>
+                <Brain size={11} /> Reasoning
+              </button>
+            </div>
+            <button onClick={send} disabled={thinking}
+              className="w-9 h-9 rounded-full flex items-center justify-center transition-transform hover:scale-110 active:scale-95 disabled:opacity-40"
+              style={{ background: `linear-gradient(160deg, ${agent.color}E6, ${agent.color})`, boxShadow: `inset 0 1px 1px rgba(255,255,255,0.35), 0 4px 12px ${agent.color}66` }}>
+              <Send size={14} className="text-white ml-0.5" />
+            </button>
+          </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }
 
