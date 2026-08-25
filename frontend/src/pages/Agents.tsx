@@ -715,15 +715,6 @@ function OfficeScene({ onOpen, selectedId, brainAgentId }: { onOpen: (a: SubAgen
 
       {/* ═══ ZONA COZY — premium di tengah ruangan ═══ */}
       <group position={[0, 0, 2.5]}>
-        {/* platform marmer premium */}
-        <mesh position={[0, 0.06, 0]} receiveShadow>
-          <boxGeometry args={[6.5, 0.12, 4.6]} />
-          <meshLambertMaterial color="#E8E2D6" />
-        </mesh>
-        <mesh position={[0, 0.13, 0]}>
-          <boxGeometry args={[6.3, 0.03, 4.4]} />
-          <meshLambertMaterial color="#F5F1E8" />
-        </mesh>
         {/* meja manajer premium (lebih besar, kayu gelap) */}
         <group position={[0, 0.14, -1.1]}>
           <mesh position={[0, 0.72, 0]} castShadow>
@@ -785,7 +776,7 @@ function OfficeScene({ onOpen, selectedId, brainAgentId }: { onOpen: (a: SubAgen
           </mesh>
         </group>
         {/* kursi manajer premium */}
-        <group position={[0, 0.14, 0.1]}>
+        <group position={[0, 0, 0.1]}>
           <mesh position={[0, 0.45, 0]} castShadow>
             <boxGeometry args={[0.6, 0.1, 0.6]} />
             <meshLambertMaterial color="#3E2723" />
@@ -798,8 +789,8 @@ function OfficeScene({ onOpen, selectedId, brainAgentId }: { onOpen: (a: SubAgen
         {/* COZY duduk menghadap ruangan */}
         <BlockCharacter
           agent={AGENTS.find(a => a.id === 'cozy')!}
-          position={[0, 0.14, 0.35]}
-          deskPos={[0, 0.14, -1.1]}
+          position={[0, 0, 0.35]}
+          deskPos={[0, 0, -1.1]}
           rotationY={() => Math.PI}
           onClick={() => onOpen(AGENTS.find(a => a.id === 'cozy')!)}
           isSelected={selectedId === 'cozy'}
