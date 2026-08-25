@@ -277,33 +277,79 @@ function MemoryPlanet({
         />
       </mesh>
       
-      {/* Main planet */}
+      {/* Main planet — NEON core */}
       <mesh ref={meshRef} onClick={onClick} onPointerOver={() => document.body.style.cursor = 'pointer'} onPointerOut={() => document.body.style.cursor = 'default'}>
         <sphereGeometry args={[node.size, 32, 32]} />
         <meshStandardMaterial
           color={node.color}
           emissive={node.color}
-          emissiveIntensity={isSelected ? 3.0 : 1.0}
-          metalness={0.3}
-          roughness={0.1}
+          emissiveIntensity={isSelected ? 4.0 : 2.2}
+          metalness={0.1}
+          roughness={0.05}
+          toneMapped={false}
         />
       </mesh>
-      
-      {/* Rings */}
-      <mesh ref={ringRef} rotation={[Math.PI / 2.5, 0, Math.PI / 6]}>
-        <ringGeometry args={[node.size * 1.4, node.size * 2.8, 64]} />
+
+      {/* Neon fresnel rim — glow tepi ala neon sign */}
+      <mesh scale={[1.04, 1.04, 1.04]}>
+        <sphereGeometry args={[node.size, 32, 32]} />
         <shaderMaterial
-          uniforms={{ uColor: { value: new THREE.Color(node.color) }, uTime: { value: 0 } }}
-          vertexShader={ringVertexShader}
-          fragmentShader={ringFragmentShader}
+          uniforms={{ uColor: { value: new THREE.Color(node.color) }, uIntensity: { value: 2.2 } }}
+          vertexShader={`
+            varying vec3 vNormal;
+            varying vec3 vView;
+            void main() {
+              vNormal = normalize(normalMatrix * normal);
+              vec4 mv = modelViewMatrix * vec4(position, 1.0);
+              vView = normalize(-mv.xyz);
+              gl_Position = projectionMatrix * mv;
+            }
+          `}
+          fragmentShader={`
+            uniform vec3 uColor;
+            uniform float uIntensity;
+            varying vec3 vNormal;
+            varying vec3 vView;
+            void main() {
+              float fres = pow(1.0 - abs(dot(vNormal, vView)), 2.5);
+              gl_FragColor = vec4(uColor, fres * uIntensity);
+            }
+          `}
           transparent={true}
-          side={THREE.DoubleSide}
+          side={THREE.FrontSide}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
         />
       </mesh>
-      
-      <pointLight color={node.color} intensity={isSelected ? 8 : 3} distance={12} decay={2} />
+
+      {/* ═══ RING NEON — 2 cincin tipis menyala (bukan saturnus tebal) ═══ */}
+      <mesh ref={ringRef} rotation={[Math.PI / 2.2, 0.2, Math.PI / 7]}>
+        <ringGeometry args={[node.size * 1.55, node.size * 1.72, 96]} />
+        <meshBasicMaterial
+          color={node.color}
+          transparent
+          opacity={isSelected ? 0.95 : 0.7}
+          side={THREE.DoubleSide}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+      {/* cincin kedua lebih tipis & miring */}
+      <mesh rotation={[Math.PI / 1.9, -0.35, -Math.PI / 9]}>
+        <ringGeometry args={[node.size * 1.95, node.size * 2.05, 96]} />
+        <meshBasicMaterial
+          color="#FFFFFF"
+          transparent
+          opacity={isSelected ? 0.55 : 0.3}
+          side={THREE.DoubleSide}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+
+      <pointLight color={node.color} intensity={isSelected ? 12 : 5} distance={14} decay={2} />
       
       <LabelSprite text={node.label} color={node.color} offset={node.size + 1.2} icon={getIcon()} />
     </group>
