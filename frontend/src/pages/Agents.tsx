@@ -724,25 +724,6 @@ function OfficeScene({ onOpen, selectedId, brainAgentId }: { onOpen: (a: SubAgen
           <boxGeometry args={[6.3, 0.03, 4.4]} />
           <meshLambertMaterial color="#F5F1E8" />
         </mesh>
-        {/* ═══ PEMBATAS RUANGAN (partisi kaca premium) ═══ */}
-        {[-2.6, 2.6].map((dx, i) => (
-          <group key={`part-${i}`} position={[dx, 0.14, -0.6]}>
-            <mesh position={[0, 1.1, 0]} castShadow>
-              <boxGeometry args={[0.12, 2.2, 2.2]} />
-              <meshStandardMaterial color="#D9E4F0" metalness={0.3} roughness={0.2} transparent opacity={0.45} />
-            </mesh>
-            {/* frame emas */}
-            <mesh position={[0, 2.22, 0]}>
-              <boxGeometry args={[0.14, 0.08, 2.3]} />
-              <meshStandardMaterial color="#D4AF37" metalness={0.85} roughness={0.25} />
-            </mesh>
-            <mesh position={[0, 0.05, 0]}>
-              <boxGeometry args={[0.16, 0.1, 2.3]} />
-              <meshStandardMaterial color="#D4AF37" metalness={0.85} roughness={0.25} />
-            </mesh>
-          </group>
-        ))}
-
         {/* meja manajer premium (lebih besar, kayu gelap) */}
         <group position={[0, 0.14, -1.1]}>
           <mesh position={[0, 0.72, 0]} castShadow>
