@@ -1612,7 +1612,7 @@ function MiniChat({ agent }: { agent: SubAgent }) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 min-h-[220px] overflow-y-auto p-4 space-y-3">
+      <div className="flex-1 min-h-[200px] max-h-[380px] overflow-y-auto p-4 space-y-3">
         {chat.length === 0 && (
           <div className="h-full flex items-center justify-center text-slate-500 text-[12px] font-mono">
             Ngobrol dengan otak {agent.name}…
@@ -1621,7 +1621,7 @@ function MiniChat({ agent }: { agent: SubAgent }) {
         {chat.map((m, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
             className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[78%] px-3.5 py-2.5 rounded-2xl text-[12px] leading-relaxed whitespace-pre-wrap ${m.role === 'user'
+            <div className={`max-w-[62%] px-3.5 py-2.5 rounded-2xl text-[12px] leading-relaxed ${m.role === 'user'
               ? 'text-white rounded-br-md'
               : 'bg-white/[0.06] text-slate-200 border border-white/5 rounded-bl-md'}`}
               style={m.role === 'user' ? { background: `linear-gradient(160deg, ${agent.color}E6, ${agent.color}99)` } : {}}
