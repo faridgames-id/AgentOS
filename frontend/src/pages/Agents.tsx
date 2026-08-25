@@ -901,15 +901,8 @@ function MinecraftRoom() {
       <gridHelper args={[W * 2, 19, '#C9D6E4', '#E8EFF6']} position={[0, 0.002, 0]} />
 
       {/* ═══ DINDING satu-arah (plane menghadap ke dalam — invisible dari luar) ═══ */}
-      {/* dinding belakang */}
-      <mesh position={[0, H / 2, -W]} receiveShadow>
-        <planeGeometry args={[W * 2, H]} />
-        <meshLambertMaterial color="#EDF2F8" side={THREE.FrontSide} />
-      </mesh>
-      <mesh position={[0, 0.9, -W + 0.06]}>
-        <boxGeometry args={[W * 2, 0.5, 0.06]} />
-        <meshStandardMaterial color="#D4AF37" metalness={0.7} roughness={0.35} />
-      </mesh>
+      {/* dinding belakang DIHAPUS — biar meja COZY & tembok kerja tidak tertutup */}
+
       {/* dinding kiri (menghadap kanan/dalam) */}
       <mesh position={[-W, H / 2, 0]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
         <planeGeometry args={[W * 2, H]} />
@@ -957,13 +950,6 @@ function MinecraftRoom() {
         <mesh key={`s-${i}`} position={[x, H - 0.4, z]}>
           <boxGeometry args={[2.4, 0.14, 1.4]} />
           <meshStandardMaterial color="#FFF7D6" emissive="#FFE9A8" emissiveIntensity={0.8} />
-        </mesh>
-      ))}
-      {/* jendela besar di dinding belakang */}
-      {[-9, -6, -3, 0, 3, 6, 9].map((x, i) => (
-        <mesh key={`w-${i}`} position={[x, 3.6, -W + 0.22]}>
-          <boxGeometry args={[2, 2, 0.08]} />
-          <meshStandardMaterial color="#BFE3FF" emissive="#9CCBFF" emissiveIntensity={0.55} />
         </mesh>
       ))}
     </group>
