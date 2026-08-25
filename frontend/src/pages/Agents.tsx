@@ -775,17 +775,6 @@ function OfficeScene({ onOpen, selectedId, brainAgentId }: { onOpen: (a: SubAgen
             <meshLambertMaterial color="#66BB6A" />
           </mesh>
         </group>
-        {/* kursi manajer premium */}
-        <group position={[0, 0, 0.1]}>
-          <mesh position={[0, 0.45, 0]} castShadow>
-            <boxGeometry args={[0.6, 0.1, 0.6]} />
-            <meshLambertMaterial color="#3E2723" />
-          </mesh>
-          <mesh position={[0, 0.85, 0.28]} castShadow>
-            <boxGeometry args={[0.6, 0.85, 0.12]} />
-            <meshLambertMaterial color="#4E342E" />
-          </mesh>
-        </group>
         {/* COZY duduk menghadap ruangan */}
         <BlockCharacter
           agent={AGENTS.find(a => a.id === 'cozy')!}
