@@ -695,24 +695,44 @@ export default function Chat() {
           style={{
             background: 'linear-gradient(170deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))',
             border: '1px solid rgba(96,140,220,0.22)',
-            boxShadow: '0 12px 36px rgba(0,0,0,0.4), inset 0 1px 0 rgba(140,180,255,0.08)'
+            boxShadow: 'inset 0 1px 0 rgba(140,180,255,0.08)'
           }}
         >
           {/* Header */}
-          <div className="flex items-center gap-3 px-5 py-3.5 border-b border-white/5">
+          <div className="flex items-center gap-3 px-5 py-3 border-b border-white/5"
+            style={{ background: 'rgba(255,255,255,0.02)' }}>
             <div className="relative">
-              <div className="w-9 h-9 rounded-full flex items-center justify-center"
-                style={{ background: 'linear-gradient(160deg,#22D3EEE6,#22D3EE)', boxShadow: '0 0 14px rgba(34,211,238,0.4)' }}>
-                <Bot size={17} className="text-white" />
+              <div
+                className="relative flex items-center justify-center w-10 h-10 rounded-[13px]"
+                style={{
+                  background: 'linear-gradient(160deg,#22D3EEE6,#0EA5E9)',
+                  boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.35), inset 0 -2px 3px rgba(0,0,0,0.15)'
+                }}
+              >
+                <div
+                  className="absolute inset-x-0 top-0 pointer-events-none"
+                  style={{
+                    height: '46%',
+                    borderRadius: '13px 13px 40% 40% / 13px 13px 70% 70%',
+                    background: 'linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.02))',
+                  }}
+                />
+                <Bot size={18} className="relative z-10 text-white" strokeWidth={2.4} />
               </div>
               <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2" style={{ borderColor: '#0a1020' }} />
             </div>
-            <div>
+            <div className="flex-1">
               <p className="text-white font-bold text-sm">Cozy</p>
               <p className="text-emerald-400 text-[11px] flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />online
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                {tgActive ? 'membaca sesi Telegram' : 'online — siap membantu'}
               </p>
             </div>
+            {tgActive && (
+              <span className="text-[9px] px-2.5 py-1 rounded-full font-mono bg-sky-500/10 border border-sky-400/25 text-sky-300">
+                TELEGRAM
+              </span>
+            )}
           </div>
 
           {/* Messages */}
@@ -730,15 +750,24 @@ export default function Chat() {
                     <motion.div
                       key={`tg-${i}`}
                       initial={false}
-                      className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                      className={`flex items-end gap-2 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
-                      <div className={`max-w-[78%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${m.role === 'user'
+                      {/* avatar Cozy untuk pesan assistant */}
+                      {m.role !== 'user' && (
+                        <div
+                          className="relative flex items-center justify-center w-7 h-7 rounded-full shrink-0 mb-0.5"
+                          style={{ background: 'linear-gradient(160deg,#22D3EEE6,#0EA5E9)' }}
+                        >
+                          <Bot size={13} className="text-white" />
+                        </div>
+                      )}
+                      <div className={`max-w-[78%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed relative ${m.role === 'user'
                         ? 'text-white rounded-br-md'
-                        : 'bg-white/[0.06] text-slate-200 border border-white/5 rounded-bl-md'
+                        : 'bg-white/[0.05] text-slate-200 border border-white/[0.07] rounded-bl-md backdrop-blur-sm'
                         }`}
                         style={m.role === 'user' ? {
-                          background: 'linear-gradient(160deg,#38BDF8E6,#0284C7)',
-                          boxShadow: '0 4px 14px rgba(56,189,248,0.25)'
+                          background: 'linear-gradient(135deg, #0EA5E9 0%, #2563EB 60%, #1D4ED8 100%)',
+                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 14px rgba(37,99,235,0.3)'
                         } : {}}
                       >
                         {atts.length > 0 && (
