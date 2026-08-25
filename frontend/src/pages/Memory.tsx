@@ -322,31 +322,36 @@ function MemoryPlanet({
         />
       </mesh>
 
-      {/* ═══ RING NEON — 2 cincin tipis menyala (bukan saturnus tebal) ═══ */}
-      <mesh ref={ringRef} rotation={[Math.PI / 2.2, 0.2, Math.PI / 7]}>
-        <ringGeometry args={[node.size * 1.55, node.size * 1.72, 96]} />
+      {/* ═══ GLOWING DISC ala vault-galaxy — tanpa cincin ═══ */}
+      {/* halo sprite radial (seperti glow() di plugin) */}
+      <sprite scale={[node.size * 6, node.size * 6, 1]}>
+        <spriteMaterial
+          map={makeGlowTexture(node.color)}
+          transparent
+          opacity={isSelected ? 0.95 : 0.55}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </sprite>
+
+      {/* disc body — lingkaran flat menghadap kamera */}
+      <mesh ref={ringRef} onClick={onClick} onPointerOver={() => document.body.style.cursor = 'pointer'} onPointerOut={() => document.body.style.cursor = 'default'}>
+        <circleGeometry args={[node.size * 0.85, 48]} />
         <meshBasicMaterial
           color={node.color}
           transparent
-          opacity={isSelected ? 0.95 : 0.7}
-          side={THREE.DoubleSide}
+          opacity={0.95}
           blending={THREE.AdditiveBlending}
           depthWrite={false}
           toneMapped={false}
         />
       </mesh>
-      {/* cincin kedua lebih tipis & miring */}
-      <mesh rotation={[Math.PI / 1.9, -0.35, -Math.PI / 9]}>
-        <ringGeometry args={[node.size * 1.95, node.size * 2.05, 96]} />
-        <meshBasicMaterial
-          color="#FFFFFF"
-          transparent
-          opacity={isSelected ? 0.55 : 0.3}
-          side={THREE.DoubleSide}
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-          toneMapped={false}
-        />
+
+      {/* hot white center ala sun di plugin */}
+      <mesh>
+        <circleGeometry args={[node.size * 0.38, 32]} />
+        <meshBasicMaterial color="#FFF7D8" transparent opacity={0.9} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
       </mesh>
 
       <pointLight color={node.color} intensity={isSelected ? 12 : 5} distance={14} decay={2} />
@@ -354,6 +359,28 @@ function MemoryPlanet({
       <LabelSprite text={node.label} color={node.color} offset={node.size + 1.2} icon={getIcon()} />
     </group>
   )
+}
+
+// Glow radial texture ala plugin vault-galaxy (cache per warna)
+const _glowCache = new Map<string, THREE.CanvasTexture>()
+function makeGlowTexture(color: string): THREE.CanvasTexture {
+  const hit = _glowCache.get(color)
+  if (hit) return hit
+  const size = 128
+  const c = document.createElement('canvas')
+  c.width = c.height = size
+  const g = c.getContext('2d')!
+  const grad = g.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2)
+  grad.addColorStop(0, color)
+  grad.addColorStop(0.25, color + 'AA')
+  grad.addColorStop(0.6, color + '33')
+  grad.addColorStop(1, 'rgba(0,0,0,0)')
+  g.fillStyle = grad
+  g.fillRect(0, 0, size, size)
+  const tex = new THREE.CanvasTexture(c)
+  tex.minFilter = THREE.LinearFilter
+  _glowCache.set(color, tex)
+  return tex
 }
 
 function LabelSprite({ text, color, offset, icon }: { text: string; color: string; offset: number; icon: string }) {
