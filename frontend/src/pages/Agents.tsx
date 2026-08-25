@@ -1575,15 +1575,17 @@ function MiniChat({ agent }: { agent: SubAgent }) {
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // dobel rAF: pastikan semua bubble selesai render, lalu scroll sampai BENERAN bawah
-    let raf1 = 0, raf2 = 0
-    raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => {
-        const el = endRef.current
-        if (el) el.scrollTop = el.scrollHeight
-      })
-    })
-    return () => { cancelAnimationFrame(raf1); cancelAnimationFrame(raf2) }
+    // scroll berulang sampai posisi stabil (layout bisa berubah setelah render)
+    let tries = 0
+    let last = -1
+    const id = setInterval(() => {
+      const el = endRef.current
+      if (!el) { clearInterval(id); return }
+      el.scrollTop = el.scrollHeight
+      if (Math.abs(el.scrollTop - last) < 1 || ++tries > 10) clearInterval(id)
+      last = el.scrollTop
+    }, 60)
+    return () => clearInterval(id)
   }, [chat, thinking])
 
   useEffect(() => {
