@@ -166,17 +166,34 @@ function MemoryScene({ selectedNode, setSelectedNode, extraNodes }: { selectedNo
     nodeMeshesRef.current.forEach((mesh, id) => {
       const node = allSceneNodes.find(n => n.id === id)
       if (node && mesh) {
-        mesh.position.y = node.y + Math.sin(elapsedTime * 0.5 + node.x * 0.1) * 0.4
-        mesh.rotation.y = elapsedTime * 0.3
+        const isSkill = id.startsWith('skill-')
+        // skill planets: orbit kecil berputar di sekitar posisi asalnya
+        if (isSkill) {
+          const base = (node as any)._basePos as THREE.Vector3 | undefined
+          const b = base ?? new THREE.Vector3(node.x, node.y, node.z)
+          ;(node as any)._basePos = b
+          const orbR = 1.6
+          const spd = 0.35 + (node.size * 0.1)
+          mesh.position.set(
+            b.x + Math.cos(elapsedTime * spd + node.z) * orbR,
+            b.y + Math.sin(elapsedTime * (spd * 0.8) + node.x) * 0.5,
+            b.z + Math.sin(elapsedTime * spd + node.x) * orbR
+          )
+        } else {
+          mesh.position.y = node.y + Math.sin(elapsedTime * 0.5 + node.x * 0.1) * 0.4
+        }
+        mesh.rotation.y = elapsedTime * (isSkill ? 1.2 : 0.3)
         mesh.rotation.x = Math.sin(elapsedTime * 0.2) * 0.15
-        
+
         const isSelected = selectedNode?.id === id
-        const targetScale = isSelected ? 1.5 : 1.0
+        // denyut glow: skill nodes berdenyut lebih hidup
+        const pulse = isSkill ? 1 + Math.sin(elapsedTime * 2.2 + node.x) * 0.18 : 1
+        const targetScale = (isSelected ? 1.5 : 1.0) * pulse
         mesh.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1)
-        
+
         const mat = mesh.material as THREE.MeshStandardMaterial
         if (mat) {
-          mat.emissiveIntensity = isSelected ? 3.0 : 1.0 + Math.sin(elapsedTime * 2) * 0.3
+          mat.emissiveIntensity = isSelected ? 4.0 : (isSkill ? 2.0 + Math.sin(elapsedTime * 3 + node.z) * 0.8 : 2.2)
         }
       }
     })
@@ -411,6 +428,7 @@ function LabelSprite({ text, color, offset, icon }: { text: string; color: strin
 }
 
 function EnergyConnection({ edge }: { edge: MemoryEdge }) {
+  const dotsRef = useRef<THREE.InstancedMesh>(null)
   const fromNode = memoryNodes.find(n => n.id === edge.from)
   const toNode = memoryNodes.find(n => n.id === edge.to)
   
@@ -422,16 +440,48 @@ function EnergyConnection({ edge }: { edge: MemoryEdge }) {
   mid.y += 5
   
   const curve = new THREE.QuadraticBezierCurve3(start, mid, end)
+  const baseColor = new THREE.Color(fromNode.color).lerp(new THREE.Color(toNode.color), 0.5)
+  const glowTex = makeGlowTexture('#7DD3FC')
+  
+  // partikel energi yang mengalir sepanjang kurva
+  const DOTS = 6
+  useFrame(({ clock }) => {
+    if (!dotsRef.current) return
+    const t = clock.getElapsedTime()
+    const dummy = new THREE.Object3D()
+    for (let i = 0; i < DOTS; i++) {
+      const k = ((t * 0.12 * edge.strength + i / DOTS) % 1)
+      const p = curve.getPoint(k)
+      const s = 0.28 * edge.strength * (0.5 + 0.5 * Math.sin(k * Math.PI)) // membesar di tengah
+      dummy.position.copy(p)
+      dummy.scale.setScalar(s)
+      dummy.updateMatrix()
+      dotsRef.current.setMatrixAt(i, dummy.matrix)
+    }
+    dotsRef.current.instanceMatrix.needsUpdate = true
+  })
   
   const tubeGeometry = new THREE.TubeGeometry(curve, 50, 0.05 * edge.strength, 8, false)
-  const baseColor = new THREE.Color(fromNode.color).lerp(new THREE.Color(toNode.color), 0.5)
   
   return (
     <group>
-      {/* Base connection tube */}
+      {/* garis dasar tipis */}
       <mesh geometry={tubeGeometry}>
-        <meshBasicMaterial color={baseColor} transparent opacity={0.55 * edge.strength} blending={THREE.AdditiveBlending} depthWrite={false} />
+        <meshBasicMaterial color={baseColor} transparent opacity={0.3 * edge.strength} blending={THREE.AdditiveBlending} depthWrite={false} />
       </mesh>
+      {/* partikel energi mengalir — ingatan berpindah antar node */}
+      <instancedMesh ref={dotsRef} args={[undefined, undefined, DOTS]}>
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial
+          map={glowTex}
+          color="#7DD3FC"
+          transparent
+          opacity={0.9}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </instancedMesh>
     </group>
   )
 }
