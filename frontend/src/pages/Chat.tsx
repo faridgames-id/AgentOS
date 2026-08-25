@@ -100,6 +100,67 @@ export default function Chat() {
       if (d.path) sendFileToTelegram(d.path, file.name)
     } catch { /* diam */ }
   }
+  // ── Voice REAL: speech-to-text + LLM + text-to-speech ──
+  const [voiceTranscript, setVoiceTranscript] = useState('')
+  const [voiceReply, setVoiceReply] = useState('')
+  const [voiceThinking, setVoiceThinking] = useState(false)
+  const recognitionRef = useRef<any>(null)
+
+  const askCozy = (question: string) => {
+    if (!question.trim()) return
+    setVoiceTranscript(question)
+    setVoiceThinking(true)
+    setVoiceReply('')
+    // pakai otak COZY (LLM + memori) — sama seperti sub-agent
+    fetch('/api/brain/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agent_id: 'cozy', message: question }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        const reply = d.reply || 'Maaf Bos, otakku sempat blank.'
+        setVoiceReply(reply)
+        setVoiceThinking(false)
+        // bicara jawabannya
+        try {
+          window.speechSynthesis.cancel()
+          const u = new SpeechSynthesisUtterance(reply.replace(/[*#🎯💰📦🚀😎🔥✨🧠]/g, ''))
+          u.lang = 'id-ID'
+          u.rate = 1.02
+          window.speechSynthesis.speak(u)
+        } catch { /* browser tidak dukung */ }
+      })
+      .catch(() => { setVoiceThinking(false); setVoiceReply('⚠️ Koneksi ke otak terganggu, Bos.') })
+  }
+
+  const startListening = () => {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SR) {
+      setVoiceTranscript('Browser tidak mendukung speech recognition — pakai Chrome/Edge ya Bos.')
+      return
+    }
+    const rec = new SR()
+    rec.lang = 'id-ID'
+    rec.interimResults = false
+    rec.maxAlternatives = 1
+    rec.onresult = (e: any) => {
+      const said = e.results[0][0].transcript
+      setIsListening(false)
+      askCozy(said)
+    }
+    rec.onerror = () => setIsListening(false)
+    rec.onend = () => setIsListening(false)
+    recognitionRef.current = rec
+    setIsListening(true)
+    try { rec.start() } catch { /* sudah jalan */ }
+  }
+
+  const stopListening = () => {
+    try { recognitionRef.current?.stop() } catch {}
+    setIsListening(false)
+  }
+
   // Telegram sync state — di level atas biar tidak reset saat re-render
   const [tgSessions, setTgSessions] = useState<Array<{ id: string; name: string; preview: string; last_role: string; time: string; message_count: number }>>([])
   const [tgActive, setTgActive] = useState<string | null>(null)
@@ -222,7 +283,7 @@ export default function Chat() {
       {/* ═══ CENTRAL ORB — ala Siri: sphere gradient + ring energi ═══ */}
       <motion.div
         className="relative cursor-pointer select-none"
-        onClick={() => setIsListening(!isListening)}
+        onClick={() => (isListening ? stopListening() : startListening())}
         animate={{ scale: isListening ? orbIntensity : 1 }}
         transition={isListening ? { duration: 0.18 } : { duration: 1.2 }}
       >
@@ -388,7 +449,7 @@ export default function Chat() {
         {isListening ? 'Listening...' : 'Hey Cozy!'}
       </motion.h2>
       <p className="text-slate-400 mt-1 text-sm">
-        {isListening ? 'Speak now — saya dengar Bos 👂' : 'Tap orb atau tekan mic untuk ngobrol via voice'}
+        {voiceThinking ? 'Berpikir...' : isListening ? 'Speak now — saya dengar Bos 👂' : voiceReply ? 'Klik lagi untuk tanya lagi' : 'Tap orb — ngomong aja, ku jawab seperti Jarvis 🎙️'}
       </p>
 
       {/* Waveform dots — ala referensi 1: deretan titik biru */}
@@ -408,6 +469,42 @@ export default function Chat() {
           />
         ))}
       </div>
+
+      {/* ═══ Transkrip & jawaban REAL ═══ */}
+      {(voiceTranscript || voiceThinking || voiceReply) && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-2xl mt-6 space-y-2.5"
+        >
+          {voiceTranscript && (
+            <div className="flex justify-end">
+              <div className="max-w-[80%] px-4 py-2.5 rounded-2xl rounded-br-md text-sm text-white"
+                style={{ background: 'linear-gradient(160deg,#38BDF8E6,#0284C7)', boxShadow: '0 4px 14px rgba(56,189,248,0.25)' }}>
+                🎤 {voiceTranscript}
+              </div>
+            </div>
+          )}
+          {voiceThinking && (
+            <div className="flex justify-start">
+              <div className="bg-white/[0.06] border border-white/5 px-4 py-3 rounded-2xl rounded-bl-md flex gap-1">
+                {[0, 1, 2].map(d => (
+                  <motion.span key={d} className="w-2 h-2 bg-fuchsia-400 rounded-full"
+                    animate={{ y: [0, -4, 0] }}
+                    transition={{ duration: 0.6, repeat: Infinity, delay: d * 0.15 }} />
+                ))}
+              </div>
+            </div>
+          )}
+          {voiceReply && (
+            <div className="flex justify-start">
+              <div className="max-w-[85%] px-4 py-3 rounded-2xl rounded-bl-md text-sm leading-relaxed bg-white/[0.06] text-slate-200 border border-white/5 whitespace-pre-wrap">
+                {voiceReply}
+              </div>
+            </div>
+          )}
+        </motion.div>
+      )}
 
       {/* Quick voice actions — iOS widget style */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-9 w-full max-w-lg pb-2">
