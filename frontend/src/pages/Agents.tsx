@@ -1575,6 +1575,11 @@ function MiniChat({ agent }: { agent: SubAgent }) {
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    const el = endRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [chat, thinking])
+
+  useEffect(() => {
     if (agent.id !== agentId) {
       setAgentId(agent.id)
       setChat([])
@@ -1640,7 +1645,6 @@ function MiniChat({ agent }: { agent: SubAgent }) {
             </div>
           </div>
         )}
-        <div ref={endRef} />
       </div>
       <div className="p-4 pt-2 mt-auto">
         <div
