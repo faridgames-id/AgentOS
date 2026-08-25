@@ -51,6 +51,15 @@ def _db() -> sqlite3.Connection:
         content TEXT NOT NULL,
         created_at REAL NOT NULL
     )""")
+    con.execute("""CREATE TABLE IF NOT EXISTS thoughts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        from_agent TEXT NOT NULL,
+        to_agent TEXT NOT NULL,
+        topic TEXT NOT NULL,
+        message TEXT NOT NULL,
+        reply TEXT NOT NULL,
+        created_at REAL NOT NULL
+    )""")
     return con
 
 
@@ -71,6 +80,136 @@ class MemoryAdd(BaseModel):
     agent_id: str
     content: str
     kind: str = 'fact'
+
+
+LLM_MODELS = ["stealth/ox-alpha", "deepseek/deepseek-chat"]
+
+
+def _llm(messages: list, max_tokens: int = 300) -> str:
+    """Panggil LLM via OpenRouter — ox-alpha utama, fallback deepseek kalau rate-limit."""
+    api_key = _env('OPENROUTER_API_KEY')
+    if not api_key:
+        return ''
+    for model in LLM_MODELS:
+        payload = json.dumps({
+            "model": model,
+            "messages": messages,
+            "max_tokens": max_tokens,
+        }).encode()
+        req = urllib.request.Request(
+            "https://openrouter.ai/api/v1/chat/completions",
+            data=payload,
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                data = json.loads(resp.read())
+            out = (data['choices'][0]['message'].get('content') or '').strip()
+            if out:
+                return out
+        except Exception:
+            continue
+    return ''
+
+
+
+# Topik obrolan antar agent — sesuai bisnis Bos Farid
+EXCHANGE_TOPICS = [
+    "progress kerja hari ini dan temuan penting",
+    "data stok akun FF/ML terbaru dan pergerakan penjualan",
+    "rekap keuangan dan profit terbaru",
+    "ide konten TikTok untuk akun Faridexcelent",
+    "keamanan sistem dan anomali yang terdeteksi",
+    "automasi yang bisa menghemat waktu Bos",
+    "insight tren pasar akun game",
+    "perbaikan dashboard Agent OS",
+    "pengalaman menarik dari memori masing-masing",
+    "rencana kerja besok",
+]
+
+
+def _run_one_exchange() -> dict | None:
+    """Satu siklus tukar pikiran: agent A bertanya ke agent B, jawaban disimpan
+    sebagai memori baru di kedua otak. Dipanggil oleh /exchange/tick."""
+    import random
+    ids = list(AGENT_CONTEXTS.keys())
+    a, b = random.sample(ids, 2)
+    topic = random.choice(EXCHANGE_TOPICS)
+
+    con = _db()
+
+    def mem_block(x: str) -> str:
+        rows = con.execute(
+            "SELECT content FROM memories WHERE agent_id=? ORDER BY id DESC LIMIT 6", (x,)
+        ).fetchall()
+        return '\n'.join(f"- {r['content']}" for r in rows) or '(memori masih kosong)'
+
+    # A bertanya (dengan konteks memorinya)
+    q = _llm([
+        {"role": "system", "content": (
+            f"Kamu {AGENT_CONTEXTS[a]} Rekan kerjamu {b} ({AGENT_CONTEXTS[b]}). "
+            f"Memorimu:\n{mem_block(a)}\n\n"
+            f"Buat 1-2 kalimat pertanyaan/berita singkat untuk {b} soal: {topic}. "
+            "Gaya santai profesional, boleh pakai 1 emoji."
+        )},
+    ], 150)
+    if not q:
+        con.close()
+        return None
+
+    # B menjawab (dengan konteks memorinya) — jawaban jadi memori baru B & A
+    r = _llm([
+        {"role": "system", "content": (
+            f"Kamu {AGENT_CONTEXTS[b]} Memori kamu:\n{mem_block(b)}\n\n"
+            f"Jawab pertanyaan {a} ini singkat (1-3 kalimat) berdasarkan pengetahuanmu. "
+            "Kalau ada info penting baru, sebutkan. Boleh 1 emoji."
+        )},
+        {"role": "user", "content": q},
+    ], 250)
+    if not r:
+        con.close()
+        return None
+
+    now = time.time()
+    con.execute(
+        "INSERT INTO thoughts (from_agent,to_agent,topic,message,reply,created_at) VALUES (?,?,?,?,?,?)",
+        (a, b, topic, q, r, now)
+    )
+    # memori baru: masing-masing mengingat pertukaran ini
+    con.execute("INSERT INTO memories (agent_id,kind,content,created_at) VALUES (?,?,?,?)",
+                (b, 'exchange', f"[diskusi dengan {a.upper()} soal {topic}] {r[:180]}", now))
+    con.execute("INSERT INTO memories (agent_id,kind,content,created_at) VALUES (?,?,?,?)",
+                (a, 'exchange', f"[kuberitahu {b.upper()} soal {topic}] {q[:180]}", now))
+    con.commit()
+    con.close()
+    return {"from": a, "to": b, "topic": topic, "message": q, "reply": r}
+
+
+@router.get("/exchange/recent")
+def exchange_recent(limit: int = 12):
+    """Riwayat tukar pikiran terakhir (untuk feed live di dashboard)."""
+    con = _db()
+    rows = con.execute(
+        "SELECT from_agent,to_agent,topic,message,reply,created_at FROM thoughts ORDER BY id DESC LIMIT ?",
+        (limit,)
+    ).fetchall()
+    con.close()
+    return {"exchanges": [
+        {
+            "from": r['from_agent'], "to": r['to_agent'], "topic": r['topic'],
+            "message": r['message'], "reply": r['reply'],
+            "time": time.strftime('%H.%M', time.localtime(r['created_at'])),
+        } for r in rows
+    ]}
+
+
+@router.post("/exchange/tick")
+def exchange_tick():
+    """Jalankan 1 siklus tukar pikiran antar 2 agent acak (memori bertambah)."""
+    result = _run_one_exchange()
+    if result is None:
+        return {"ok": False, "reason": "LLM sibuk / gagal"}
+    return {"ok": True, **result}
 
 
 @router.get("/{agent_id}/memory")

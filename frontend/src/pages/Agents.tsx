@@ -1234,10 +1234,49 @@ function ChatSessionPanel({ agent, onClose }: { agent: SubAgent | null; onClose:
 // ─────────────────────────────────────────────────────────
 type ViewMode = 'workflow' | 'office'
 
+interface ExchangeItem {
+  from: string
+  to: string
+  topic: string
+  message: string
+  reply: string
+  time: string
+}
+
 export default function AgentsPage() {
   const [view, setView] = useState<ViewMode>('workflow')
   const [chatAgent, setChatAgent] = useState<SubAgent | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [exchanges, setExchanges] = useState<ExchangeItem[]>([])
+  const [ticking, setTicking] = useState(false)
+
+  // ── Engine tukar pikiran: tick tiap 45 detik + feed live ──
+  useEffect(() => {
+    let alive = true
+    const loadFeed = () => {
+      fetch('/api/brain/exchange/recent')
+        .then(r => r.json())
+        .then(d => { if (alive) setExchanges(d.exchanges || []) })
+        .catch(() => {})
+    }
+    const tick = () => {
+      if (document.hidden) return // hemat kuota saat tab tidak aktif
+      setTicking(true)
+      fetch('/api/brain/exchange/tick', { method: 'POST' })
+        .then(r => r.json())
+        .then(() => { loadFeed(); setTicking(false) })
+        .catch(() => setTicking(false))
+    }
+    loadFeed()
+    tick() // langsung sekali saat buka
+    const ivTick = setInterval(tick, 45000)
+    const ivFeed = setInterval(loadFeed, 20000)
+    return () => {
+      alive = false
+      clearInterval(ivTick)
+      clearInterval(ivFeed)
+    }
+  }, [])
 
   const openAgent = (a: SubAgent) => {
     setSelectedId(a.id)
@@ -1322,6 +1361,65 @@ export default function AgentsPage() {
 
       {/* Chat session BELOW the layout */}
       <ChatSessionPanel agent={chatAgent} onClose={() => { setChatAgent(null); setSelectedId(null) }} />
+
+      {/* ═══ Live Thoughts — agent saling bertukar pikiran REAL ═══ */}
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mt-4 rounded-2xl overflow-hidden"
+        style={{
+          background: 'linear-gradient(170deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))',
+          border: '1px solid rgba(96,140,220,0.22)',
+          boxShadow: '0 12px 36px rgba(0,0,0,0.45), inset 0 1px 0 rgba(140,180,255,0.08)'
+        }}
+      >
+        <div className="flex items-center gap-3 px-5 py-3.5 border-b border-white/5">
+          <motion.div
+            animate={{ rotate: ticking ? 360 : 0 }}
+            transition={{ duration: 1, repeat: ticking ? Infinity : 0, ease: 'linear' }}
+          >
+            <Brain size={16} className="text-sky-400" />
+          </motion.div>
+          <div className="flex-1">
+            <p className="text-white font-bold text-sm">Live Thoughts — Agent Saling Bertukar Pikiran</p>
+            <p className="text-[11px] text-slate-500 font-mono">tiap 45 detik · memori bertambah otomatis</p>
+          </div>
+          <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold border ${ticking ? 'text-emerald-400 border-emerald-400/40 bg-emerald-400/10' : 'text-slate-400 border-white/10 bg-white/5'}`}>
+            {ticking ? '● berpikir...' : '● live'}
+          </span>
+        </div>
+        <div className="max-h-80 overflow-y-auto p-4 space-y-3">
+          {exchanges.length === 0 && (
+            <p className="text-[12px] text-slate-500 font-mono px-1">Menunggu percakapan pertama antar agent...</p>
+          )}
+          {exchanges.map((ex, i) => {
+            const a = AGENTS.find(x => x.id === ex.from)
+            const b = AGENTS.find(x => x.id === ex.to)
+            const ca = a?.color || '#94A3B8'
+            const cb = b?.color || '#94A3B8'
+            return (
+              <motion.div
+                key={`${i}-${ex.time}`}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.04 }}
+                className="rounded-xl px-4 py-3 bg-white/[0.03] border border-white/5"
+              >
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-[11px] font-black tracking-wide" style={{ color: ca }}>{ex.from.toUpperCase()}</span>
+                  <span className="text-slate-500 text-[10px]">→</span>
+                  <span className="text-[11px] font-black tracking-wide" style={{ color: cb }}>{ex.to.toUpperCase()}</span>
+                  <span className="text-[9px] text-slate-600 font-mono ml-auto">{ex.time} · {ex.topic}</span>
+                </div>
+                <p className="text-[12px] text-slate-300 leading-snug">{ex.message}</p>
+                <p className="text-[12px] text-slate-400 leading-snug mt-1.5 pl-3 border-l-2" style={{ borderColor: cb }}>
+                  {ex.reply}
+                </p>
+              </motion.div>
+            )
+          })}
+        </div>
+      </motion.div>
     </div>
   )
 }
