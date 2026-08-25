@@ -91,24 +91,26 @@ def _llm(messages: list, max_tokens: int = 300) -> str:
     if not api_key:
         return ''
     for model in LLM_MODELS:
-        payload = json.dumps({
-            "model": model,
-            "messages": messages,
-            "max_tokens": max_tokens,
-        }).encode()
-        req = urllib.request.Request(
-            "https://openrouter.ai/api/v1/chat/completions",
-            data=payload,
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-        )
-        try:
-            with urllib.request.urlopen(req, timeout=60) as resp:
-                data = json.loads(resp.read())
-            out = (data['choices'][0]['message'].get('content') or '').strip()
-            if out:
-                return out
-        except Exception:
-            continue
+        for attempt in range(2):  # retry 1x per model (rate-limit upstream sering cepat pulih)
+            payload = json.dumps({
+                "model": model,
+                "messages": messages,
+                "max_tokens": max_tokens,
+            }).encode()
+            req = urllib.request.Request(
+                "https://openrouter.ai/api/v1/chat/completions",
+                data=payload,
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=60) as resp:
+                    data = json.loads(resp.read())
+                out = (data['choices'][0]['message'].get('content') or '').strip()
+                if out:
+                    return out
+            except Exception:
+                time.sleep(1.5)
+                continue
     return ''
 
 
@@ -284,32 +286,11 @@ def agent_chat(body: ChatMsg):
         for c in reversed(hist)
     ]
 
-    # panggil LLM via OpenRouter (kredensial dari env Hermes)
-    api_key = _env('OPENROUTER_API_KEY')
-    reply = ''
-    if api_key:
-        try:
-            payload = json.dumps({
-                "model": "stealth/ox-alpha",
-                "messages": messages,
-                "max_tokens": 500,
-            }).encode()
-            req = urllib.request.Request(
-                "https://openrouter.ai/api/v1/chat/completions",
-                data=payload,
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json",
-                },
-            )
-            with urllib.request.urlopen(req, timeout=60) as resp:
-                data = json.loads(resp.read())
-            reply = (data['choices'][0]['message'].get('content') or '').strip()
-        except Exception as e:
-            reply = f"⚠️ Otak sedang sibuk ({e.__class__.__name__}). Coba lagi sebentar, Bos."
-    else:
-        reply = "⚠️ OPENROUTER_API_KEY tidak tersedia — otak agent butuh kunci itu untuk berpikir."
-    reply = reply or "(otak sempat blank, coba tanya lagi Bos)"
+    # panggil LLM via helper (ox-alpha utama + fallback deepseek saat rate-limit)
+    reply = _llm(messages, max_tokens=600)
+    if not reply:
+        reply = "⚠️ Otak sedang sibuk (semua provider rate-limit). Coba lagi 1-2 menit, Bos."
+
 
     con.execute("INSERT INTO chats (agent_id, role, content, created_at) VALUES (?,?,?,?)",
                 (body.agent_id, 'assistant', reply, time.time()))
