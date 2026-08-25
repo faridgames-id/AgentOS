@@ -920,29 +920,30 @@ function MinecraftRoom() {
       </mesh>
       <gridHelper args={[W * 2, 19, '#C9D6E4', '#E8EFF6']} position={[0, 0.002, 0]} />
 
-      {/* dinding belakang + panel bawah emas */}
+      {/* ═══ DINDING satu-arah (plane menghadap ke dalam — invisible dari luar) ═══ */}
+      {/* dinding belakang */}
       <mesh position={[0, H / 2, -W]} receiveShadow>
-        <boxGeometry args={[W * 2, H, 0.4]} />
-        <meshLambertMaterial color="#EDF2F8" />
+        <planeGeometry args={[W * 2, H]} />
+        <meshLambertMaterial color="#EDF2F8" side={THREE.FrontSide} />
       </mesh>
-      <mesh position={[0, 0.9, -W + 0.25]}>
+      <mesh position={[0, 0.9, -W + 0.06]}>
         <boxGeometry args={[W * 2, 0.5, 0.06]} />
         <meshStandardMaterial color="#D4AF37" metalness={0.7} roughness={0.35} />
       </mesh>
-      {/* dinding kiri */}
-      <mesh position={[-W, H / 2, 0]} receiveShadow>
-        <boxGeometry args={[0.4, H, W * 2]} />
-        <meshLambertMaterial color="#E8EEF6" />
+      {/* dinding kiri (menghadap kanan/dalam) */}
+      <mesh position={[-W, H / 2, 0]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
+        <planeGeometry args={[W * 2, H]} />
+        <meshLambertMaterial color="#E8EEF6" side={THREE.FrontSide} />
       </mesh>
-      {/* dinding kanan */}
-      <mesh position={[W, H / 2, 0]} receiveShadow>
-        <boxGeometry args={[0.4, H, W * 2]} />
-        <meshLambertMaterial color="#E8EEF6" />
+      {/* dinding kanan (menghadap kiri/dalam) */}
+      <mesh position={[W, H / 2, 0]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
+        <planeGeometry args={[W * 2, H]} />
+        <meshLambertMaterial color="#E8EEF6" side={THREE.FrontSide} />
       </mesh>
-      {/* plafon blok putih */}
-      <mesh position={[0, H, 0]}>
-        <boxGeometry args={[W * 2, 0.4, W * 2]} />
-        <meshLambertMaterial color="#F8FAFD" />
+      {/* plafon menghadap ke bawah */}
+      <mesh position={[0, H, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[W * 2, W * 2]} />
+        <meshLambertMaterial color="#F8FAFD" side={THREE.FrontSide} />
       </mesh>
       {/* chandelier kristal tengah */}
       <group position={[0, H - 1.6, 0]}>
