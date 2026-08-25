@@ -1430,7 +1430,7 @@ function AgentSessionsView({ onOpen, onCloseSession, selectedId }: { onOpen: (a:
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: selected ? 0 : i * 0.03 }}
                   whileHover={{ scale: 1.06 }}
-                  onClick={() => onOpen(a)}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpen(a); return false }}
                   title={`${a.name} — ${a.role}`}
                   className={`relative rounded-2xl cursor-pointer group overflow-hidden ${selected ? 'p-2' : 'p-3.5 text-left'}`}
                   style={{
@@ -1557,7 +1557,7 @@ function MiniChat({ agent }: { agent: SubAgent }) {
     }
   }, [agent])
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [chat, thinking])
+  // tanpa auto-scroll smooth — tidak mengganggu saat klik antar icon
 
   const send = () => {
     if (!input.trim() || thinking) return
