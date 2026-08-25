@@ -1763,13 +1763,15 @@ export default function AgentsPage() {
       </div>
 
       {/* Active view */}
-      {/* ═══ Chat session panel — DI ATAS layout (chat/memory/cron) ═══ */}
-      <ChatSessionPanel
-        agent={chatAgent}
-        onClose={() => { setChatAgent(null); setSelectedId(null) }}
-        tab={agentTab}
-        onTabChange={setAgentTab}
-      />
+      {/* ═══ Chat session panel — tampil di tab workflow & office (di Agent Sessions sudah ada MiniChat) ═══ */}
+      {view !== 'agents' && (
+        <ChatSessionPanel
+          agent={chatAgent}
+          onClose={() => { setChatAgent(null); setSelectedId(null) }}
+          tab={agentTab}
+          onTabChange={setAgentTab}
+        />
+      )}
 
       {/* View aktif di bawahnya */}
       <AnimatePresence mode="wait">
