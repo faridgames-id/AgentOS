@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Mic, MicOff, Send, Sparkles, Brain, CalendarClock, MessageSquare,
-  AudioLines, Plus, Trash2, Bot, User, Zap, Globe, Terminal, X, Play, Pause
+  AudioLines, Plus, Trash2, Bot, User, Zap, Globe, Terminal, X, Play, Pause, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react'
 
 type Tab = 'voice' | 'chat' | 'memory' | 'cron'
@@ -100,6 +100,9 @@ export default function Chat() {
       if (d.path) sendFileToTelegram(d.path, file.name)
     } catch { /* diam */ }
   }
+  // Sidebar history chat bisa disembunyikan
+  const [sidebarHidden, setSidebarHidden] = useState(false)
+
   // ── Voice REAL: speech-to-text + LLM + text-to-speech ──
   const [voiceTranscript, setVoiceTranscript] = useState('')
   const [voiceReply, setVoiceReply] = useState('')
@@ -567,24 +570,36 @@ export default function Chat() {
 
     return (
       <div className="flex gap-4 h-[calc(100vh-190px)]">
-        {/* ── History Chat (ala referensi 3) ── */}
+        {/* ── History Chat — collapsible ── */}
+        {!sidebarHidden && (
         <div
-          className="w-[264px] flex-shrink-0 flex flex-col rounded-2xl overflow-hidden"
+          className="w-[248px] flex-shrink-0 flex flex-col rounded-2xl overflow-hidden"
           style={{
             background: 'linear-gradient(170deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))',
             border: '1px solid rgba(96,140,220,0.22)',
-            boxShadow: '0 12px 36px rgba(0,0,0,0.4), inset 0 1px 0 rgba(140,180,255,0.08)'
+            boxShadow: '0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(140,180,255,0.08)'
           }}
         >
-          <div className="flex items-center justify-between px-4 pt-4 pb-3">
-            <p className="text-base font-bold text-white">History Chat</p>
-            <button
-              onClick={newSession}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold text-white transition-transform hover:scale-105 active:scale-95"
-              style={{ background: 'linear-gradient(160deg, #22D3EEE6, #22D3EE)', boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.35), 0 3px 10px rgba(34,211,238,0.35)' }}
-            >
-              <Plus size={12} strokeWidth={3} /> New Chat
-            </button>
+          <div className="flex items-center justify-between px-3.5 pt-3.5 pb-2.5">
+            <p className="text-sm font-bold text-white">History Chat</p>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={newSession}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] font-bold text-white transition-transform hover:scale-105 active:scale-95"
+                style={{ background: 'linear-gradient(160deg, #22D3EEE6, #22D3EE)', boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.35)' }}
+              >
+                <Plus size={11} strokeWidth={3} /> New
+              </button>
+              {/* tombol sembunyikan */}
+              <button
+                onClick={() => setSidebarHidden(true)}
+                title="Sembunyikan sesi chat"
+                className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+              >
+                <PanelLeftClose size={13} />
+              </button>
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto px-3 pb-3">
             {/* ── Sesi Telegram REAL ── */}
@@ -602,8 +617,7 @@ export default function Chat() {
                   className={`group flex items-start gap-2.5 px-3 py-2.5 rounded-2xl cursor-pointer transition-all ${tgActive === s.id ? '' : 'hover:bg-white/[0.04]'}`}
                   style={tgActive === s.id ? {
                     background: 'rgba(56,189,248,0.1)',
-                    border: '1px solid rgba(56,189,248,0.4)',
-                    boxShadow: '0 0 16px rgba(56,189,248,0.15)'
+                    border: '1px solid rgba(56,189,248,0.4)'
                   } : { border: '1px solid rgba(148,163,184,0.08)' }}
                 >
                   <span
@@ -616,7 +630,7 @@ export default function Chat() {
                     <Send size={11} className="text-white" />
                   </span>
                   <span className="flex-1 min-w-0">
-                    <span className={`block text-[12px] truncate font-medium ${tgActive === s.id ? 'text-white' : 'text-slate-300'}`}>{s.preview}</span>
+                    <span className={`block text-[12px] truncate font-medium ${tgActive === s.id ? 'text-white' : 'text-slate-300'}`}>{s.preview.replace(/\*\*/g, '')}</span>
                     <span className="block text-[9px] text-slate-500 font-mono mt-0.5">{s.time} · {s.message_count} pesan</span>
                   </span>
                 </div>
@@ -655,8 +669,27 @@ export default function Chat() {
                 </div>
               ))}
             </div>
-          </div>
+            </div>
         </div>
+        )}
+
+        {/* Tombol munculkan sidebar saat disembunyikan */}
+        {sidebarHidden && (
+          <button
+            onClick={() => setSidebarHidden(false)}
+            title="Tampilkan sesi chat"
+            className="absolute left-3 top-16 z-20 w-9 h-9 rounded-xl flex items-center justify-center text-slate-300 hover:text-white transition-all hover:scale-110"
+            style={{
+              background: 'rgba(16,28,52,0.9)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(96,140,220,0.3)',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.35)'
+            }}
+          >
+            <PanelLeftOpen size={15} />
+          </button>
+        )}
+
 
         {/* ── Chat area ── */}
         <div
