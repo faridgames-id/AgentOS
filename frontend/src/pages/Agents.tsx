@@ -1395,7 +1395,7 @@ function ChatSessionPanel({ agent, onClose, tab, onTabChange }: { agent: SubAgen
 // ─────────────────────────────────────────────────────────
 // VIEW 3: Agent Sessions — pilih sub agent lalu chat dengannya
 // ─────────────────────────────────────────────────────────
-function AgentSessionsView({ onOpen, onCloseSession, selectedId }: { onOpen: (a: SubAgent) => void; onCloseSession: () => void; selectedId: string | null }) {
+function AgentSessionsView({ onOpen, onCloseSession, onSwitchTabPanel, selectedId }: { onOpen: (a: SubAgent) => void; onCloseSession: () => void; onSwitchTabPanel: (t: AgentTab) => void; selectedId: string | null }) {
   const selected = AGENTS.find(a => a.id === selectedId) || null
 
   return (
@@ -1529,7 +1529,7 @@ function AgentSessionsView({ onOpen, onCloseSession, selectedId }: { onOpen: (a:
                 border: `1px solid ${selected.color}55`,
                 boxShadow: `0 10px 32px rgba(0,0,0,0.45), 0 0 20px ${selected.color}22`
               }}>
-                {/* header chat */}
+                {/* header chat + 3 icon tab ala pill (Chat/Memory/Cron) */}
                 <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5">
                   <div
                     className="relative flex items-center justify-center w-9 h-9 rounded-[11px] shrink-0"
@@ -1543,14 +1543,29 @@ function AgentSessionsView({ onOpen, onCloseSession, selectedId }: { onOpen: (a:
                       <span className="ml-2 text-[10px] font-mono text-slate-500">{selected.role}</span>
                     </p>
                   </div>
-                  <button
-                    onClick={() => onOpen(selected)}
-                    className="text-[10px] px-2.5 py-1 rounded-full font-bold shrink-0"
-                    style={{ color: selected.color, border: `1px solid ${selected.color}55` }}
-                    title="Buka panel penuh (chat + memory + cron)"
-                  >
-                    Panel penuh ↗
-                  </button>
+                  {/* 3 icon tab — klik buka panel penuh di halaman sesuai tab */}
+                  <div className="flex items-center gap-1 p-1 rounded-full shrink-0"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    {([
+                      { key: 'chat', icon: MessageSquare, label: 'Chat Session' },
+                      { key: 'memory', icon: Brain, label: 'Memory' },
+                      { key: 'cron', icon: CalendarClock, label: 'Cron' },
+                    ] as { key: AgentTab; icon: typeof MessageSquare; label: string }[]).map(t => (
+                      <button
+                        key={t.key}
+                        onClick={() => { onOpen(selected); onSwitchTabPanel(t.key) }}
+                        title={t.label}
+                        className="relative w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-all group/tab2"
+                      >
+                        {/* AppIcon-style tile saat hover/aktif */}
+                        <span
+                          className="absolute inset-0 rounded-full opacity-0 group-hover/tab2:opacity-100 transition-opacity"
+                          style={{ background: `linear-gradient(160deg, ${selected.color}E6, ${selected.color})`, boxShadow: `0 3px 10px ${selected.color}55` }}
+                        />
+                        <t.icon size={13} className="relative z-10 group-hover/tab2:text-white" strokeWidth={2.4} />
+                      </button>
+                    ))}
+                  </div>
                   <button onClick={() => onCloseSession()}
                     className="text-slate-500 hover:text-white shrink-0" title="Tutup chat">
                     <X size={15} />
@@ -1842,7 +1857,7 @@ export default function AgentsPage() {
           ? <WorkflowView key="wf" onOpen={openAgent} selectedId={selectedId} />
           : view === 'office'
           ? <OfficeView key="of" onOpen={openAgent} selectedId={selectedId} />
-          : <AgentSessionsView key="ag" onOpen={openAgent} onCloseSession={() => setSelectedId(null)} selectedId={selectedId} />}
+          : <AgentSessionsView key="ag" onOpen={openAgent} onCloseSession={() => setSelectedId(null)} onSwitchTabPanel={setAgentTab} selectedId={selectedId} />}
       </AnimatePresence>
 
       {/* ═══ Chat session panel — DI BAWAH view (tampil di tab workflow & office) ═══ */}
