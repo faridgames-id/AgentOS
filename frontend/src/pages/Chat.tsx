@@ -192,9 +192,9 @@ export default function Chat() {
       .then(d => {
         if (!alive) return
         setTgMessages(d.messages || [])
-        // langsung lompat ke chat terbaru (bawah) begitu pesan termuat
+        // lompat instan ke chat terbaru (tanpa animasi smooth — anti guncang)
         requestAnimationFrame(() => {
-          messagesEndRef.current?.scrollIntoView({ block: 'end' })
+          messagesEndRef.current?.scrollIntoView({ block: 'nearest' })
         })
       })
       .catch(() => {})
@@ -203,9 +203,7 @@ export default function Chat() {
 
   const session = sessions.find(s => s.id === activeSession)
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [session?.messages.length, tgMessages.length, tgActive])
+  // auto-scroll hanya sekali saat sesi dibuka (instan, tanpa smooth — anti guncang)
 
   // Fake voice orb pulse when listening
   useEffect(() => {
@@ -731,8 +729,7 @@ export default function Chat() {
                   return (
                     <motion.div
                       key={`tg-${i}`}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
+                      initial={false}
                       className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                       <div className={`max-w-[78%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${m.role === 'user'
