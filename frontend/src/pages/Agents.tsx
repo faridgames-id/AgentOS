@@ -1395,72 +1395,243 @@ function ChatSessionPanel({ agent, onClose, tab, onTabChange }: { agent: SubAgen
 // ─────────────────────────────────────────────────────────
 // VIEW 3: Agent Sessions — pilih sub agent lalu chat dengannya
 // ─────────────────────────────────────────────────────────
-function AgentSessionsView({ onOpen, selectedId }: { onOpen: (a: SubAgent) => void; selectedId: string | null }) {
+function AgentSessionsView({ onOpen, onCloseSession, selectedId }: { onOpen: (a: SubAgent) => void; onCloseSession: () => void; selectedId: string | null }) {
+  const selected = AGENTS.find(a => a.id === selectedId) || null
+
   return (
     <motion.div
       key="agents"
       initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-      className="rounded-2xl p-6"
+      className="rounded-2xl p-5"
       style={{
         background: 'linear-gradient(170deg, rgba(16,28,52,0.97), rgba(7,14,30,0.99))',
         border: '1px solid rgba(96,140,220,0.22)',
         boxShadow: '0 12px 36px rgba(0,0,0,0.45), inset 0 1px 0 rgba(140,180,255,0.08)'
       }}
     >
-      <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-500 mb-4">
-        Pilih sub agent yang mau dihubungi
-      </p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        {AGENTS.map((a, i) => {
-          const active = selectedId === a.id
-          return (
-            <motion.button
-              key={a.id}
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.04 }}
-              whileHover={{ y: -4 }}
-              onClick={() => onOpen(a)}
-              className="relative rounded-2xl p-3.5 text-left group overflow-hidden"
-              style={{
-                background: active ? `linear-gradient(160deg, ${a.color}22, rgba(15,19,26,0.98))` : 'linear-gradient(160deg, rgba(30,35,45,0.95), rgba(15,19,26,0.98))',
-                border: active ? `1.5px solid ${a.color}` : '1px solid rgba(148,163,184,0.14)',
-                boxShadow: active ? `0 8px 24px ${a.color}44` : '0 6px 18px rgba(0,0,0,0.3)'
-              }}
-            >
-              <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full blur-xl opacity-15 pointer-events-none group-hover:opacity-30 transition-opacity"
-                style={{ background: a.color }} />
-              {/* AppIcon iOS */}
-              <div
-                className="relative flex items-center justify-center w-10 h-10 mb-2.5 rounded-[12px]"
-                style={{
-                  background: `linear-gradient(160deg, ${a.color}E6, ${a.color})`,
-                  boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.35), inset 0 -2px 4px rgba(0,0,0,0.15)',
-                }}
-              >
-                <div
-                  className="absolute inset-x-0 top-0 pointer-events-none"
+      <div className={`flex gap-4 transition-all`}>
+        {/* ═══ KOLOM AGENT — menyusut jadi icon saat agent dipilih ═══ */}
+        <motion.div
+          animate={{ width: selected ? 64 : '100%' }}
+          transition={{ type: 'spring', stiffness: 260, damping: 28 }}
+          className="shrink-0"
+        >
+          <p className={`text-[9px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-3 text-center transition-opacity ${selected ? 'opacity-0' : 'opacity-100'}`}>
+            Pilih sub agent
+          </p>
+          <div className={`grid gap-2.5 ${selected ? 'grid-cols-1' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5'}`}>
+            {AGENTS.map((a, i) => {
+              const active = selectedId === a.id
+              return (
+                <motion.button
+                  key={a.id}
+                  layout
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: selected ? 0 : i * 0.03 }}
+                  whileHover={{ scale: 1.06 }}
+                  onClick={() => onOpen(a)}
+                  title={`${a.name} — ${a.role}`}
+                  className={`relative rounded-2xl cursor-pointer group overflow-hidden ${selected ? 'p-2' : 'p-3.5 text-left'}`}
                   style={{
-                    height: '46%',
-                    borderRadius: '12px 12px 40% 40% / 12px 12px 70% 70%',
-                    background: 'linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.02))',
+                    background: active ? `linear-gradient(160deg, ${a.color}22, rgba(15,19,26,0.98))` : 'linear-gradient(160deg, rgba(30,35,45,0.95), rgba(15,19,26,0.98))',
+                    border: active ? `1.5px solid ${a.color}` : '1px solid rgba(148,163,184,0.14)',
+                    boxShadow: active ? `0 8px 24px ${a.color}44` : '0 6px 18px rgba(0,0,0,0.3)'
                   }}
-                />
-                <a.icon size={18} className="relative z-10 text-white" strokeWidth={2.4} />
+                >
+                  <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full blur-xl opacity-15 pointer-events-none group-hover:opacity-30 transition-opacity"
+                    style={{ background: a.color }} />
+                  {/* AppIcon iOS — selalu tampil */}
+                  <div
+                    className={`relative flex items-center justify-center rounded-[12px] mx-auto ${selected ? 'w-11 h-11' : 'w-10 h-10 mb-2.5'}`}
+                    style={{
+                      background: `linear-gradient(160deg, ${a.color}E6, ${a.color})`,
+                      boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.35), inset 0 -2px 4px rgba(0,0,0,0.15)',
+                    }}
+                  >
+                    <div
+                      className="absolute inset-x-0 top-0 pointer-events-none"
+                      style={{
+                        height: '46%',
+                        borderRadius: '12px 12px 40% 40% / 12px 12px 70% 70%',
+                        background: 'linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.02))',
+                      }}
+                    />
+                    <a.icon size={selected ? 20 : 18} className="relative z-10 text-white" strokeWidth={2.4} />
+                    {/* titik status */}
+                    <span
+                      className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-slate-950"
+                      style={{ background: STATUS_META[a.status].dot, boxShadow: `0 0 6px ${STATUS_META[a.status].dot}` }}
+                    />
+                  </div>
+                  {/* teks hanya saat mode grid */}
+                  {!selected && (
+                    <>
+                      <p className="text-[12px] font-black tracking-wide" style={{ color: a.color }}>{a.name}</p>
+                      <p className="text-[9px] text-slate-500 truncate">{a.role}</p>
+                      <div className="flex items-center gap-1.5 mt-2">
+                        <span className="text-[9px] text-slate-500">{STATUS_META[a.status].label}</span>
+                      </div>
+                    </>
+                  )}
+                </motion.button>
+              )
+            })}
+          </div>
+        </motion.div>
+
+        {/* ═══ PANEL CHAT — muncul mengisi sisa lebar saat agent dipilih ═══ */}
+        <AnimatePresence>
+          {selected && (
+            <motion.div
+              initial={{ opacity: 0, x: 32, scale: 0.98 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 32, scale: 0.98 }}
+              transition={{ type: 'spring', stiffness: 240, damping: 26 }}
+              className="flex-1 min-w-0"
+            >
+              <div className="rounded-2xl h-full flex flex-col" style={{
+                background: 'linear-gradient(160deg, rgba(22,28,40,0.98), rgba(12,16,24,0.99))',
+                border: `1px solid ${selected.color}55`,
+                boxShadow: `0 10px 32px rgba(0,0,0,0.45), 0 0 20px ${selected.color}22`
+              }}>
+                {/* header chat */}
+                <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5">
+                  <div
+                    className="relative flex items-center justify-center w-9 h-9 rounded-[11px] shrink-0"
+                    style={{ background: `linear-gradient(160deg, ${selected.color}E6, ${selected.color})` }}
+                  >
+                    <selected.icon size={16} className="text-white relative z-10" strokeWidth={2.4} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-white truncate">
+                      Otak {selected.name}
+                      <span className="ml-2 text-[10px] font-mono text-slate-500">{selected.role}</span>
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => onOpen(selected)}
+                    className="text-[10px] px-2.5 py-1 rounded-full font-bold shrink-0"
+                    style={{ color: selected.color, border: `1px solid ${selected.color}55` }}
+                    title="Buka panel penuh (chat + memory + cron)"
+                  >
+                    Panel penuh ↗
+                  </button>
+                  <button onClick={() => onCloseSession()}
+                    className="text-slate-500 hover:text-white shrink-0" title="Tutup chat">
+                    <X size={15} />
+                  </button>
+                </div>
+                <MiniChat agent={selected} />
               </div>
-              <p className="text-[12px] font-black tracking-wide" style={{ color: a.color }}>{a.name}</p>
-              <p className="text-[9px] text-slate-500 truncate">{a.role}</p>
-              <div className="flex items-center gap-1.5 mt-2">
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: STATUS_META[a.status].dot, boxShadow: `0 0 6px ${STATUS_META[a.status].dot}` }} />
-                <span className="text-[9px] text-slate-500">{STATUS_META[a.status].label}</span>
-              </div>
-            </motion.button>
-          )
-        })}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   )
 }
+
+/** Chat ringkas di dalam Agent Sessions (pakai otak agent yang sama) */
+function MiniChat({ agent }: { agent: SubAgent }) {
+  const [chat, setChat] = useState<{ role: 'user' | 'agent'; text: string }[]>([])
+  const [input, setInput] = useState('')
+  const [thinking, setThinking] = useState(false)
+  const [agentId, setAgentId] = useState<string | null>(null)
+  const endRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (agent.id !== agentId) {
+      setAgentId(agent.id)
+      setChat([])
+      setInput('')
+      fetch(`/api/brain/${agent.id}/memory`)
+        .then(r => r.json())
+        .then(d => {
+          setChat((d.chats || []).slice(-8).map((c: { role: string; text: string }) => ({
+            role: c.role === 'user' ? 'user' as const : 'agent' as const,
+            text: c.text,
+          })))
+        })
+        .catch(() => {})
+    }
+  }, [agent])
+
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [chat, thinking])
+
+  const send = () => {
+    if (!input.trim() || thinking) return
+    const q = input.trim()
+    setChat(prev => [...prev, { role: 'user', text: q }])
+    setInput('')
+    setThinking(true)
+    fetch('/api/brain/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agent_id: agent.id, message: q }),
+    })
+      .then(r => r.json())
+      .then(d => setChat(prev => [...prev, { role: 'agent', text: d.reply || '…' }]))
+      .catch(() => setChat(prev => [...prev, { role: 'agent', text: '⚠️ koneksi otak terganggu' }]))
+      .finally(() => setThinking(false))
+  }
+
+  return (
+    <>
+      <div className="h-72 overflow-y-auto p-4 space-y-3">
+        {chat.length === 0 && (
+          <div className="h-full flex items-center justify-center text-slate-500 text-[12px] font-mono">
+            Ngobrol dengan otak {agent.name}…
+          </div>
+        )}
+        {chat.map((m, i) => (
+          <motion.div key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+            className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`max-w-[78%] px-3.5 py-2.5 rounded-2xl text-[12px] leading-relaxed whitespace-pre-wrap ${m.role === 'user'
+              ? 'text-white rounded-br-md'
+              : 'bg-white/[0.06] text-slate-200 border border-white/5 rounded-bl-md'}`}
+              style={m.role === 'user' ? { background: `linear-gradient(160deg, ${agent.color}E6, ${agent.color}99)` } : {}}
+            >
+              {m.text}
+            </div>
+          </motion.div>
+        ))}
+        {thinking && (
+          <div className="flex justify-start">
+            <div className="bg-white/[0.06] border border-white/5 px-3 py-2.5 rounded-2xl flex gap-1">
+              {[0, 1, 2].map(d => (
+                <motion.span key={d} className="w-1.5 h-1.5 rounded-full" style={{ background: agent.color }}
+                  animate={{ y: [0, -4, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: d * 0.15 }} />
+              ))}
+            </div>
+          </div>
+        )}
+        <div ref={endRef} />
+      </div>
+      <div className="p-3 border-t border-white/5">
+        <div className="flex items-center gap-2 bg-white/[0.04] border border-white/10 rounded-2xl px-3.5 py-2 focus-within:border-sky-400/40 transition-colors">
+          <MessageSquare size={13} className="text-slate-500 shrink-0" />
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && send()}
+            placeholder={`Pesan untuk ${agent.name}...`}
+            className="flex-1 bg-transparent outline-none text-[12px] text-white placeholder:text-slate-500"
+          />
+          <button onClick={send} disabled={thinking}
+            className="w-7 h-7 rounded-full flex items-center justify-center disabled:opacity-40"
+            style={{ background: `linear-gradient(135deg, ${agent.color}, ${agent.color}88)` }}>
+            <Send size={11} className="text-white" />
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ─────────────────────────────────────────────────────────
+// Page
+// ─────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────
 // Page
@@ -1597,7 +1768,7 @@ export default function AgentsPage() {
           ? <WorkflowView key="wf" onOpen={openAgent} selectedId={selectedId} />
           : view === 'office'
           ? <OfficeView key="of" onOpen={openAgent} selectedId={selectedId} />
-          : <AgentSessionsView key="ag" onOpen={openAgent} selectedId={selectedId} />}
+          : <AgentSessionsView key="ag" onOpen={openAgent} onCloseSession={() => setSelectedId(null)} selectedId={selectedId} />}
       </AnimatePresence>
 
       {/* Chat session BELOW the layout */}
