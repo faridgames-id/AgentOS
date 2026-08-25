@@ -1575,8 +1575,15 @@ function MiniChat({ agent }: { agent: SubAgent }) {
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const el = endRef.current
-    if (el) el.scrollTop = el.scrollHeight
+    // dobel rAF: pastikan semua bubble selesai render, lalu scroll sampai BENERAN bawah
+    let raf1 = 0, raf2 = 0
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        const el = endRef.current
+        if (el) el.scrollTop = el.scrollHeight
+      })
+    })
+    return () => { cancelAnimationFrame(raf1); cancelAnimationFrame(raf2) }
   }, [chat, thinking])
 
   useEffect(() => {
@@ -1617,7 +1624,7 @@ function MiniChat({ agent }: { agent: SubAgent }) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 min-h-[200px] max-h-[380px] overflow-y-auto p-4 space-y-3">
+      <div ref={endRef} className="flex-1 min-h-[200px] max-h-[380px] overflow-y-auto overflow-x-hidden p-4 pb-8 pr-2.5 space-y-3">
         {chat.length === 0 && (
           <div className="h-full flex items-center justify-center text-slate-500 text-[12px] font-mono">
             Ngobrol dengan otak {agent.name}…
